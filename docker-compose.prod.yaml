@@ -1,0 +1,40 @@
+version: "3.3"
+ 
+services:
+  gameservice:
+    container_name: game_service
+    build:
+      context: ./gameservice
+      dockerfile: Dockerfile
+    ports:
+      - "4007:8070"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=gopro.tsxbet.com
+    #   - VIRTUAL_PORT=3007
+    volumes:
+      - ./gameservice/:/app
+    networks:
+        - proxy-net
+
+  backendservice:
+    image: king_backend_service
+    container_name: backend_service
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4006:8060"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_PORT=4007
+    volumes:
+      - ./backend/:/app
+    networks:
+        - proxy-net
+
+networks:
+  proxy-net:
+      name: app-net
+      external: true

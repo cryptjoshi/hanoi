@@ -1,0 +1,88 @@
+version: "3.3"
+ 
+services:
+
+  apigateway:
+    container_name: api_gateway
+    build:
+      context: ./apigateway
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4005:8050"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_PORT=4007
+    volumes:
+      - ./apigateway/:/app
+    networks:
+        - proxy-net
+
+
+
+  gameservice:
+    #image: king_game_service
+    container_name: game_service
+    build:
+      context: ./gameservice
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4007:8070"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_PORT=4007
+    volumes:
+      - ./gameservice/:/app
+    networks:
+        - proxy-net
+
+
+
+  gservice:
+    # image: gclub
+    build:
+      context: ./gclubservice
+      dockerfile: Dockerfile
+      target: base
+    volumes:
+      - ./gclubservice/src:/home/node/app/src
+      - ./gclubservice/nodemon.json:/home/node/app/nodemon.json
+    container_name: gservice
+    expose:
+      - '9003'
+    ports:
+      - '9003:9003'
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    command: " npm run dev"
+    # environment:
+    #   - VIRTUAL_HOST=gclub.tsxbet.net
+    #   - VIRTUAL_PORT=3003
+    env_file: .env
+    networks:
+      - proxy-net
+
+  backendservice:
+    image: king_backend_service
+    container_name: backend_service
+    build:
+      context: ./backend
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4006:8060"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_PORT=4007
+    volumes:
+      - ./backend/:/app
+    networks:
+        - proxy-net
+
+
+networks:
+  proxy-net:
+      name: app-net
+      external: true

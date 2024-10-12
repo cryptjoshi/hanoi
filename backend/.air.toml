@@ -7,6 +7,8 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
+# build = "swag init && go build -o ./tmp/main ."
+# cmd = "swag init && go build -o ./tmp/app/engine ./main.go"
 cmd = "go build -o ./tmp/app/engine ./main.go"
 # Binary file yields from `cmd`.
 bin = "tmp/app"
@@ -22,6 +24,8 @@ include_ext = ["go", "yaml"]
 exclude_dir = ["tmp"]
 # It's not necessary to trigger build each time file changes if it's too frequent.
 delay = 1000 # ms
+# Command to run before building
+# pre_build = "swag init"
 
 [log]
 # Show log time

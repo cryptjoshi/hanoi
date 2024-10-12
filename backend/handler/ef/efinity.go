@@ -3,9 +3,9 @@ package ef
 import 
 (
 	"github.com/gofiber/fiber/v2"
-	"pkd/models"
-	"pkd/database"
-	"pkd/repository"
+	"hanoi/models"
+	"hanoi/database"
+	"hanoi/repository"
 	"github.com/shopspring/decimal"
 	"crypto/md5"
 	"encoding/hex"
@@ -81,13 +81,13 @@ func parseTime(layout, value string) (time.Time, error) {
 
 func Index(c *fiber.Ctx) error {
 
-	var user []models.Users
-	database.Database.Find(&user)
+	//var user []models.Users
+	//db.Find(&user)
 	response := Response{
 		Message: "Welcome to Efinity!!",
 		Status:  true,
 		Data: fiber.Map{ 
-			"users":user,
+			//"users":user,
 		}, 
 	}
 	 
@@ -139,8 +139,8 @@ func GetBalance(c *fiber.Ctx) error {
 	
 	if CheckSign(body.Sign,"getbalance",body.RequestTime) == true {
 			var users models.Users
-
-			if err := database.Database.Where("username = ?", body.MemberName).First(&users).Error; err != nil {
+			db, _ := database.ConnectToDB(body.MemberName)
+			if err := db.Where("username = ?", body.MemberName).First(&users).Error; err != nil {
 				
 				response := EFResponse {
 					ErrorCode: 16,
@@ -184,7 +184,8 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 	}
 	 
 	var users models.Users
-    if err_ := database.Database.Where("username = ? ", membername).First(&users).Error; err_ != nil {
+	db, _ := database.ConnectToDB(membername)
+    if err_ := db.Where("username = ? ", membername).First(&users).Error; err_ != nil {
 		response = Response{
 			Status: false,
 			Message: "ไม่พบข้อมูล",
@@ -201,7 +202,7 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
 	
-	result := database.Database.Create(&transactionsub); 
+	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
 		response = Response{
@@ -217,7 +218,7 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 				}
 	
 		 
-		  repository.UpdateFieldsUserString(membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		  repository.UpdateFieldsUserString(db,membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 		//fmt.Println(_err)
 		// if _err != nil {
 		// 	fmt.Println("Error:", _err)
@@ -254,7 +255,8 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 	}
 	 
 	var users models.Users
-    if err_ := database.Database.Where("username = ? ", membername).First(&users).Error; err_ != nil {
+	db, _ := database.ConnectToDB(membername)
+    if err_ := db.Where("username = ? ", membername).First(&users).Error; err_ != nil {
 		response = Response{
 			Status: false,
 			Message: "ไม่พบข้อมูล",
@@ -273,7 +275,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 	transaction.BeforeBalance = users.Balance
 	transaction.Balance = users.Balance.Add(transaction.TransactionAmount)
 	
-	result := database.Database.Create(&transaction); 
+	result := db.Create(&transaction); 
 	
 	
 	fmt.Print(result)
@@ -292,7 +294,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 				}
 	
 		 
-		  repository.UpdateFieldsUserString(membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		  repository.UpdateFieldsUserString(db,membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 		//fmt.Println(_err)
 		// if _err != nil {
 		// 	fmt.Println("Error:", _err)
@@ -329,7 +331,8 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	}
 	 
 	var users models.Users
-    if err_ := database.Database.Where("username = ? ", membername).First(&users).Error; err_ != nil {
+	db, _ := database.ConnectToDB(membername)
+    if err_ := db.Where("username = ? ", membername).First(&users).Error; err_ != nil {
 		response = Response{
 			Status: false,
 			Message: "ไม่พบข้อมูล",
@@ -346,7 +349,7 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
 	
-	result := database.Database.Create(&transactionsub); 
+	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
 		response = Response{
@@ -362,7 +365,7 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 				}
 	
 		 
-		  repository.UpdateFieldsUserString(membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		  repository.UpdateFieldsUserString(db,membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 		//fmt.Println(_err)
 		// if _err != nil {
 		// 	fmt.Println("Error:", _err)
@@ -407,10 +410,10 @@ func PlaceBet(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -423,7 +426,7 @@ func PlaceBet(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -488,12 +491,15 @@ func GameResult(c *fiber.Ctx) error {
 
 	// ตรวจสอบ ว่า มี transactions เดิมอยู่มั้ย
     var _transaction_found models.TransactionSub
-	_terr := database.Database.Model(&models.TransactionSub{}).Where("WagerID = ?",transaction.WagerID).Scan(&_transaction_found).RowsAffected
+	
+	db, _ := database.ConnectToDB(request.MemberName)
+
+	_terr := db.Model(&models.TransactionSub{}).Where("WagerID = ?",transaction.WagerID).Scan(&_transaction_found).RowsAffected
 	
 	if _terr == 0 {
 		//ตรวจสอบว่า เป็น transactions buyin buyout หรือไม่
 		var buyinout models.BuyInOut;
-		_berr := database.Database.Model(&models.BuyInOut{}).Where("WagerID = ?",transaction.WagerID).Scan(&buyinout).RowsAffected
+		_berr := db.Model(&models.BuyInOut{}).Where("WagerID = ?",transaction.WagerID).Scan(&buyinout).RowsAffected
 
 		// ถ้าเป็น buyin buyout
 		if _berr >  0 {
@@ -517,7 +523,7 @@ func GameResult(c *fiber.Ctx) error {
 
 	} else {
 		var c_transaction_found models.TransactionSub
-		rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+		rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 		 if rowsAffected == 0 {
 			result := AddTransactions(transaction,request.MemberName)
@@ -567,10 +573,10 @@ func RollBack(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -583,7 +589,7 @@ func RollBack(c *fiber.Ctx) error {
 			} else 
 			 {
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 				
 				 if rowsAffected == 0 {
 					result := AddTransactions(transaction,request.MemberName)
@@ -653,10 +659,10 @@ func CancelBet(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -669,7 +675,7 @@ func CancelBet(c *fiber.Ctx) error {
 			} else 
 			 {
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 				
 				 if rowsAffected == 0 {
 					result := AddTransactions(transaction,request.MemberName)
@@ -738,10 +744,10 @@ func Bonus(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -754,7 +760,7 @@ func Bonus(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -809,10 +815,10 @@ func Jackpot(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -825,7 +831,7 @@ func Jackpot(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -880,10 +886,10 @@ func PushBet(c *fiber.Ctx) error {
 		
 		var user models.Users
 		
-		
+		db, _ := database.ConnectToDB(request.MemberName)
 		 for _, transaction := range request.Transactions {
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -896,7 +902,7 @@ func PushBet(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -952,8 +958,8 @@ func MobileLogin(c *fiber.Ctx) error {
 	}
 	
 	var user models.Users
-
-	rowsAffected := database.Database.Where("username = ? and password = ?", request.MemberName,request.Password).First(&user).RowsAffected
+	db, _ := database.ConnectToDB(request.MemberName)
+	rowsAffected := db.Where("username = ? and password = ?", request.MemberName,request.Password).First(&user).RowsAffected
 	  	
 	if rowsAffected == 0 {
 		response = EFResponse{
@@ -1000,9 +1006,9 @@ func BuyIn(c *fiber.Ctx) error {
 		var user models.Users
 		
 		
-	 
+		db, _ := database.ConnectToDB(request.MemberName)
 
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		//fmt.Println(&request)
 			if user.Balance.LessThan(request.Transaction.TransactionAmount.Abs()) {
 
@@ -1015,7 +1021,7 @@ func BuyIn(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.BuyInOut
-				rowsAffected := database.Database.Model(&models.BuyInOut{}).Select("id").Where("transaction_id = ? ",request.Transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.BuyInOut{}).Select("id").Where("transaction_id = ? ",request.Transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -1072,9 +1078,9 @@ func BuyOut(c *fiber.Ctx) error {
 		var user models.Users
 		
 		
-	 
+		db, _ := database.ConnectToDB(request.MemberName)
 			
-			database.Database.Where("username = ?", request.MemberName).First(&user)
+			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(request.Transaction.BetAmount) {
 
@@ -1087,7 +1093,7 @@ func BuyOut(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.BuyInOut
-				rowsAffected := database.Database.Model(&models.BuyInOut{}).Where("transaction_id = ? ",request.Transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Model(&models.BuyInOut{}).Where("transaction_id = ? ",request.Transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 

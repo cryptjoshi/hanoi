@@ -317,7 +317,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 }
 func AddTransactions(transactionsub models.TransactionSub,membername string) Response {
 
-
+	fmt.Println("transactionsub:",transactionsub)
 	response := Response{
 		Status: false,
 		Message:"Success",

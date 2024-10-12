@@ -1,0 +1,990 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Api Goteway in Go.",
+        "title": "Api Goteway in Go",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "167.71.100.123:3003",
+    "basePath": "/api/v1",
+    "paths": {
+        "/users/all": {
+            "post": {
+                "description": "Get a list of all users in the database.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "description": "User registration info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerBody"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.SwaggerUser"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/balance": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user balance in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user balance",
+                "parameters": [
+                    {
+                        "description": "User balance info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Error response",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "post": {
+                "description": "Get a list of all users in the database.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "User registration info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.SwaggerUser"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user balance in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "User Logout",
+                "parameters": [
+                    {
+                        "description": "User Logout",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Error response",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "description": "Register user in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register new user",
+                "parameters": [
+                    {
+                        "description": "User registration info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerUser"
+                        }
+                    },
+                    "400": {
+                        "description": "Error response",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/statement": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user Statement in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user Statement",
+                "parameters": [
+                    {
+                        "description": "User Bank Statement info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BankStatement"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerBankStatement"
+                        }
+                    },
+                    "400": {
+                        "description": "Error response",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/transactions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user Transaction in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user Transaction",
+                "parameters": [
+                    {
+                        "description": "User Transaction info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TransactionSub"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SwaggerTransactionSub"
+                        }
+                    },
+                    "400": {
+                        "description": "Error response",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.BankStatement": {
+            "type": "object",
+            "properties": {
+                "accountno": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "bankaccountID": {
+                    "type": "integer"
+                },
+                "bankcode": {
+                    "type": "integer"
+                },
+                "bankname": {
+                    "type": "string"
+                },
+                "beforebalance": {
+                    "type": "number"
+                },
+                "betAmount": {
+                    "type": "number"
+                },
+                "bet_amount": {
+                    "type": "number"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletionAt": {
+                    "type": "string"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "ismanual": {
+                    "type": "integer"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "qrExpireDate": {
+                    "type": "string"
+                },
+                "statementType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionamount": {
+                    "type": "number"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "unix": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "integer"
+                },
+                "walletid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.SwaggerBankStatement": {
+            "type": "object",
+            "properties": {
+                "accountno": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "bankaccountID": {
+                    "type": "integer"
+                },
+                "bankcode": {
+                    "type": "integer"
+                },
+                "bankname": {
+                    "type": "string"
+                },
+                "beforebalance": {
+                    "type": "number"
+                },
+                "betAmount": {
+                    "type": "number"
+                },
+                "bet_amount": {
+                    "type": "number"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletionAt": {
+                    "type": "string"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ismanual": {
+                    "type": "integer"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "qrExpireDate": {
+                    "type": "string"
+                },
+                "statementType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "transactionamount": {
+                    "type": "number"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "unix": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "integer"
+                },
+                "walletid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.SwaggerBody": {
+            "type": "object",
+            "properties": {
+                "prefix": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SwaggerTransactionSub": {
+            "type": "object",
+            "properties": {
+                "afterBalance": {
+                    "type": "number"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "beforeBalance": {
+                    "type": "number"
+                },
+                "betAmount": {
+                    "type": "number"
+                },
+                "commissionAmount": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currencyID": {
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "gameID": {
+                    "type": "string"
+                },
+                "gameNumber": {
+                    "type": "string"
+                },
+                "gameProvide": {
+                    "type": "string"
+                },
+                "gameRoundID": {
+                    "type": "string"
+                },
+                "gameType": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isAction": {
+                    "type": "string"
+                },
+                "isEndRound": {
+                    "type": "integer"
+                },
+                "isFeature": {
+                    "type": "integer"
+                },
+                "isFeatureBuy": {
+                    "type": "integer"
+                },
+                "jackpotAmount": {
+                    "type": "number"
+                },
+                "jpbet": {
+                    "type": "number"
+                },
+                "memberID": {
+                    "type": "integer"
+                },
+                "memberName": {
+                    "type": "string"
+                },
+                "messageID": {
+                    "type": "string"
+                },
+                "operatorCode": {
+                    "type": "string"
+                },
+                "operatorID": {
+                    "type": "integer"
+                },
+                "payoutAmount": {
+                    "type": "number"
+                },
+                "payoutDetail": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "productID": {
+                    "type": "integer"
+                },
+                "providerID": {
+                    "type": "integer"
+                },
+                "providerLineID": {
+                    "type": "integer"
+                },
+                "requestTime": {
+                    "type": "string"
+                },
+                "settlementDate": {
+                    "type": "string"
+                },
+                "sign": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "transactionAmount": {
+                    "type": "number"
+                },
+                "transactionID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "validBetAmount": {
+                    "type": "number"
+                },
+                "wagerID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.SwaggerUser": {
+            "type": "object",
+            "properties": {
+                "actived": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "bankname": {
+                    "type": "string"
+                },
+                "banknumber": {
+                    "type": "string"
+                },
+                "beforebalance": {
+                    "type": "number"
+                },
+                "betamount": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "credit": {
+                    "type": "number"
+                },
+                "deletionAt": {
+                    "type": "string"
+                },
+                "deposit": {
+                    "type": "number"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "fullname": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "lose": {
+                    "type": "number"
+                },
+                "otpAuthUrl": {
+                    "type": "string"
+                },
+                "partnersKey": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "preferredname": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "proID": {
+                    "type": "string"
+                },
+                "proStatus": {
+                    "type": "string"
+                },
+                "providerPassword": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "salt": {
+                    "type": "string"
+                },
+                "secret": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "tempSecret": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "turnover": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "walletid": {
+                    "type": "integer"
+                },
+                "win": {
+                    "type": "number"
+                },
+                "withdraw": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.TransactionSub": {
+            "type": "object",
+            "properties": {
+                "afterBalance": {
+                    "type": "number"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "beforeBalance": {
+                    "type": "number"
+                },
+                "betAmount": {
+                    "type": "number"
+                },
+                "commissionAmount": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currencyID": {
+                    "type": "integer"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "gameID": {
+                    "type": "string"
+                },
+                "gameNumber": {
+                    "type": "string"
+                },
+                "gameProvide": {
+                    "type": "string"
+                },
+                "gameRoundID": {
+                    "type": "string"
+                },
+                "gameType": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "isAction": {
+                    "type": "string"
+                },
+                "isEndRound": {
+                    "type": "integer"
+                },
+                "isFeature": {
+                    "type": "integer"
+                },
+                "isFeatureBuy": {
+                    "type": "integer"
+                },
+                "jackpotAmount": {
+                    "type": "number"
+                },
+                "jpbet": {
+                    "type": "number"
+                },
+                "memberID": {
+                    "type": "integer"
+                },
+                "memberName": {
+                    "type": "string"
+                },
+                "messageID": {
+                    "type": "string"
+                },
+                "operatorCode": {
+                    "type": "string"
+                },
+                "operatorID": {
+                    "type": "integer"
+                },
+                "payoutAmount": {
+                    "type": "number"
+                },
+                "payoutDetail": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "productID": {
+                    "type": "integer"
+                },
+                "providerID": {
+                    "type": "integer"
+                },
+                "providerLineID": {
+                    "type": "integer"
+                },
+                "requestTime": {
+                    "type": "string"
+                },
+                "settlementDate": {
+                    "type": "string"
+                },
+                "sign": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "transactionAmount": {
+                    "type": "number"
+                },
+                "transactionID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "validBetAmount": {
+                    "type": "number"
+                },
+                "wagerID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Users": {
+            "type": "object",
+            "properties": {
+                "actived": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "number"
+                },
+                "bankname": {
+                    "type": "string"
+                },
+                "banknumber": {
+                    "type": "string"
+                },
+                "beforebalance": {
+                    "type": "number"
+                },
+                "betamount": {
+                    "type": "number"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "credit": {
+                    "type": "number"
+                },
+                "deletionAt": {
+                    "type": "string"
+                },
+                "deposit": {
+                    "type": "number"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "fullname": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "gorm.Model",
+                    "type": "integer"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "lose": {
+                    "type": "number"
+                },
+                "otpAuthUrl": {
+                    "type": "string"
+                },
+                "partnersKey": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "preferredname": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "proID": {
+                    "type": "string"
+                },
+                "proStatus": {
+                    "type": "string"
+                },
+                "providerPassword": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "salt": {
+                    "type": "string"
+                },
+                "secret": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "tempSecret": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "turnover": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "walletid": {
+                    "type": "integer"
+                },
+                "win": {
+                    "type": "number"
+                },
+                "withdraw": {
+                    "type": "number"
+                }
+            }
+        },
+        "users.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

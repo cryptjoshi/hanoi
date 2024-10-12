@@ -8,7 +8,7 @@ import (
 
 
 type TransactionSub struct {
-	gorm.Model
+	//gorm.Model
 	ID                int       `gorm:"column:id;NOT NULL"`
 	MemberID          int       `gorm:"type:varchar(100)";gorm:"column:MemberID"`
 	MemberName        string    `gorm:"type:varchar(255)";gorm:"column:MemberName"`
@@ -48,6 +48,7 @@ type TransactionSub struct {
 	IsAction          string    `gorm:"type:varchar(50)";gorm:"column:IsAction"`
 	GameProvide       string    `gorm:"type:varchar(255)";gorm:"column:GameProvide"`
 	GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
+	Prefix			  string    `gorm:"column:Prefix"`
 }
 
 func (m *TransactionSub) TableName() string {
@@ -102,3 +103,46 @@ type TransactionsRequest struct {
     RequestTime  string         `json:"RequestTime"`
 }
 
+type SwaggerTransactionSub struct {
+ 
+	ID                int       `gorm:"column:id;NOT NULL"`
+	MemberID          int       `gorm:"type:varchar(100)";gorm:"column:MemberID"`
+	MemberName        string    `gorm:"type:varchar(255)";gorm:"column:MemberName"`
+	CurrencyID        int       `gorm:"column:CurrencyID"`
+	TransactionAmount decimal.Decimal    `gorm:"column:TransactionAmount"`
+	Status            int       `gorm:"column:Status"`
+	BeforeBalance     decimal.Decimal    `gorm:"column:BeforeBalance"`
+	Balance           decimal.Decimal    `gorm:"column:Balance"`
+	Sign              string    `gorm:"type:text";gorm:"column:Sign"`
+	RequestTime       string    `gorm:"type:varchar(50)";gorm:"column:RequestTime"`
+	OperatorCode      string    `gorm:"type:varchar(50)";gorm:"column:OperatorCode"`
+	OperatorID        int       `gorm:"column:OperatorID"`
+	ProductID         int64     `gorm:"column:ProductID"`
+	ProviderID        int       `gorm:"column:ProviderID"`
+	ProviderLineID    int       `gorm:"column:ProviderLineID"`
+	WagerID           int64     `gorm:"column:WagerID"`
+	GameType          int       `gorm:"column:GameType"`
+	GameID            string    `gorm:"type:varchar(255)";gorm:"column:GameID"`
+	GameRoundID       string    `gorm:"type:varchar(255)";gorm:"column:GameRoundID"`
+	ValidBetAmount    decimal.Decimal    `gorm:"column:ValidBetAmount"`
+	BetAmount         decimal.Decimal    `gorm:"column:BetAmount"`
+	PayoutAmount      decimal.Decimal    `gorm:"column:PayoutAmount"`
+	PayoutDetail      string    `gorm:"type:text";gorm:"column:PayoutDetail"`
+	CommissionAmount  decimal.Decimal    `gorm:"column:CommissionAmount"`
+	JackpotAmount     decimal.Decimal    `gorm:"column:JackpotAmount"`
+	SettlementDate    string `gorm:"column:SettlementDate"`
+	JPBet             decimal.Decimal       `gorm:"column:JPBet"`
+	AfterBalance      decimal.Decimal    `gorm:"column:AfterBalance"`
+	MessageID         string    `gorm:"type:varchar(255)";gorm:"column:MessageID"`
+	CreatedAt         string `gorm:"column:createdAt;NOT NULL"`
+	UpdatedAt         string `gorm:"column:updatedAt;NOT NULL"`
+	DeletedAt         string `gorm:"column:deletedAt"`
+	TransactionID     string    `gorm:"type:varchar(255)";gorm:"column:TransactionID"`
+	IsEndRound        int       `gorm:"column:IsEndRound"`
+	IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
+	IsFeature         int       `gorm:"column:IsFeature"`
+	IsAction          string    `gorm:"type:varchar(50)";gorm:"column:IsAction"`
+	GameProvide       string    `gorm:"type:varchar(255)";gorm:"column:GameProvide"`
+	GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
+	Prefix			  string    `gorm:"column:Prefix"`
+}

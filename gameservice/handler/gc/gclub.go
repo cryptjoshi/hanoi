@@ -350,7 +350,7 @@ func LaunchGame(c *fiber.Ctx) error {
 		return err
 	}
 
-	var users models.Users
+	//var users models.Users
 	updates := map[string]interface{}{
 		"g_token": response.Data.Token,
 		}

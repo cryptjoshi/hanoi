@@ -2,26 +2,60 @@ version: "3.3"
  
 services:
 
-  apigateway:
-    container_name: api_gateway
+  # apigateway:
+  #   container_name: api_gateway
+  #   build:
+  #     context: ./apigateway
+  #     dockerfile: dev.Dockerfile
+  #   ports:
+  #     - "4005:8050"
+  #   env_file: .env
+  #   # environment:
+  #   #   - VIRTUAL_HOST=stagging.tsxbet.com
+  #   #   - VIRTUAL_PORT=4007
+  #   volumes:
+  #     - ./apigateway/:/app
+  #   networks:
+  #       - proxy-net
+
+  whoami2:
+    image: traefik/whoami
+    networks:
+      - caddy
+    labels:
+      caddy: whoami2.paribrand.shop
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      caddy.tls: "internal"
+
+  frontend:
+    container_name: frontend
     build:
-      context: ./apigateway
-      dockerfile: dev.Dockerfile
-    ports:
-      - "4005:8050"
-    env_file: .env
-    # environment:
-    #   - VIRTUAL_HOST=stagging.tsxbet.com
-    #   - VIRTUAL_PORT=4007
+        context: ./frontend
+        dockerfile: ./Dockerfile
+        target: development
     volumes:
-      - ./apigateway/:/app
+        - ./frontend:/app
+        - /app/node_modules
+        #- /app/.next
+    expose:
+        - '4001'
+    ports:
+        - "4001:4001"
+    working_dir: /app
+    env_file: .env
+    # labels:
+    #   caddy: paribrand.shop
+    #   caddy.reverse_proxy: "{{upstreams 4001}}"
+    #   caddy.tls: "internal"
+    # environment:
+    #    - VIRTUAL_HOST=dashboard.tsxbet.com
+    #    - VIRTUAL_PORT=4001
+    #    - NEXT_PUBLIC_PREFIX=PKD
     networks:
         - proxy-net
 
-
-
   gameservice:
-    #image: king_game_service
+    #image: king_game_service                                                                                                                                        
     container_name: game_service
     build:
       context: ./gameservice
@@ -85,4 +119,6 @@ services:
 networks:
   proxy-net:
       name: app-net
+      external: true
+  caddy:
       external: true

@@ -65,8 +65,8 @@ func main() {
 	//rabbitmq.Init()
 	
 	 loadDatabase()
-	//  DropTable()
-	 //migrateNormal()
+     DropTable()
+	 migrateNormal()
 	//  migrateAdmin()
 
 	app.Use(logger.New())

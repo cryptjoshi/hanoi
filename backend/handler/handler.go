@@ -11,13 +11,17 @@ import (
 	"github.com/tdewolff/minify/v2/js"
 	"github.com/valyala/fasthttp"
 	_ "github.com/go-sql-driver/mysql"
-	"pkd/models"
+	"gorm.io/driver/mysql"
+	"hanoi/models"
+	"gorm.io/gorm"
+	"math/rand"
 	//"github.com/golang-jwt/jwt"
 	jtoken "github.com/golang-jwt/jwt/v4"
 	//"github.com/solrac97gr/basic-jwt-auth/config"
 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
-	"pkd/repository"
+	"hanoi/repository"
+	"hanoi/database"
 	"log"
 	"net"
 	"net/http"
@@ -26,6 +30,26 @@ import (
 	"time"
 	//"strings"
 )
+
+var Words = []string{
+	"apple", "banana", "cherry", "date", "elderberry",
+	"fig", "grape", "honeydew", "kiwi", "lemon",
+	"mango", "orange", "papaya", "quince", "raspberry",
+	"strawberry", "tangerine", "watermelon", "blueberry", "blackberry",
+	"apricot", "cranberry", "pineapple", "pomegranate", "grapefruit",
+	"avocado", "coconut", "guava", "lime", "passionfruit",
+	"lychee", "nectarine", "plum", "apricot", "kiwifruit",
+	"boysenberry", "cantaloupe", "rambutan", "starfruit", "persimmon",
+	"currant", "dragonfruit", "gooseberry", "papaya", "ugli fruit",
+	"quince", "ackee", "durian", "jackfruit", "kumquat",
+	"litchi", "mulberry", "olive", "rhubarb", "tamarind",
+	"tomato", "coconut", "cucumber", "eggplant", "zucchini",
+	"potato", "carrot", "onion", "garlic", "broccoli",
+	"cauliflower", "spinach", "kale", "lettuce", "cabbage",
+	"brussels sprouts", "artichoke", "asparagus", "celery", "green bean",
+	"peas", "corn", "radish", "beet", "turnip",
+	"rutabaga", "pars"}
+
 
 var ctx = context.Background()
 var amqp_connection *amqp.Connection
@@ -47,7 +71,9 @@ var rabbit_mq = "amqp://128.199.92.45:5672" //os.Getenv("RABBIT_MQ") @rabbitmq:5
 var connection_timeout = os.Getenv("CONNECTION_TIMEOUT")
 var redis_database = getEnv("REDIS_DATABASE", "0")
 var go_pixel_log = os.Getenv("GO_PIXEL_LOG")
-
+var mysql_host = os.Getenv("MYSQL_HOST")
+var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
 
@@ -304,91 +330,6 @@ func Signup(c *fiber.Ctx) error {
 	return c.SendString(message)
 }
 
-func Login(c *fiber.Ctx) error {
-	 
-
-
-
-	loginRequest := new(models.Users)
-
-	if err := c.BodyParser(loginRequest); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":err.Error(),
-		})
-	}
-	 
-	user,err := repository.FindUser(loginRequest.Preferredname,loginRequest.Password)
-	if err != nil {
-		response := Response{
-			Message: "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-			Status:  false,
-			Data:    fiber.Map{ 
-				"id": -1,
-			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-		}
-	
-		return c.JSON(response)
-	}
-
-	
-	//day := time.Hour * 24
-
-	claims := jtoken.MapClaims{
-		"ID": user.ID,
-		"Walletid": user.Walletid,
-		"Username": user.Username,
-		"Role": user.Role,
-		"PartnersKey": user.PartnersKey,
-		//"exp":   time.Now().Add(day * 1).Unix(),
-	}
-
-	token := jtoken.NewWithClaims(jtoken.SigningMethodHS256,claims)
-
-	t,err_ := token.SignedString([]byte(jwtSecret))
-	
-	
-	if err_ != nil {
-		response := Response{
-			Message: "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-			Status:  false,
-			Data:    fiber.Map{ 
-				"id": -1,
-			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-		}
-		return c.JSON(response)
-	}
-	updates := map[string]interface{}{
-		"Token": t,
-			}
-
-	// อัปเดตข้อมูลยูสเซอร์
-	_err := repository.UpdateFieldsUser(user.ID, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-	if _err != nil {
-		response := Response{
-			Message: "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-			Status:  false,
-			Data:    fiber.Map{ 
-				"id": -1,
-			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-		}
-		return c.JSON(response)
-	} else {
-		response := Response{
-			Message: "เข้าระบบสำเร็จ!",
-			Status:  true,
-			Data: models.LoginResponse{  
-				Token: t, 
-				},
-		}
-		return c.JSON(response)
-	}
-
-	
-	
-
-	
-
-}
 
 // Protected route
 func Protected(c *fiber.Ctx) error {
@@ -414,28 +355,29 @@ func Logout(c *fiber.Ctx) error {
 	username := claims["Username"].(string)
 	//favPhrase := claims["PartnersKey"].(string)
 	//id := claims["ID"]
-	 
+	prefix := username[:3] 
+	db, _ := database.ConnectToDB(prefix)
 	//if claims != nil {
 		updates := map[string]interface{}{
 			"Token": "",
 				}
 	
 		// อัปเดตข้อมูลยูสเซอร์
-		 repository.UpdateFieldsUserString(username, updates) 
+		 repository.UpdateFieldsUserString(db,username, updates) 
 
-		response := Response{
-			Message: "ออกจากระบบสำเร็จ!",
-			Status:  true,
-			Data: fiber.Map{ 
+		response := fiber.Map{
+			"Message": "ออกจากระบบสำเร็จ!",
+			"Status":  true,
+			"Data": fiber.Map{ 
 				"id": -1,
 			},
 		}
 		return c.JSON(response)
 	// } else {
-	// 	response := Response{
-	// 		Message: "มีข้อผิดพลาด กรุณาออกจากระบบอีกครั้ง!",
-	// 		Status:  false,
-	// 		Data: fiber.Map{ 
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาด กรุณาออกจากระบบอีกครั้ง!",
+	// 		"Status":  false,
+	// 		"Data": fiber.Map{ 
 	// 			"id": -1,
 	// 		},
 	// 	}
@@ -444,3 +386,228 @@ func Logout(c *fiber.Ctx) error {
 	 
 }
 
+func GenerateSeedPhrase(length int) string {
+	seedPhrase := ""
+	rand.Seed(time.Now().UnixNano())
+
+	for i:= 0; i < length; i++{
+		randomInt := rand.Intn(40)
+		seedPhrase = fmt.Sprintf("%s %s",seedPhrase,Words[randomInt])
+	}
+
+	return seedPhrase
+
+}
+
+
+func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
+	dbInterface := c.Locals("db")
+	if dbInterface == nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "No database connection found")
+	}
+
+	// แปลง interface{} ให้เป็น *gorm.DB
+	db, ok := dbInterface.(*gorm.DB)
+	if !ok {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Invalid database connection")
+	}
+
+	return db, nil
+}
+func handleError(err error) {
+	log.Fatal(err)
+}
+func migrateNormal(db *gorm.DB) {
+
+	if err := db.AutoMigrate(&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},&models.BankStatement{},&models.BuyInOut{}); err != nil {
+		handleError(err)
+	}
+	 
+	fmt.Println("Migrations Normal Tables executed successfully")
+}
+func migrateAdmin(db *gorm.DB) {
+ 
+	if err := db.AutoMigrate(&models.TsxAdmin{},&models.Provider{}); err != nil {
+		handleError(err)
+	}
+	fmt.Println("Migrations Admin Tables executed successfully")
+}
+
+
+
+
+// func RootLogin(c *fiber.Ctx) error {
+	 
+
+
+
+// 	loginRequest := new(models.Users)
+
+// 	if err := c.BodyParser(loginRequest); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"error":err.Error(),
+// 		})
+// 	}
+// 	db, _ := database.ConnectToDB(loginRequest.Prefix)
+
+// 	user,err := repository.FindUser(db,loginRequest.Preferredname,loginRequest.Password)
+// 	if err != nil {
+// 		response := fiber.Map{
+// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
+// 			"Status":  false,
+// 			"Data":    fiber.Map{ 
+// 				"id": -1,
+// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
+// 		}
+	
+// 		return c.JSON(response)
+// 	}
+
+	
+// 	//day := time.Hour * 24
+
+// 	claims := jtoken.MapClaims{
+// 		"ID": user.ID,
+// 		"Walletid": user.Walletid,
+// 		"Username": user.Username,
+// 		"Role": user.Role,
+// 		"PartnersKey": user.PartnersKey,
+// 		//"exp":   time.Now().Add(day * 1).Unix(),
+// 	}
+
+// 	token := jtoken.NewWithClaims(jtoken.SigningMethodHS256,claims)
+
+// 	t,err_ := token.SignedString([]byte(jwtSecret))
+	
+	
+// 	if err_ != nil {
+// 		response := fiber.Map{
+// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
+// 			"Status":  false,
+// 			"Data":    fiber.Map{ 
+// 				"id": -1,
+// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
+// 		}
+// 		return c.JSON(response)
+// 	}
+// 	updates := map[string]interface{}{
+// 		"Token": t,
+// 			}
+
+// 	// อัปเดตข้อมูลยูสเซอร์
+// 	_err := repository.UpdateFieldsUserString(db,user.Username, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+// 	if _err != nil {
+// 		response := fiber.Map{
+// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
+// 			"Status":  false,
+// 			"Data":    fiber.Map{ 
+// 				"id": -1,
+// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
+// 		}
+// 		return c.JSON(response)
+// 	} else {
+// 		response := fiber.Map{
+// 			"Message": "เข้าระบบสำเร็จ!",
+// 			"Status":  true,
+// 			"Data": fiber.Map{  
+// 				"Token": t, 
+// 				},
+// 		}
+// 		return c.JSON(response)
+// 	}
+// }
+
+
+// Function to connect and create a database with a specific prefix and name
+func CreateDatabase(c *fiber.Ctx)  (error) {
+     type Dbstruct struct {
+		DBName string `json:"dbname"`
+		Prefix string `json:"prefix"`
+	}
+
+	dbstruct := new(Dbstruct)
+
+	if err := c.BodyParser(dbstruct); err != nil {
+		return err
+		// c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		// 	"error":err.Error(),
+		// })
+	}
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+    
+
+    // Connect to MySQL without a specific database
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    if err != nil {
+        return err
+    }
+
+    // Create the database with the provided prefix and name
+    fullDBName := dbstruct.Prefix + "_" + dbstruct.DBName
+    createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", fullDBName)
+    if err := db.Exec(createDBQuery).Error; err != nil {
+        return err
+    }
+
+    // Switch to the new database
+    newDsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, fullDBName)
+    newDB, err := gorm.Open(mysql.Open(newDsn), &gorm.Config{})
+    if err != nil {
+        return err
+    }
+	migrateAdmin(newDB)
+	migrateNormal(newDB)
+
+    return nil
+}
+
+
+func RootLogin(c *fiber.Ctx) error {
+    
+	
+	loginRequest := new(models.Users)
+
+	if err := c.BodyParser(loginRequest); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":err.Error(),
+		})
+	}
+	
+	// เชื่อมต่อกับฐานข้อมูลระบบ 'mysql'
+    dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?charset=utf8mb4&parseTime=True&loc=Local", loginRequest.Username, loginRequest.Password, mysql_host)
+   // fmt.Println(dsn)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    if err != nil {
+		response := fiber.Map{
+			"Message": "เข้าสู่ระบบไม่สำเร็จ!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+	   //	return err
+       // return fmt.Errorf("Failed to connect to MySQL: %v", err)
+    }
+	c.Locals("db", db)
+   // fmt.Println("Login successful")
+
+	response := fiber.Map{
+		"Message": "เข้าสู่ระบบสำเร็จ!!",
+		"Status":  true,
+		}
+	return c.JSON(response)
+   
+}
+
+// ฟังก์ชันสำหรับสร้างฐานข้อมูลใหม่
+func CreateDB(db *gorm.DB, dbName string) error {
+    // ตรวจสอบว่าฐานข้อมูลที่ต้องการสร้างมีอยู่หรือยัง ถ้าไม่มีให้สร้าง
+    createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName)
+    
+    // รันคำสั่ง SQL เพื่อสร้างฐานข้อมูล
+    if err := db.Exec(createDBQuery).Error; err != nil {
+        return fmt.Errorf("Failed to create database: %v", err)
+    }
+
+    fmt.Printf("Database %s created successfully\n", dbName)
+    return nil
+}

@@ -10,11 +10,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { DatabaseEntry, columns } from "./colums"
-import { DataTableList } from "./data-table"
+ 
 import { GetDatabaseList } from "@/actions";
-import { ColumnDef } from "@tanstack/react-table";
-//import { DataTableDemo } from "@/components/agents/lists";
+ 
  
  
  
@@ -22,17 +20,39 @@ import { useParams } from 'next/navigation';
 
 // เพิ่ม import สำหรับ Client Component
 import AgentsList from './AgentsList';
+import { columns } from "./colums";
 
-interface DatabaseEntry {
-  Databases: string[];
+// ปรับ interface ให้ตรงกับข้อมูลที่ได้รับ
+interface DatabaseResponse {
+  Databases: {
+    [prefix: string]: string[];
+  };
   Status: boolean;
   Message: string;
 }
 
+interface DatabaseEntry {
+  name: string;
+  prefix: string;
+  type: string;
+}
+
+ 
+
 export default async function PostsPage({ params }: { params: { lng: string } }) {
   const { lng } = params;
-  const data:DatabaseEntry = await GetDatabaseList();
+  const data: DatabaseResponse = await GetDatabaseList();
+  
 
+  // แปลงข้อมูลจาก object เป็น DatabaseEntry[]
+  const flattenedData: DatabaseEntry[] = Object.entries(data.Databases).reduce((acc, [prefix, names]) => {
+    const entries = names.map(name => {
+      const [, type = 'other'] = name.split('_').reverse();
+      return { name, prefix, type };
+    });
+    return [...acc, ...entries];
+  }, [] as DatabaseEntry[]);
+ 
   return (
     <ContentLayout title="All Agents">
       <Breadcrumb>
@@ -54,7 +74,15 @@ export default async function PostsPage({ params }: { params: { lng: string } })
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <AgentsList lng={lng} data={data.Databases} columns={columns} />
+      <AgentsList lng={lng} data={flattenedData.reduce((acc, entry) => {
+        const existingGroup = acc.find(group => group.prefix === entry.prefix);
+        if (existingGroup) {
+          existingGroup.names.push(entry.name);
+        } else {
+          acc.push({ prefix: entry.prefix, names: [entry.name] });
+        }
+        return acc;
+      }, [] as { prefix: string; names: string[] }[])} columns={columns} />
     </ContentLayout>
   );
 }

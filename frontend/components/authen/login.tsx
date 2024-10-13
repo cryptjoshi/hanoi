@@ -96,7 +96,7 @@ export default function Login({lng}:{lng:string}) {
                 required
                 defaultValue="" {...register("password", { required: true })} 
               />
-            <button type="button" className=" px-3 py-2 mt-2 bg-gray-700 text-white rounded hover:bg-gray-600" onClick={() => setShowing(!showing)}>{showing ? <LucideEye className="w-3 h-4"/> : <LucideEyeOff className="w-3 h-4"/>}</button>
+           
             </div>
             </div>
             <div className="mt-6">

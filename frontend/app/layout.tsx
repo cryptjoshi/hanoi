@@ -38,22 +38,19 @@ export const metadata: Metadata = {
   
 };
 
- function RootLayout({
-  children, params: {
-    lng
-  }
+export default function RootLayout({
+  children,
+  params: { lng }
 }: Readonly<{
   children: React.ReactNode;
+  params: { lng: string };
 }>) {
   return (
-    <html  lang={lng} dir={dir(lng)}>
-      <body className={`${kanit.className} ${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-       {children} 
+    <html lang={lng} dir={dir(lng)}>
+      <body className={`${kanit.className} ${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
         <Toaster />
       </body>
     </html>
   );
 }
-
-export default RootLayout;

@@ -27,13 +27,13 @@ import {
     menus: Menu[];
   };
   
-  export function getMenuList(pathname: string): Group[] {
+  export function getMenuList(pathname: string, lng: string): Group[] {
     return [
       {
         groupLabel: "",
         menus: [
           {
-            href: "/dashboard",
+            href: `/${lng}/dashboard`,
             label: "Dashboard",
             icon: LayoutGrid,
             submenus: []
@@ -49,11 +49,11 @@ import {
             icon: SquarePen,
             submenus: [
               {
-                href: "/dashboard/agents",
+                href: `/${lng}/dashboard/agents`,
                 label: "All Agents"
               },
               {
-                href: "/dashboard/agents/new",
+                href: `/${lng}/dashboard/agents/new`,
                 label: "New Agent"
               }
             ]
@@ -74,7 +74,7 @@ import {
         groupLabel: "Settings",
         menus: [
           {
-            href: "/dashboard/users",
+            href:  `/${lng}/dashboard/users`,
             label: "Users",
             icon: Users
           },

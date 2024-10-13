@@ -4,16 +4,20 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons"
-import { ColumnDef } from "@tanstack/react-table"
-
+import { ColumnDef,FilterFn } from "@tanstack/react-table"
+ 
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type DatabaseEntry = {
   id: string
-  name: string
+  prefix: string
+  names: string[]
 }
-
+const customArrayFilter: FilterFn<DatabaseEntry> = (row, columnId, filterValue) => {
+  const names = row.getValue(columnId) as string[];
+  return names.some(name => name.toLowerCase().includes(filterValue.toLowerCase()));
+};
 export const columns: ColumnDef<DatabaseEntry>[] = [
     {
       id: "select",
@@ -38,26 +42,27 @@ export const columns: ColumnDef<DatabaseEntry>[] = [
       enableHiding: false,
     },
     {
-      accessorKey: "name",
-      header: "Database Name",
+      accessorKey: "prefix",
+      header: "Prefix",
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("name")}</div>
+        <div className="capitalize">{row.getValue("prefix")}</div>
       ),
     },
     {
-      accessorKey: "email",
+      accessorKey: "names",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Email
+            Names
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
         )
       },
-      cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+      cell: ({ row }) => <div className="lowercase">{(row.getValue("names") as string[]).join(", ")}</div>,
+      filterFn: customArrayFilter
     },
     {
       id: "actions",

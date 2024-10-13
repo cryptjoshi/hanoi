@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Ellipsis, LogOut } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { getMenuList } from "@/lib/menu-list";
@@ -24,12 +24,13 @@ interface MenuProps {
 
 export function Menu({ isOpen }: MenuProps) {
   const pathname = usePathname();
-  const menuList = getMenuList(pathname);
+  const lng = useParams().lng as string;
+  const menuList = getMenuList(pathname, lng);
   const {Logout} = useAuthStore()
 
   const handleLogout = () => {
     Logout();
-    location.replace('/'); 
+    location.replace(`/${lng}`); 
   };
 
   return (

@@ -36,47 +36,42 @@ import {
 import React from "react"
 import { ChevronDownIcon } from "lucide-react"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-}
+ 
+
 import { useState } from "react"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+ 
+export interface GroupedDatabase {
+  // Define the properties of GroupedDatabase here
+  id: string;
+  names: string;
+  prefix: string;
+  // Add other properties as needed
+}
+interface DataTableProps<TData> {
+  columns: ColumnDef<TData, any>[]
   data: TData[]
 }
 
-interface AgentData {
-  Message: string
-  Status: boolean
-  Databases: string[]
-}
-
-
-export type DatabaseEntry = {
-  id: string
-  name: string
-}
-//function DataTable<TData, TValue>({
-export function DataTableList({
+export function AgentListDataTable({
   columns,
   data,
-}: DataTableProps<DatabaseEntry, string>) {
+}: DataTableProps<GroupedDatabase>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const tableData: DatabaseEntry[] = Array.isArray(data)
-    ? data.map((entry) => ({
-        id: entry.id,
-        name: entry.name,
-      }))
-    : [];
-
+  // const tableData: DatabaseEntry[] = Array.isArray(data)
+  //   ? data.map((entry) => ({
+  //       id: entry.id,
+  //       names: entry.names,
+  //       prefix: entry.prefix,
+  //     }))
+  //   : [];
+ 
   const table = useReactTable({
-    data: tableData,
+    data: data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -92,6 +87,14 @@ export function DataTableList({
       columnVisibility,
       rowSelection,
     },
+    filterFns: {
+      customArrayFilter: (row, columnId, filterValue) => {
+        const names = row.getValue(columnId) as string[];
+        return names.some(name => 
+          name.toLowerCase().includes(filterValue.toLowerCase())
+        );
+      },
+    },
   })
 
   return (
@@ -99,9 +102,9 @@ export function DataTableList({
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter databases..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("names")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("names")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />

@@ -595,9 +595,12 @@ func GetDatabaseList(c *fiber.Ctx) error {
         }
         return c.JSON(response)
     }
-
+	type DatabaseInfo struct {
+        Prefix string   `json:"prefix"`
+        Names  []string `json:"names"`
+    }
     // Query to get all databases
-    var databases []string
+	groupedDatabases := make(map[string][]string)
     
     rows, err := db.Raw("SHOW DATABASES").Rows()
     if err != nil {
@@ -610,27 +613,44 @@ func GetDatabaseList(c *fiber.Ctx) error {
     defer rows.Close()
 
     systemDatabases := map[string]bool{
-        "information_schema": false,
-        "mysql":              false,
-        "performance_schema": false,
-        "sys":                false,
+        "information_schema": true,
+        "mysql":              true,
+        "performance_schema": true,
+        "sys":                true,
     }
-	fmt.Println(rows)
+	 
     for rows.Next() {
         var dbName string
         if err := rows.Scan(&dbName); err != nil {
             continue
         }
+		//fmt.Println(dbName)
+		//fmt.Println(systemDatabases[dbName])
         // Include databases with underscore in their names and exclude system databases
-        if strings.Contains(dbName, "_") && !systemDatabases[dbName] {
-            databases = append(databases, dbName)
+        // 
+		if strings.Contains(dbName, "_") && !systemDatabases[dbName] {
+            parts := strings.SplitN(dbName, "_", 2)
+            if len(parts) == 2 {
+                prefix := parts[0]
+                if _, exists := groupedDatabases[prefix]; !exists {
+                    groupedDatabases[prefix] = []string{}
+                }
+                groupedDatabases[prefix] = append(groupedDatabases[prefix], dbName)
+            }
         }
     }
-	
+	var databaseList []DatabaseInfo
+    for prefix, names := range groupedDatabases {
+        databaseList = append(databaseList, DatabaseInfo{
+            Prefix: prefix,
+            Names:  names,
+        })
+    }
+
     response := fiber.Map{
         "Message": "ดึงรายชื่อฐานข้อมูลสำเร็จ",
         "Status":  true,
-        "Databases": databases,
+        "Databases": groupedDatabases,
     }
     return c.JSON(response)
 }

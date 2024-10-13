@@ -10,37 +10,42 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { Payment, columns } from "@/app/[lng]/dashboard/agents/colums"
-import { DataTable, DataTableDemo } from "./data-table"
+import { DatabaseEntry, columns } from "./colums"
+import { DataTableList } from "./data-table"
+import { GetDatabaseList } from "@/actions";
+import { ColumnDef } from "@tanstack/react-table";
+//import { DataTableDemo } from "@/components/agents/lists";
  
-async function getData(): Promise<Payment[]> {
-  // Fetch data from your API here.
-  return [
-    {
-      id: "728ed52f",
-      amount: 100,
-      status: "pending",
-      email: "m@example.com",
-    },
-    // ...
-  ]
+ 
+ 
+import { useParams } from 'next/navigation';
+
+// เพิ่ม import สำหรับ Client Component
+import AgentsList from './AgentsList';
+
+interface DatabaseEntry {
+  Databases: string[];
+  Status: boolean;
+  Message: string;
 }
- 
-export default async function PostsPage() {
-  const data = await getData()
+
+export default async function PostsPage({ params }: { params: { lng: string } }) {
+  const { lng } = params;
+  const data:DatabaseEntry = await GetDatabaseList();
+
   return (
-    <ContentLayout title="All Agents" children={undefined}>
+    <ContentLayout title="All Agents">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Home</Link>
+              <Link href={`/${lng}`}>Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href={`/${lng}/dashboard`}>Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -49,7 +54,7 @@ export default async function PostsPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <DataTableDemo columns={columns} data={data} />
+      <AgentsList lng={lng} data={data.Databases} columns={columns} />
     </ContentLayout>
   );
 }

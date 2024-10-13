@@ -28,7 +28,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//"strings"
+	"strings"
 )
 
 var Words = []string{
@@ -523,15 +523,18 @@ func CreateDatabase(c *fiber.Ctx)  (error) {
      type Dbstruct struct {
 		DBName string `json:"dbname"`
 		Prefix string `json:"prefix"`
+		Username string `json:"username"`
+		Dbnames []string `json:"dbnames"`
 	}
 
 	dbstruct := new(Dbstruct)
 
 	if err := c.BodyParser(dbstruct); err != nil {
-		return err
-		// c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		// 	"error":err.Error(),
-		// })
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
 	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
@@ -540,28 +543,97 @@ func CreateDatabase(c *fiber.Ctx)  (error) {
     // Connect to MySQL without a specific database
     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
     if err != nil {
-        return err
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
     }
 
-    // Create the database with the provided prefix and name
-    fullDBName := dbstruct.Prefix + "_" + dbstruct.DBName
-    createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", fullDBName)
-    if err := db.Exec(createDBQuery).Error; err != nil {
-        return err
-    }
+	for _, dbname := range dbstruct.Dbnames {
+		// Create the database with the provided prefix and name
+		//fullDBName := dbstruct.Prefix + "_" + dbname
+		createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci", dbname)
+		if err := db.Exec(createDBQuery).Error; err != nil {
+        response := fiber.Map{
+			"Message": "สร้างฐานข้อมูลไม่สำเร็จ!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+    	}
+	
 
     // Switch to the new database
-    newDsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, fullDBName)
+    newDsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, dbname)
     newDB, err := gorm.Open(mysql.Open(newDsn), &gorm.Config{})
     if err != nil {
-        return err
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
     }
-	migrateAdmin(newDB)
-	migrateNormal(newDB)
+		migrateAdmin(newDB)
+		migrateNormal(newDB)
+	}
 
-    return nil
+	response := fiber.Map{
+		"Message": "สร้างฐานข้อมูลสำเร็จ!",
+		"Status":  true,
+		}
+	return c.JSON(response)
 }
+func GetDatabaseList(c *fiber.Ctx) error {
+    dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
 
+    // Connect to MySQL without a specific database
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    if err != nil {
+        response := fiber.Map{
+            "Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+            "Status":  false,
+        }
+        return c.JSON(response)
+    }
+
+    // Query to get all databases
+    var databases []string
+    
+    rows, err := db.Raw("SHOW DATABASES").Rows()
+    if err != nil {
+        response := fiber.Map{
+            "Message": "มีข้อผิดพลาดในการดึงรายชื่อฐานข้อมูล",
+            "Status":  false,
+        }
+        return c.JSON(response)
+    }
+    defer rows.Close()
+
+    systemDatabases := map[string]bool{
+        "information_schema": false,
+        "mysql":              false,
+        "performance_schema": false,
+        "sys":                false,
+    }
+	fmt.Println(rows)
+    for rows.Next() {
+        var dbName string
+        if err := rows.Scan(&dbName); err != nil {
+            continue
+        }
+        // Include databases with underscore in their names and exclude system databases
+        if strings.Contains(dbName, "_") && !systemDatabases[dbName] {
+            databases = append(databases, dbName)
+        }
+    }
+	
+    response := fiber.Map{
+        "Message": "ดึงรายชื่อฐานข้อมูลสำเร็จ",
+        "Status":  true,
+        "Databases": databases,
+    }
+    return c.JSON(response)
+}
 
 func RootLogin(c *fiber.Ctx) error {
     

@@ -16,7 +16,8 @@ import SettingsProfilePage from "@/components/agents/new/page";
 import SettingsLayout from "@/components/agents/new/layout";
  
 
-export default function NewPostPage() {
+export default function NewPostPage({ params }: { params: { lng: string } }) {
+  const { lng } = params;
   return (
     <ContentLayout title="New Agent" >
       <Breadcrumb>
@@ -46,7 +47,9 @@ export default function NewPostPage() {
       </Breadcrumb>
      <PlaceholderContent>
       {/* <SettingsLayout>  */}
-        <SettingsProfilePage />
+        <SettingsProfilePage params={{
+          lng: lng
+        }} />
       {/* </SettingsLayout> */}
      </PlaceholderContent>
     </ContentLayout>

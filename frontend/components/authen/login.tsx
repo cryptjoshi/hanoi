@@ -14,11 +14,11 @@ import { LucideEyeOff,LucideEye } from "lucide-react";
 import { useTranslation } from '@/app/i18n/client'
  
   
-export default function Login({lng}) {
+export default function Login({lng}:{lng:string}) {
   const router = useRouter();
   const { Signin, isLoggedIn } = useAuthStore();
   const [showing,setShowing] = React.useState(false)
-  const { t } = useTranslation(lng, 'login')
+  const { t } = useTranslation(lng, 'login', undefined  )
   const {toast} = useToast()
   const {
     register,

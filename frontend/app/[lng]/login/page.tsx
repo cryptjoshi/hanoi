@@ -1,18 +1,20 @@
-import Login from "@/components/authen/login"
-// import { fallbackLng, languages } from '@/app/i18n/settings';
-// import { useTranslation } from '@/app/i18n';
+'use client';
 
-// export async function generateStaticParams() {
-//   return languages.map((lng) => ({ lng }));
-// }
-// export async function generateStaticParams() {
-//    return languages.map((lng) => ({ lng }));
-//  }
- 
-export default async function LoginPage({ params }: { params: { lng: string } }) {
- // const { t } = await useTranslation(params.lng,'login');
- return (
-    <Login lng={params.lng} />
- )
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/app/i18n/client';
+import Login from "@/components/authen/login";
+
+export default function LoginPage({ params }: { params: { lng: string } }) {
+  const router = useRouter();
+  const { i18n } = useTranslation(params.lng, 'login', undefined);
+
+  useEffect(() => {
+   console.log(i18n.language);
+    if (i18n.language !== params.lng) {
+      i18n.changeLanguage(params.lng);
+    }
+  }, [i18n, params.lng]);
+
+  return <Login lng={params.lng} />;
 }
- 

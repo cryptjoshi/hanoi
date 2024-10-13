@@ -6,16 +6,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons"
 import { ColumnDef } from "@tanstack/react-table"
 
+
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type Payment = {
+export type DatabaseEntry = {
   id: string
-  amount: number
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
+  name: string
 }
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<DatabaseEntry>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -39,10 +38,10 @@ export const columns: ColumnDef<Payment>[] = [
       enableHiding: false,
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "name",
+      header: "Database Name",
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("status")}</div>
+        <div className="capitalize">{row.getValue("name")}</div>
       ),
     },
     {
@@ -61,25 +60,10 @@ export const columns: ColumnDef<Payment>[] = [
       cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
     },
     {
-      accessorKey: "amount",
-      header: () => <div className="text-right">Amount</div>,
-      cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("amount"))
-  
-        // Format the amount as a dollar amount
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(amount)
-  
-        return <div className="text-right font-medium">{formatted}</div>
-      },
-    },
-    {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const payment = row.original
+        const database = row.original
   
         return (
           <DropdownMenu>
@@ -92,13 +76,13 @@ export const columns: ColumnDef<Payment>[] = [
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(payment.id)}
+                onClick={() => navigator.clipboard.writeText(database.id)}
               >
-                Copy payment ID
+                Copy database ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>View customer</DropdownMenuItem>
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
+              <DropdownMenuItem>View database</DropdownMenuItem>
+              <DropdownMenuItem>Delete database</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -107,17 +91,4 @@ export const columns: ColumnDef<Payment>[] = [
   ]
   
 
-// const columns: ColumnDef<Payment>[] = [
-//   {
-//     accessorKey: "status",
-//     header: "Status",
-//   },
-//   {
-//     accessorKey: "email",
-//     header: "Email",
-//   },
-//   {
-//     accessorKey: "amount",
-//     header: "Amount",
-//   },
-// ]
+ 

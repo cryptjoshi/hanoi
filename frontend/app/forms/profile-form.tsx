@@ -2,9 +2,8 @@
 
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useFieldArray, useForm } from "react-hook-form"
+import { useFieldArray, useForm,SubmitHandler } from "react-hook-form"
 import { z } from "zod"
-
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -26,6 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { CreateUser } from "@/actions"
+import { useState, useEffect, useMemo } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useRouter } from 'next/navigation'
 
 const profileFormSchema = z.object({
   username: z
@@ -44,6 +47,9 @@ const profileFormSchema = z.object({
     .max(5, {
       message: "ต้องไม่เกิน 5 ตัวอักษร.",
     }),
+  dbname: z.string().min(3, {
+    message: "ต้องไม่น้อยกว่า 3 ตัวอักษร.",
+  }),
   // email: z
   //   .string({
   //     required_error: "Please select an email to display.",
@@ -70,29 +76,83 @@ const defaultValues: Partial<ProfileFormValues> = {
   ],
 }
 
+interface ModeSelection {
+  development: boolean;
+  production: boolean;
+}
+
 export function ProfileForm() {
+  const [isDbNameSameAsPrefix, setIsDbNameSameAsPrefix] = useState(true)
+  const [modeSelection, setModeSelection] = useState<ModeSelection>({
+    development: true,
+    production: false
+  })
+  const router = useRouter();
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
     mode: "onChange",
   })
 
-  const { fields, append } = useFieldArray({
-    name: "urls",
-    control: form.control,
-  })
+  const prefixValue = form.watch("prefix")
+  const customDbName = form.watch("customDbName")
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
+  const generateDbNames = useMemo(() => {
+    const names: string[] = [];
+    if (modeSelection.development) {
+      names.push(isDbNameSameAsPrefix ? `${prefixValue}_development` : `${prefixValue}_${customDbName || prefixValue}_development`);
+    }
+    if (modeSelection.production) {
+      names.push(isDbNameSameAsPrefix ? `${prefixValue}_production` : `${prefixValue}_${customDbName || prefixValue}_production`);
+    }
+    return names.join(', ');
+  }, [isDbNameSameAsPrefix, modeSelection, prefixValue, customDbName]);
+
+  useEffect(() => {
+    form.setValue("dbname", generateDbNames, { shouldValidate: true });
+  }, [generateDbNames, form]);
+
+  const handleCheckboxChange = (checked: boolean) => {
+    if (checked && prefixValue.length < 3) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "ชื่อย่อต้องมีความยาวอย่างน้อย 3 ตัวอักษรเพื่อใช้เป็นชื่อฐานข้อมูล",
+        variant: "destructive",
+      })
+      return;
+    }
+    setIsDbNameSameAsPrefix(checked);
   }
 
+  const onSubmit: SubmitHandler<ProfileFormValues> = async (data: ProfileFormValues) => {
+    // สร้าง array ของชื่อฐานข้อมูลจาก dbname
+    const dbNamesArray = data.dbname.split(', ');
+    
+    const submitData = {
+      ...data,
+      dbnames: dbNamesArray,
+    };
+
+    try {
+      const response = await CreateUser(submitData);
+      toast({
+        title: "สร้างยูสเซอร์สำเร็จ",
+        description: (
+          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+            <code className="text-white">{JSON.stringify(response, null, 2)}</code>
+          </pre>
+        ),
+      });
+      router.push("/dashboard/agents");
+    } catch (error) {
+      toast({
+        title: "การสร้างยูสเซอร์ลบล้มเหลว",
+        description: "กรุณาตรวจสอบข้อมูลอีกครั้ง",
+        variant: "destructive",
+      });
+    }
+  }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -123,6 +183,113 @@ export function ProfileForm() {
               </FormControl>
               <FormDescription>
                ชื่อย่อ เพื่อกำหนดในฐานข้อมูล 
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="samePrefix"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={isDbNameSameAsPrefix}
+                  onCheckedChange={handleCheckboxChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  ใช้ชื่อย่อเป็นชื่อฐานข้อมูล
+                </FormLabel>
+                <FormDescription>
+                  เมื่อเลือกตัวเลือกนี้ ชื่อฐานข้อมูลจะใช้เฉพาะชื่อย่อ (ชื่อย่อต้องมีความยาวอย่างน้อย 5 ตัวอักษร)
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+        <div className="space-y-2">
+          <FormLabel>โหมดการสร้างฐานข้อมูล</FormLabel>
+          <div className="flex space-x-4">
+            <FormField
+              control={form.control}
+              name="developmentMode"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={modeSelection.development}
+                      onCheckedChange={(checked) => {
+                        setModeSelection(prev => ({ ...prev, development: checked as boolean }));
+                      }}
+                    />
+                  </FormControl>
+                  <FormLabel>Development</FormLabel>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="productionMode"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={modeSelection.production}
+                      onCheckedChange={(checked) => {
+                        setModeSelection(prev => ({ ...prev, production: checked as boolean }));
+                      }}
+                    />
+                  </FormControl>
+                  <FormLabel>Production</FormLabel>
+                </FormItem>
+              )}
+            />
+          </div>
+          <FormDescription>
+            เลือกโหมดที่ต้องการสร้างฐานข้อมูล (สามารถเลือกได้ทั้งสองโหมด)
+          </FormDescription>
+        </div>
+
+        {!isDbNameSameAsPrefix && (
+          <FormField
+            control={form.control}
+            name="customDbName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{"ชื่อฐานข้อมูลเพิ่มเติม"}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="ระบุชื่อฐานข้อมูลเพิ่มเติม (ถ้ามี)"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  ระบุชื่อฐานข้อมูลเพิ่มเติมหากไม่ต้องการใช้ชื่อย่อ
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        <FormField
+          control={form.control}
+          name="dbname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{"ชื่อฐานข้อมูลที่จะถูกสร้าง"}</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  disabled={true}
+                  readOnly={true}
+                />
+              </FormControl>
+              <FormDescription>
+                ชื่อฐานข้อมูลที่จะถูกสร้างตามการตั้งค่าของคุณ
               </FormDescription>
               <FormMessage />
             </FormItem>

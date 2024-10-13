@@ -68,11 +68,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${lng}${request.nextUrl.pathname}`, request.url))
   }
 
-  console.log("lng:",lng)
-  // if (!languages.includes(lng)) {
-  //   // ถ้า locale ไม่ถูกต้อง ให้ตั้งเป็นค่า fallback
-  //   lng = fallbackLng;
-  // }
+  
+  if (!languages.includes(lng)) {
+    // ถ้า locale ไม่ถูกต้อง ให้ตั้งเป็นค่า fallback
+    lng = fallbackLng;
+  }
 
   // ตรวจสอบการล็อกอิน
   if (!isLoggedIn && !url.pathname.startsWith(`/${lng}/login`)) {

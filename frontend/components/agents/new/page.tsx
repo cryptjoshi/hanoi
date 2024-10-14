@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator"
-import { ProfileForm } from "@/app/forms/profile-form"
+import { ProfileRegister } from "@/components/agents/new/profile-register"
 
-export default function SettingsProfilePage({ params: { lng } }: { params: { lng: string } }) {
+export default function SettingsProfilePage({ params: { lng,id } }: { params: { lng: string,id: string } }) {
   return (
     <div className="space-y-6">
       <div>
@@ -11,7 +11,7 @@ export default function SettingsProfilePage({ params: { lng } }: { params: { lng
         </p>
       </div>
       <Separator />
-      <ProfileForm lng={lng} />
+      <ProfileRegister lng={lng} id={id} />
     </div>
   )
 }

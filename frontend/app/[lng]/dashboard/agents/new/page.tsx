@@ -11,7 +11,7 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { AccountForm } from "@/app/forms/account/account-form";
-import { ProfileForm } from "@/app/forms/profile-form";
+import { ProfileForm } from "@/components/agents/new/profile-register";
 import SettingsProfilePage from "@/components/agents/new/page";
 import SettingsLayout from "@/components/agents/new/layout";
  
@@ -24,19 +24,19 @@ export default function NewPostPage({ params }: { params: { lng: string } }) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Home</Link>
+              <Link href={`/${lng}/`}>Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href={`/${lng}/dashboard`}>Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/agens">Agents</Link>
+              <Link href={`/${lng}/dashboard/agents`}>Agents</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

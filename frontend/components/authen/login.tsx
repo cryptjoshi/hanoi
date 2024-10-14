@@ -36,7 +36,7 @@ export default function Login({lng}:{lng:string}) {
      
      if (response) {
   
-        router.push('/dashboard');
+        router.push(`/${lng}/dashboard`);
     } else {
   
       toast({
@@ -52,12 +52,12 @@ export default function Login({lng}:{lng:string}) {
   }
 
   const redirect = ()=>{
-    location.replace("/register")
+    location.replace(`/${lng}/register`)
 }
 
   React.useEffect(() => {
   if (isLoggedIn) {
-      router.push('/dashboard');  
+      router.push(`/${lng}/dashboard`);  
   }
 }, [isLoggedIn, router]);
 

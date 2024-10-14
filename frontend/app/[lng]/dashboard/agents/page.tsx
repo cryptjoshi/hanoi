@@ -20,7 +20,8 @@ import { useParams } from 'next/navigation';
 
 // เพิ่ม import สำหรับ Client Component
 import AgentsList from './AgentsList';
-import { columns } from "./colums";
+import { columns } from "./columns";
+import { useTranslation } from "@/app/i18n";
 
 // ปรับ interface ให้ตรงกับข้อมูลที่ได้รับ
 interface DatabaseResponse {
@@ -42,6 +43,7 @@ interface DatabaseEntry {
 export default async function PostsPage({ params }: { params: { lng: string } }) {
   const { lng } = params;
   const data: DatabaseResponse = await GetDatabaseList();
+  const { t } = await useTranslation(lng, "agents")
   
 
   // แปลงข้อมูลจาก object เป็น DatabaseEntry[]

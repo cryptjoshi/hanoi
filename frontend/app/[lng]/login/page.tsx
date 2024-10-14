@@ -10,7 +10,7 @@ export default function LoginPage({ params }: { params: { lng: string } }) {
   const { i18n } = useTranslation(params.lng, 'login', undefined);
 
   useEffect(() => {
-   console.log(i18n.language);
+ 
     if (i18n.language !== params.lng) {
       i18n.changeLanguage(params.lng);
     }

@@ -81,7 +81,7 @@ interface ModeSelection {
   production: boolean;
 }
 
-export function ProfileForm() {
+export function ProfileEdit() {
   const [isDbNameSameAsPrefix, setIsDbNameSameAsPrefix] = useState(true)
   const [modeSelection, setModeSelection] = useState<ModeSelection>({
     development: true,

@@ -61,14 +61,6 @@ export function AgentListDataTable({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-
-  // const tableData: DatabaseEntry[] = Array.isArray(data)
-  //   ? data.map((entry) => ({
-  //       id: entry.id,
-  //       names: entry.names,
-  //       prefix: entry.prefix,
-  //     }))
-  //   : [];
  
   const table = useReactTable({
     data: data,

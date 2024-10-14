@@ -78,7 +78,52 @@ export const GetDatabaseListByPrefix = async (prefix:string) =>{
   return response.json()
 }
 
+export const AddPromotion = async (body:any) =>{
  
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/create", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    })
+    return response.json()
+  }
+
+  export const UpdatePromotion = async (body:any) =>{
+ 
+    const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
+      headers: {   
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+  })
+  return response.json()
+}
+export const GetPromotionById = async (id:any) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/get", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"id":id})
+})
+return response.json()
+}
+export const GetPromotion = async () =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion", { method: 'GET',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+    //  body: JSON.stringify({"id":id})
+})
+return response.json()
+}
+
 export async function navigate(path:string) {
   redirect(path)
 }

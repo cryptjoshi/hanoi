@@ -516,17 +516,17 @@ func migrateAdmin(db *gorm.DB) {
 // 		return c.JSON(response)
 // 	}
 // }
+type Dbstruct struct {
+	DBName string `json:"dbname"`
+	Prefix string `json:"prefix"`
+	Username string `json:"username"`
+	Dbnames []string `json:"dbnames"`
+}
 
 
 // Function to connect and create a database with a specific prefix and name
 func CreateDatabase(c *fiber.Ctx)  (error) {
-     type Dbstruct struct {
-		DBName string `json:"dbname"`
-		Prefix string `json:"prefix"`
-		Username string `json:"username"`
-		Dbnames []string `json:"dbnames"`
-	}
-
+    
 	dbstruct := new(Dbstruct)
 
 	if err := c.BodyParser(dbstruct); err != nil {
@@ -654,7 +654,65 @@ func GetDatabaseList(c *fiber.Ctx) error {
     }
     return c.JSON(response)
 }
+func GetDatabaseByPrefix(c *fiber.Ctx) error {
+    loginRequest := new(Dbstruct)
 
+    if err := c.BodyParser(loginRequest); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+
+    dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    if err != nil {
+        response := fiber.Map{
+            "Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+            "Status":  false,
+        }
+        return c.JSON(response)
+    }
+
+    rows, err := db.Raw("SHOW DATABASES").Rows()
+    if err != nil {
+        response := fiber.Map{
+            "Message": "มีข้อผิดพลาดในการดึงรายชื่อฐานข้อมูล",
+            "Status":  false,
+        }
+        return c.JSON(response)
+    }
+    defer rows.Close()
+
+    systemDatabases := map[string]bool{
+        "information_schema": true,
+        "mysql":              true,
+        "performance_schema": true,
+        "sys":                true,
+    }
+
+    var databaseNames []string
+    for rows.Next() {
+        var dbName string
+        if err := rows.Scan(&dbName); err != nil {
+            continue
+        }
+        
+        if strings.HasPrefix(dbName, loginRequest.Prefix+"_") && !systemDatabases[dbName] {
+            databaseNames = append(databaseNames, dbName)
+        }
+    }
+	
+    response := fiber.Map{
+        "Message": "ดึงรายชื่อฐานข้อมูลสำเร็จ",
+        "Status":  true,
+        "Databases": databaseNames,
+		// map[string][]string{
+        //     loginRequest.Prefix: databaseNames,
+        // },
+    }
+    return c.JSON(response)
+}
 func RootLogin(c *fiber.Ctx) error {
     
 	

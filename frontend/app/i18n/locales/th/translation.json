@@ -3,7 +3,11 @@
     "description": "นี่คือตัวอย่างการแปลภาษาใน Next.js",
     "agents": {
         "title": "สมาชิก",
-        "description":"รายละเอียดสมาชิก"
+        "description":"รายละเอียดสมาชิก",
+        "settings": {
+            "title": "Settings",
+            "description": "จัดการการตั้งค่าบัญชีของคุณและตั้งค่าการตั้งค่าอีเมล"
+        }
     }
    
 

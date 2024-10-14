@@ -76,6 +76,7 @@ export default async function PostsPage({ params }: { params: { lng: string } })
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <PlaceholderContent>
       <AgentsList lng={lng} data={flattenedData.reduce((acc, entry) => {
         const existingGroup = acc.find(group => group.prefix === entry.prefix);
         if (existingGroup) {
@@ -85,6 +86,7 @@ export default async function PostsPage({ params }: { params: { lng: string } })
         }
         return acc;
       }, [] as { prefix: string; names: string[] }[])} columns={columns} />
+      </PlaceholderContent>
     </ContentLayout>
   );
 }

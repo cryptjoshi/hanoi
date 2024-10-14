@@ -14,6 +14,8 @@ export interface AuthStore {
     setRefreshToken: (refreshToken: string | null) => void;
     init: () => void;
     clearTokens: () => void;
+    lng: string;
+    setLng: (lng: string) => void;
 }
 
 export type User = {
@@ -23,9 +25,18 @@ export type User = {
 
 const endpoint =   "http://152.42.185.164:4006/api/v1/db/login"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
 
+// เพิ่มฟังก์ชันสำหรับอ่านค่า cookie
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null; // ตรวจสอบว่าอยู่ใน browser environment
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
 const useAuthStore = create<AuthStore>()(
   persist(
-    (set,get) => ({
+    (set, get) => ({
       isLoggedIn: false,
       accessToken: null,
       accessTokenData: null,
@@ -83,17 +94,15 @@ const useAuthStore = create<AuthStore>()(
       },
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       init: () => {
-
-        
-       const { setAccessToken, setRefreshToken,setIsLoggedIn } = get();
-        const isloggedIn = localStorage.getItem('isLoggedIn')=='true';
-        const accessToken = localStorage.getItem('accessToken'); // ปรับใช้ getItem แทน get
+        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng } = get();
+        const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';
+        const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
-        // console.log(accessToken)
-        // console.log(refreshToken)
-        setIsLoggedIn(isloggedIn)
+        const lng = getCookie('lng') || 'en'; // Get language from cookie or use default
+        setIsLoggedIn(isloggedIn);
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
+        setLng(lng);
       },
       clearTokens: () => {
         set({
@@ -101,6 +110,11 @@ const useAuthStore = create<AuthStore>()(
           accessTokenData: null,
           refreshToken: null,
         });
+      },
+      lng: 'en', // Default language
+      setLng: (lng: string) => {
+        set({ lng });
+        document.cookie = `lng=${lng}; path=/`;
       },
     }),
     {

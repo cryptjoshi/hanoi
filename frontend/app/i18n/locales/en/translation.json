@@ -3,9 +3,11 @@
     "description": "This is an example of i18n in Next.js",
     "agents": {
         "title": "Agent",
-        "description":"Agent detail"
+        "description":"Agent detail",
+        "settings": {
+            "title": "Settings",
+            "description": "Manage your account settings and set e-mail preferences."
+        }
     }
-   
-
-  }
+}
   

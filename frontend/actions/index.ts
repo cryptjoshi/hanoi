@@ -54,8 +54,29 @@ const response = await fetch("http://152.42.185.164:4006/api/v1/db/create", { me
   return response.json()
 }
 
-
+export const UpdateDatabaseListByPrefix = async (body:Dbstruct) =>{
  
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/update", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"dbname":body.dbname,"prefix":body.prefix,"username":body.username,"dbnames":body.dbnames})
+    })
+    return response.json()
+  }
+  
+export const GetDatabaseListByPrefix = async (prefix:string) =>{
+  console.log(prefix)
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/prefix", { method: 'POST',
+  headers: {   
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    },
+   body: JSON.stringify({"prefix":prefix})
+  })
+  return response.json()
+}
 
  
 export async function navigate(path:string) {

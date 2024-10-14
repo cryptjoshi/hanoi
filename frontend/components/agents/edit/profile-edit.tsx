@@ -24,11 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useTranslation } from "@/app/i18n/client"
 import { Textarea } from "@/components/ui/textarea"
-import { CreateUser } from "@/actions"
+import { CreateUser, GetDatabaseListByPrefix, UpdateDatabaseListByPrefix } from "@/actions"
 import { useState, useEffect, useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from 'next/navigation'
+//import { useQuery } from '@tanstack/react-query'
+
+ 
 
 const profileFormSchema = z.object({
   username: z
@@ -81,19 +85,73 @@ interface ModeSelection {
   production: boolean;
 }
 
-export function ProfileEdit() {
+interface ProfileEditProps {
+  lng: string;
+  id: string;
+}
+
+export function ProfileEdit({ lng, id }: ProfileEditProps) {
+  
+  //const { lng, setLng } = useAuthStore()
+ 
+  const {t} = useTranslation(lng,'translation',undefined)
+  
   const [isDbNameSameAsPrefix, setIsDbNameSameAsPrefix] = useState(true)
   const [modeSelection, setModeSelection] = useState<ModeSelection>({
     development: true,
     production: false
   })
+
   const router = useRouter();
+
+  // const { data: userData, isLoading, error } = useQuery({
+  //   queryKey: ["prefix", id],
+  //   queryFn: async () => {
+  //     const response = await GetDatabaseListByPrefix(id);
+  //     return response.data;
+  //   }
+  // });
+ 
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
     mode: "onChange",
   })
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await GetDatabaseListByPrefix(id);
+     
+      if (response.Status) {
+        // Response: {Databases: ["ckd_dev","ckd_prod"], Message: "ดึงรายชื่อฐานข้อมูลสำเร็จ", Status: true}
+        const databases = response.Databases || [];
+        
+        if (databases.length > 0) {
+          const [prefix, ...rest] = databases[0].split('_');
+          
+          form.reset({
+            username: id, // Assuming id is the username
+            prefix: prefix,
+            dbname: databases.join(', '),
+          });
+
+          // Check if all database names are the same as prefix + mode
+          const isDbNameSameAsPrefix = databases.every(db => 
+            db === `${prefix}_dev` || db === `${prefix}_prod`
+          );
+          setIsDbNameSameAsPrefix(isDbNameSameAsPrefix);
+
+          // Set mode selection based on database names
+          setModeSelection({
+            development: databases.some(db => db.endsWith('_dev')),
+            production: databases.some(db => db.endsWith('_prod')),
+          });
+        }
+      }
+    }
+    fetchData();
+  }, [id, form]);
 
   const prefixValue = form.watch("prefix")
   const customDbName = form.watch("customDbName")
@@ -135,24 +193,28 @@ export function ProfileEdit() {
     };
 
     try {
-      const response = await CreateUser(submitData);
+      const response = await UpdateDatabaseListByPrefix(submitData);  
       toast({
-        title: "สร้างยูสเซอร์สำเร็จ",
+        title: "อัพเดทข้อมูลสำเร็จ",
         description: (
           <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-            <code className="text-white">{JSON.stringify(response, null, 2)}</code>
+            <code className="text-white">{JSON.stringify(response.data, null, 2)}</code>
           </pre>
         ),
       });
-      router.push("/dashboard/agents");
+      router.push(`/${lng}/dashboard/agents`);
     } catch (error) {
       toast({
-        title: "การสร้างยูสเซอร์ลบล้มเหลว",
+        title: "การอัพเดทข้อมูลล้มเหลว",
         description: "กรุณาตรวจสอบข้อมูลอีกครั้ง",
         variant: "destructive",
       });
     }
   }
+
+  // if (isLoading) return <div>กำลังโหลด...</div>;
+  // if (error) return <div>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -280,7 +342,7 @@ export function ProfileEdit() {
           name="dbname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{"ชื่อฐานข้อมูลที่จะถูกสร้าง"}</FormLabel>
+              <FormLabel>{"ชื่อฐานข้อมูลที่มีอยู่"}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -289,7 +351,7 @@ export function ProfileEdit() {
                 />
               </FormControl>
               <FormDescription>
-                ชื่อฐานข้อมูลที่จะถูกสร้างตามการตั้งค่าของคุณ
+                ชื่อฐานข้อมูลที่มีอยู่ในระบบ
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -374,7 +436,7 @@ export function ProfileEdit() {
             Add URL
           </Button>
         </div> */}
-        <Button type="submit">{"สร้างยูสเซอร์"}</Button>
+        <Button type="submit">{t("agents.settings.edit.submit")}</Button>
       </form>
     </Form>
   )

@@ -15,7 +15,9 @@ export default function EditAgentSettings({ params: { lng,id } }: { params: { ln
   <TabsContent value="account">
   <ProfileEdit lng={lng} id={id} />
   </TabsContent>
-  <TabsContent value="password"><PromotionList prefix={id} lng={lng} /></TabsContent>
+  <TabsContent value="password">
+    <PromotionList prefix={id} lng={lng} />
+  </TabsContent>
 </Tabs>
 
         

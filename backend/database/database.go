@@ -34,8 +34,25 @@ var (
 	mutex         sync.Mutex
 )
 
-const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+const baseDSN = "web:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+//const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
+    migrator := db.Migrator()
+    tableName := db.Model(model).Statement.Table
 
+    if !migrator.HasTable(tableName) {
+        fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
+        if err := migrator.CreateTable(model); err != nil {
+            return fmt.Errorf("failed to create table '%s': %v", tableName, err)
+			//fmt.Printf("Table '%s' already exists\n", tableName)
+        }
+        fmt.Printf("Table '%s' created successfully\n", tableName)
+    } else {
+        fmt.Printf("Table '%s' already exists\n", tableName)
+    }
+
+    return nil
+}
 // Connect function to establish a database connection based on the prefix
 func ConnectToDB(prefix string) (*gorm.DB, error) {
 	mutex.Lock()
@@ -50,17 +67,18 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
 	env := os.Getenv("ENVIRONMENT") // Read the environment variable
 	var dbName string
-	suffix := "dev" // Default to dev
+	suffix := "development" // Default to dev
 
 	if env == "production" {
-		suffix = "prod"
+		suffix = "production"
 	}
-
+	
 	// Determine the database name based on the prefix
 	if contains(prefixes, prefix) {
 		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
 	} else {
-		return nil, fmt.Errorf("unknown prefix: %s", prefix)
+		//return nil, fmt.Errorf("unknown prefix: %s", prefix)
+		dbName = fmt.Sprintf("%s", prefix)
 	}
 
 	// Create the DSN for the selected database

@@ -25,6 +25,15 @@ type Promotion struct {
 	// Bankid        string `gorm:"size:255;not null;" json:"bankid"`
 	// Bankname      string `gorm:"size:255;not null;" json:"bankname"`
 	DeletedAt     string `gorm:"size:255;not null;" json:"deletedAt"`
+	Name string `gorm:"size:255;not null;" json:"name"`
+	PercentDiscount decimal.Decimal `gorm:"type:numeric" json:"percentDiscount"`
+	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"maxDiscount"`
+	UsageLimit string `gorm:"size:255;not null;" json:"usageLimit"`
+	SpecificTime string `gorm:"size:255;not null;" json:"specificTime"`
+	PaymentMethod string `gorm:"size:255;not null;" json:"paymentMethod"`
+	MinSpend decimal.Decimal `gorm:"type:numeric" json:"minSpend"`
+	MaxSpend decimal.Decimal `gorm:"type:numeric" json:"maxSpend"`
+	TermsAndConditions string `gorm:"size:255;not null;" json:"termsAndConditions"`
 	// Deviceid      string `gorm:"type:text"json:"deviceid"`
 	// ID            uint  `json:"id"`
 	// Level         int  `json:"level"`

@@ -48,12 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import EditPromotionPanel from './EditPromotionPanel'
-
-
-
-
-
- 
+import { GetPromotion } from '@/actions'
 
 interface Promotion {
   id: string
@@ -70,7 +65,7 @@ interface Promotion {
 export interface GroupedDatabase {
   // Define the properties of GroupedDatabase here
   id: string;
-  names: string;
+  name: string;
   prefix: string;
   // Add other properties as needed
 }
@@ -79,43 +74,58 @@ interface DataTableProps<TData> {
   data: TData[]
 }
 
-
 export default function PromotionListDataTable({
- 
+  prefix,
   data,
-}: DataTableProps<GroupedDatabase>) {
+}: {prefix:string, data:DataTableProps<GroupedDatabase>}) {
   const [promotions, setPromotions] = useState<Promotion[]>([])
-  const router = useRouter()
- 
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [editingPromotion, setEditingPromotion] = useState<string | null>(null);
+  const [isAddingPromotion, setIsAddingPromotion] = useState(false);
+  const router = useRouter()
+
   useEffect(() => {
-    // Fetch promotions data from API
-    // For now, we'll use mock data
-    const mockData: Promotion[] = [
-      {
-        id: '1',
-        name: 'สมัครใหม่',
-        percentDiscount: 50,
-        maxDiscount: 5000,
-        usageLimit: '1 ครั้ง',
-        specificTime: 'ทั้งหมด',
-        paymentMethod: '-',
-        minSpend: 1500,
-        maxSpend: 30000,
-        termsAndConditions: '(ทุน+โบนัส)*1500%',
-      },
-      // ... add more mock data based on your image
-    ]
-    setPromotions(mockData)
-  }, [])
+    const fetchPromotions = async () => {
+      if (!prefix) {
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const fetchedPromotions = await GetPromotion(prefix);
+        const serializablePromotions = fetchedPromotions.map((promo: any) => ({
+          id: promo.id,
+          name: promo.name,
+          percentDiscount: promo.percentDiscount,
+          maxDiscount: promo.maxDiscount,
+          usageLimit: promo.usageLimit,
+          specificTime: promo.specificTime,
+          paymentMethod: promo.paymentMethod,
+          minSpend: promo.minSpend,
+          maxSpend: promo.maxSpend,
+          termsAndConditions: promo.termsAndConditions,
+        }));
+        setPromotions(serializablePromotions);
+      } catch (error) {
+        console.error('Error fetching promotions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPromotions();
+  }, [prefix])
 
   const columnHelper = createColumnHelper<Promotion>()
 
   const columns = useMemo(() => [
+    columnHelper.accessor('id', {
+      header: 'ID',
+      cell: info => info.getValue(),
+    }),
     columnHelper.accessor('name', {
       header: 'โปรโมชั่น',
       cell: info => info.getValue(),
@@ -182,20 +192,6 @@ export default function PromotionListDataTable({
   },
   ], [])
 
- 
-
-  const handleAddPromotion = () => {
-    router.push('/promotions/add')
-  }
-
-  const openEditPanel = (id: string) => {
-    setEditingPromotion(id);
-  };
-
-  const closeEditPanel = () => {
-    setEditingPromotion(null);
-  };
-
   const table = useReactTable({
     data: promotions,
     columns,
@@ -223,14 +219,38 @@ export default function PromotionListDataTable({
     },
   })
 
+  const handleAddPromotion = () => {
+    setIsAddingPromotion(true);
+  };
+
+  const handleCloseAddPromotion = () => {
+    setIsAddingPromotion(false);
+  };
+
+  const openEditPanel = (id: string) => {
+    setEditingPromotion(id);
+  };
+
+  const closeEditPanel = () => {
+    setEditingPromotion(null);
+  };
+
+  if (isLoading) {
+    return <div>Loading promotions...</div>;
+  }
+
   return (
     <div className="w-full">
+      <div className="flex items-center justify-between mt-4 mb-4">
+       
+        <Button onClick={handleAddPromotion}>เพิ่มโปรโมชั่น</Button>
+      </div>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter databases..."
-          value={(table.getColumn("names")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("names")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -341,211 +361,11 @@ export default function PromotionListDataTable({
           onClose={closeEditPanel}
         />
       )}
+      <EditPromotionPanel
+        isOpen={isAddingPromotion}
+        onClose={handleCloseAddPromotion}
+        promotionId={null}
+      />
     </div>
   )
 }
-// function DataTable<TData, TValue>({
-//   columns,
-//   data,
-// }: DataTableProps<TData, TValue>) {
-//   const table = useReactTable({
-//     data,
-//     columns,
-//     getCoreRowModel: getCoreRowModel(),
-//   })
-
-//   return (
-//     <div className="rounded-md border">
-//       <Table>
-//         <TableHeader>
-//           {table.getHeaderGroups().map((headerGroup) => (
-//             <TableRow key={headerGroup.id}>
-//               {headerGroup.headers.map((header) => {
-//                 return (
-//                   <TableHead key={header.id}>
-//                     {header.isPlaceholder
-//                       ? null
-//                       : flexRender(
-//                           header.column.columnDef.header,
-//                           header.getContext()
-//                         )}
-//                   </TableHead>
-//                 )
-//               })}
-//             </TableRow>
-//           ))}
-//         </TableHeader>
-//         <TableBody>
-//           {table.getRowModel().rows?.length ? (
-//             table.getRowModel().rows.map((row) => (
-//               <TableRow
-//                 key={row.id}
-//                 data-state={row.getIsSelected() && "selected"}
-//               >
-//                 {row.getVisibleCells().map((cell) => (
-//                   <TableCell key={cell.id}>
-//                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-//                   </TableCell>
-//                 ))}
-//               </TableRow>
-//             ))
-//           ) : (
-//             <TableRow>
-//               <TableCell colSpan={columns.length} className="h-24 text-center">
-//                 No results.
-//               </TableCell>
-//             </TableRow>
-//           )}
-//         </TableBody>
-//       </Table>
-//     </div>
-//   )
-// } function DataTableDemo<TData, TValue>({
-//     columns,
-//     data,
-//   }: DataTableProps<TData, TValue>){
-    
-//     const [sorting, setSorting] = React.useState<SortingState>([])
-//     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-//       []
-//     )
-//     const [columnVisibility, setColumnVisibility] =
-//       React.useState<VisibilityState>({})
-//     const [rowSelection, setRowSelection] = React.useState({})
-  
-//     const table = useReactTable({
-//       data,
-//       columns,
-//       onSortingChange: setSorting,
-//       onColumnFiltersChange: setColumnFilters,
-//       getCoreRowModel: getCoreRowModel(),
-//       getPaginationRowModel: getPaginationRowModel(),
-//       getSortedRowModel: getSortedRowModel(),
-//       getFilteredRowModel: getFilteredRowModel(),
-//       onColumnVisibilityChange: setColumnVisibility,
-//       onRowSelectionChange: setRowSelection,
-//       state: {
-//         sorting,
-//         columnFilters,
-//         columnVisibility,
-//         rowSelection,
-//       },
-//     })
-  
-//     return (
-//       <div className="w-full">
-//         <div className="flex items-center py-4">
-//           <Input
-//             placeholder="Filter emails..."
-//             value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-//             onChange={(event) =>
-//               table.getColumn("email")?.setFilterValue(event.target.value)
-//             }
-//             className="max-w-sm"
-//           />
-//           <DropdownMenu>
-//             <DropdownMenuTrigger asChild>
-//               <Button variant="outline" className="ml-auto">
-//                 Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-//               </Button>
-//             </DropdownMenuTrigger>
-//             <DropdownMenuContent align="end">
-//               {table
-//                 .getAllColumns()
-//                 .filter((column) => column.getCanHide())
-//                 .map((column) => {
-//                   return (
-//                     <DropdownMenuCheckboxItem
-//                       key={column.id}
-//                       className="capitalize"
-//                       checked={column.getIsVisible()}
-//                       onCheckedChange={(value) =>
-//                         column.toggleVisibility(!!value)
-//                       }
-//                     >
-//                       {column.id}
-//                     </DropdownMenuCheckboxItem>
-//                   )
-//                 })}
-//             </DropdownMenuContent>
-//           </DropdownMenu>
-//         </div>
-//         <div className="rounded-md border">
-//           <Table>
-//             <TableHeader>
-//               {table.getHeaderGroups().map((headerGroup) => (
-//                 <TableRow key={headerGroup.id}>
-//                   {headerGroup.headers.map((header) => {
-//                     return (
-//                       <TableHead key={header.id}>
-//                         {header.isPlaceholder
-//                           ? null
-//                           : flexRender(
-//                               header.column.columnDef.header,
-//                               header.getContext()
-//                             )}
-//                       </TableHead>
-//                     )
-//                   })}
-//                 </TableRow>
-//               ))}
-//             </TableHeader>
-//             <TableBody>
-//               {table.getRowModel().rows?.length ? (
-//                 table.getRowModel().rows.map((row) => (
-//                   <TableRow
-//                     key={row.id}
-//                     data-state={row.getIsSelected() && "selected"}
-//                   >
-//                     {row.getVisibleCells().map((cell) => (
-//                       <TableCell key={cell.id}>
-//                         {flexRender(
-//                           cell.column.columnDef.cell,
-//                           cell.getContext()
-//                         )}
-//                       </TableCell>
-//                     ))}
-//                   </TableRow>
-//                 ))
-//               ) : (
-//                 <TableRow>
-//                   <TableCell
-//                     colSpan={columns.length}
-//                     className="h-24 text-center"
-//                   >
-//                     No results.
-//                   </TableCell>
-//                 </TableRow>
-//               )}
-//             </TableBody>
-//           </Table>
-//         </div>
-//         <div className="flex items-center justify-end space-x-2 py-4">
-//           <div className="flex-1 text-sm text-muted-foreground">
-//             {table.getFilteredSelectedRowModel().rows.length} of{" "}
-//             {table.getFilteredRowModel().rows.length} row(s) selected.
-//           </div>
-//           <div className="space-x-2">
-//             <Button
-//               variant="outline"
-//               size="sm"
-//               onClick={() => table.previousPage()}
-//               disabled={!table.getCanPreviousPage()}
-//             >
-//               Previous
-//             </Button>
-//             <Button
-//               variant="outline"
-//               size="sm"
-//               onClick={() => table.nextPage()}
-//               disabled={!table.getCanNextPage()}
-//             >
-//               Next
-//             </Button>
-//           </div>
-//         </div>
-//       </div>
-//     )
-//   }
-
- 

@@ -524,6 +524,7 @@ type Dbstruct struct {
 }
 
 
+
 // Function to connect and create a database with a specific prefix and name
 func CreateDatabase(c *fiber.Ctx)  (error) {
     
@@ -761,3 +762,121 @@ func CreateDB(db *gorm.DB, dbName string) error {
     fmt.Printf("Database %s created successfully\n", dbName)
     return nil
 }
+
+
+func GetPromotion(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}	
+	 
+	var prefixs = struct{
+		development string
+		production string
+	}{
+		development: body.Prefix+"_development",
+		production: body.Prefix+"_production",
+	}
+	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	 database.CheckAndCreateTable(db, models.Promotion{})
+	promotions := []models.Promotion{}
+
+	db.Find(&promotions)
+	return c.JSON(promotions)
+}
+
+func GetPromotionById(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	var prefixs = struct{
+		development string
+		production string
+	}{
+		development: body.Prefix+"_development",
+		production: body.Prefix+"_production",
+	}
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	promotion := models.Promotion{}
+	db.First(&promotion, c.Params("id"))
+	return c.JSON(promotion)
+}
+
+func CreatePromotion(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	var prefixs = struct{
+		development string
+		production string
+	}{
+		development: body.Prefix+"_development",
+		production: body.Prefix+"_production",
+	}
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	promotion := models.Promotion{}
+	db.Create(&promotion)
+	return c.JSON(promotion)
+}
+
+func UpdatePromotion(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	var prefixs = struct{	
+		development string
+		production string
+	}{
+		development: body.Prefix+"_development",
+		production: body.Prefix+"_production",
+	}
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	promotion := models.Promotion{}
+	db.Model(&promotion).Updates(promotion)
+	return c.JSON(promotion)
+}
+
+
+	
+
+
+
+
+
+
+
+
+

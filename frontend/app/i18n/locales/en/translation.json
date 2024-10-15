@@ -6,8 +6,76 @@
         "description":"Agent detail",
         "settings": {
             "title": "Settings",
-            "description": "Manage your account settings and set e-mail preferences."
+            "description": "Manage your account settings and set e-mail preferences.",
+        
+        "edit": {
+            "title": "Edit Agent",
+            "description": "Edit agent detail",
+            "username": "Username",
+            "username_description": "Username for login",
+            "prefix": "Prefix",
+            "prefix_description": "Prefix for database",
+            "same_prefix_description": "Use prefix as database name",
+            "same_prefix_description_description": "When you select this option, the database name will only use the prefix (prefix must be at least 5 characters)",
+            "database_mode": "Database Mode",
+            "database_mode_description": "Select the database mode to create a database (can select both modes)",
+            "development": "Development",
+            "production": "Production",
+            "custom_database_name": "Custom Database Name",
+            "custom_database_name_placeholder": "Enter custom database name (if any)",
+            "custom_database_name_description": "Enter custom database name if not using prefix",
+            "existing_database_name": "Existing Database Name",
+            "existing_database_name_description": "Database name in system",
+            "error": "Error",
+            "success": "Success",
+            "submit": "Submit",
+            "error_update_database": "Error updating database",
+            "error_prefix_length": "Prefix must be at least 3 characters",
+            "error_prefix_length_description": "Prefix must be at least 3 characters",
+            "error_database_name_length": "Database name must be at least 5 characters",
+            "error_database_name_length_description": "Database name must be at least 5 characters",
+            "error_database_name_exists": "Database name already exists",
+            "error_database_name_exists_description": "Database name already exists",
+            "error_database_name_not_allowed": "Database name not allowed",
+            "error_database_name_not_allowed_description": "Database name not allowed",
+            "error_database_name_not_allowed_characters": "Database name must be special characters only",
+            "error_database_name_not_allowed_characters_description": "Database name must be special characters only",
+            "error_database_name_not_allowed_special_characters": "Database name must be special characters only",
+            "error_database_name_not_allowed_special_characters_description": "Database name must be special characters only",
+            "error_database_name_not_allowed_reserved_words": "Database name must be special characters only",
+            "error_database_name_not_allowed_reserved_words_description": "Database name must be special characters only"
         }
+    }
+    },
+    "promotion": {
+        "name": "Promotion",
+        "percentDiscount": "Percent Discount",
+        "maxDiscount": "Max Discount",
+        "usageLimit": "Usage Limit",
+        "specificTime": "Specific Time",
+        "paymentMethod": "Payment Method",
+        "minSpend": "Min Spend",
+        "maxSpend": "Max Spend",
+        "termsAndConditions": "Terms and Conditions",
+        "title": "Promotion",
+        "description": "Promotion detail",
+        "edit": {
+            "title": "Edit Promotion",
+            "description": "Edit promotion detail"
+        },
+        "add": {
+            "title": "Add Promotion",
+            "description": "Add promotion detail"
+        },
+        "save": "Save",
+        "copyPromotionID": "Copy Promotion ID",
+        "editPromotion": "Edit Promotion",
+        "addPromotion": "Add Promotion",
+        "filterPromotion": "Filter Promotion",
+        "columns": "Columns",
+        "rowSelected": "row(s) selected",
+        "previous": "Previous",
+        "next": "Next"
     }
 }
   

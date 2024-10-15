@@ -67,7 +67,7 @@ export const UpdateDatabaseListByPrefix = async (body:Dbstruct) =>{
   }
   
 export const GetDatabaseListByPrefix = async (prefix:string) =>{
-  console.log(prefix)
+ 
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/prefix", { method: 'POST',
   headers: {   
     'Accept': 'application/json',
@@ -78,51 +78,56 @@ export const GetDatabaseListByPrefix = async (prefix:string) =>{
   return response.json()
 }
 
-export const AddPromotion = async (body:any) =>{
+export const AddPromotion = async (dbname:string,body:any) =>{
  
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/create", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({"dbname":dbname,"body":body})
     })
     return response.json()
   }
 
-  export const UpdatePromotion = async (body:any) =>{
+    export const UpdatePromotion = async (dbname:string,body:any) =>{
  
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({"dbname":dbname,"body":body})
   })
   return response.json()
 }
-export const GetPromotionById = async (id:any) =>{
+export const GetPromotionById = async (dbname:string,id:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/get", { method: 'POST',
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/id", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body: JSON.stringify({"id":id})
+      body: JSON.stringify({"dbname":dbname,"id":id})
 })
 return response.json()
 }
-export const GetPromotion = async () =>{
- 
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion", { method: 'GET',
+export const GetPromotion = async (dbname:string) =>{
+ try{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/all", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-    //  body: JSON.stringify({"id":id})
+      body: JSON.stringify({"prefix":dbname})
 })
 return response.json()
+}catch(error){
+
+  console.log(error)
+  return error
 }
+} 
 
 export async function navigate(path:string) {
   redirect(path)

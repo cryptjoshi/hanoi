@@ -138,14 +138,14 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
 
           // Check if all database names are the same as prefix + mode
           const isDbNameSameAsPrefix = databases.every(db => 
-            db === `${prefix}_dev` || db === `${prefix}_prod`
+            db === `${prefix}_development` || db === `${prefix}_production`
           );
           setIsDbNameSameAsPrefix(isDbNameSameAsPrefix);
 
           // Set mode selection based on database names
           setModeSelection({
-            development: databases.some(db => db.endsWith('_dev')),
-            production: databases.some(db => db.endsWith('_prod')),
+            development: databases.some(db => db.endsWith('_development')),
+            production: databases.some(db => db.endsWith('_production')),
           });
         }
       }
@@ -174,8 +174,8 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
   const handleCheckboxChange = (checked: boolean) => {
     if (checked && prefixValue.length < 3) {
       toast({
-        title: "ข้อผิดพลาด",
-        description: "ชื่อย่อต้องมีความยาวอย่างน้อย 3 ตัวอักษรเพื่อใช้เป็นชื่อฐานข้อมูล",
+        title: t("agents.settings.edit.error"),
+        description: t("agents.settings.edit.error_prefix_length"),
         variant: "destructive",
       })
       return;
@@ -195,7 +195,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
     try {
       const response = await UpdateDatabaseListByPrefix(submitData);  
       toast({
-        title: "อัพเดทข้อมูลสำเร็จ",
+        title: t("agents.settings.edit.success"),
         description: (
           <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
             <code className="text-white">{JSON.stringify(response.data, null, 2)}</code>
@@ -205,8 +205,8 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
       router.push(`/${lng}/dashboard/agents`);
     } catch (error) {
       toast({
-        title: "การอัพเดทข้อมูลล้มเหลว",
-        description: "กรุณาตรวจสอบข้อมูลอีกครั้ง",
+        title: t("agents.settings.edit.error"),
+        description: t("agents.settings.edit.error_update_database"),
         variant: "destructive",
       });
     }
@@ -223,12 +223,12 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{"ชื่อผู้ใช้"}</FormLabel>
+              <FormLabel>{t("agents.settings.edit.username")}</FormLabel>
               <FormControl>
                 <Input placeholder="" {...field} />
               </FormControl>
               <FormDescription>
-                ชื่อผู้ใช้ เพื่อเข้าสู่ระบบจัดการ
+                {t("agents.settings.edit.username_description")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -239,12 +239,12 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
           name="prefix"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{"ชื่อย่อ"}</FormLabel>
+              <FormLabel>{t("agents.settings.edit.prefix")}</FormLabel>
               <FormControl>
                 <Input placeholder="" {...field} />
               </FormControl>
               <FormDescription>
-               ชื่อย่อ เพื่อกำหนดในฐานข้อมูล 
+                {t("agents.settings.edit.prefix_description")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -263,17 +263,17 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>
-                  ใช้ชื่อย่อเป็นชื่อฐานข้อมูล
+                  {t("agents.settings.edit.same_prefix_description")}
                 </FormLabel>
                 <FormDescription>
-                  เมื่อเลือกตัวเลือกนี้ ชื่อฐานข้อมูลจะใช้เฉพาะชื่อย่อ (ชื่อย่อต้องมีความยาวอย่างน้อย 5 ตัวอักษร)
+                  {t("agents.settings.edit.same_prefix_description_description")}
                 </FormDescription>
               </div>
             </FormItem>
           )}
         />
         <div className="space-y-2">
-          <FormLabel>โหมดการสร้างฐานข้อมูล</FormLabel>
+          <FormLabel>{t("agents.settings.edit.database_mode")}</FormLabel>
           <div className="flex space-x-4">
             <FormField
               control={form.control}
@@ -288,7 +288,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
                       }}
                     />
                   </FormControl>
-                  <FormLabel>Development</FormLabel>
+                  <FormLabel>{t("agents.settings.edit.development")}</FormLabel>
                 </FormItem>
               )}
             />
@@ -305,13 +305,13 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
                       }}
                     />
                   </FormControl>
-                  <FormLabel>Production</FormLabel>
+                  <FormLabel>{t("agents.settings.edit.production")}</FormLabel>
                 </FormItem>
               )}
             />
           </div>
           <FormDescription>
-            เลือกโหมดที่ต้องการสร้างฐานข้อมูล (สามารถเลือกได้ทั้งสองโหมด)
+            {t("agents.settings.edit.database_mode_description")}
           </FormDescription>
         </div>
 
@@ -321,15 +321,15 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
             name="customDbName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{"ชื่อฐานข้อมูลเพิ่มเติม"}</FormLabel>
+                <FormLabel>{t("agents.settings.edit.custom_database_name")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="ระบุชื่อฐานข้อมูลเพิ่มเติม (ถ้ามี)"
+                    placeholder={t("agents.settings.edit.custom_database_name_placeholder")}
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  ระบุชื่อฐานข้อมูลเพิ่มเติมหากไม่ต้องการใช้ชื่อย่อ
+                  {t("agents.settings.edit.custom_database_name_description")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -342,7 +342,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
           name="dbname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{"ชื่อฐานข้อมูลที่มีอยู่"}</FormLabel>
+              <FormLabel>{t("agents.settings.edit.existing_database_name")}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -351,7 +351,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
                 />
               </FormControl>
               <FormDescription>
-                ชื่อฐานข้อมูลที่มีอยู่ในระบบ
+                {t("agents.settings.edit.existing_database_name_description")}
               </FormDescription>
               <FormMessage />
             </FormItem>

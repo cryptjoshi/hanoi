@@ -65,13 +65,15 @@
             "title": "Edit Promotion",
             "description": "Edit promotion detail",
             "success": "Success",
-            "error": "Error"
+            "error": "Error",
+            "error_description": "Promotion edit error description"
         },
         "add": {
             "title": "Add Promotion",
             "description": "Add promotion detail",
             "success": "Success",
-            "error": "Error"
+            "error": "Error",
+            "error_description": "Promotion add error description"
         },
         "save": "Save",
         "cancel": "Cancel",
@@ -100,7 +102,60 @@
         "account": "Account",
         "promotion": "Promotion",
         "include": "Include",
-        "exclude": "Exclude"
+        "exclude": "Exclude",
+        "backToList": "Back to List",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "selectTimeType": "Select Time Type",
+        "enterValue": "Enter Value",
+        "once": "Once",
+        "recurring": "Recurring",
+        "every": "Every",
+        "day": "Day",
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "selectDay": "Select Day",
+        "selectWeek": "Select Week",
+        "selectMonth": "Select Month",
+        "selectYear": "Select Year"
+        
+        
+    },
+    "common": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun",
+        "jan": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Jun",
+        "jul": "Jul",
+        "aug": "Aug",
+        "sep": "Sep",
+        "oct": "Oct",
+        "nov": "Nov",
+        "dec": "Dec",
+        "am": "AM",
+        "pm": "PM",
+        "hh": "HH",
+        "mm": "MM",
+        "ss": "SS",
+        "hour": "Hour",
+        "minute": "Minute",
+        "weekly": "Weekly",
+        "daily": "Daily",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "once": "Once",
+        "selectHour": "Select Hour",
+        "selectMinute": "Select Minute"
     }
 }
   

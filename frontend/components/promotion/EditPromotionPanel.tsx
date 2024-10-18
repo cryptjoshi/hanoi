@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddPromotion, GetPromotionById, UpdatePromotion } from '@/actions';
 import { useTranslation } from '@/app/i18n/client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
 import { toast } from "@/hooks/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { cn } from "@/lib/utils"
+import { format, parse } from "date-fns"
+import th from "date-fns/locale/th"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface EditPromotionPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
   promotionId: string | null;
   lng: string;
   prefix: string;
+  onClose: () => void;
+  onCancel: () => void;
 }
 
 // Update the Promotion interface
@@ -40,7 +47,7 @@ interface Promotion {
   status: string;
 }
 
-// Update the form schema to include all fields
+// Update the form schema
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string(),
@@ -49,7 +56,14 @@ const formSchema = z.object({
   endDate: z.string(),
   maxDiscount: z.coerce.number(),
   usageLimit: z.coerce.number(),
-  specificTime: z.string(),
+  specificTime: z.string().refine((val) => {
+    try {
+      const parsed = JSON.parse(val);
+      return parsed && typeof parsed === 'object';
+    } catch {
+      return false;
+    }
+  }, { message: "Invalid JSON string" }),
   paymentMethod: z.string(),
   minSpend: z.coerce.number(),
   maxSpend: z.coerce.number(),
@@ -58,7 +72,28 @@ const formSchema = z.object({
   example: z.string(),
 })
 
-export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, onClose, promotionId, prefix, lng }) => {
+interface SpecificTime {
+  type?: string;
+  daysOfWeek?: string[];
+  hour?: string;
+  minute?: string;
+}
+
+function cleanJsonString(jsonString: string): SpecificTime {
+  if (!jsonString) {
+    return {};
+  }
+
+  try {
+    let cleanJsonString = jsonString.trim().replace(/^["']|["']$/g, '');
+    cleanJsonString = cleanJsonString.replace(/\\"/g, '"');
+    return JSON.parse(cleanJsonString) as SpecificTime;
+  } catch { 
+    return {}
+  }
+}
+
+export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotionId, prefix, lng, onClose, onCancel }) => {
  
   const [promotion, setPromotion] = useState<Promotion>({
     id: '',
@@ -89,16 +124,17 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, 
     form.reset(data.Data as z.infer<typeof formSchema>);
   };
   useEffect(() => {
-    if (isOpen && promotionId) {
+    if (promotionId) {
       
       fetchPromotion(prefix,promotionId);
-    } else if (isOpen) {
+    } else {
       form.reset({} as z.infer<typeof formSchema>);
     }
-  }, [isOpen, promotionId]);
+  }, [promotionId]);
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    // TODO: Implement save logic
+
+    const specificTime = cleanJsonString(values.specificTime);
     const stringifiedValues = {
       ...values,
       percentDiscount: values.percentDiscount.toString(),
@@ -106,11 +142,13 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, 
       usageLimit: values.usageLimit,
       minSpend: values.minSpend.toString(),
       maxSpend: values.maxSpend.toString(),
-      status: values.status,
+      status: values.status, // Convert status to string
+      specificTime: JSON.stringify(specificTime),
     };
    
     if (promotionId) {
       const data = await UpdatePromotion(prefix, promotionId, stringifiedValues);
+
       if (data.Status) {
      
         toast({
@@ -122,7 +160,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, 
       } else {
         toast({
           title: t("promotion.edit.error"),
-          description: t("promotion.edit.error_description"),
+          description:  t("promotion.edit.error_description")+data.Message,
           variant: "destructive",
         })
       }
@@ -140,7 +178,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, 
       } else {
         toast({
           title: t("promotion.add.error"),
-          description: t("promotion.add.error_description"),
+          description:  t("promotion.add.error_description")+data.Message,
           variant: "destructive",
         })
       }
@@ -148,214 +186,323 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ isOpen, 
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[90vh] overflow-y-auto max-w-xl mx-auto">
-        <SheetHeader>
-          <SheetTitle>{promotionId ? t('promotion.edit.title') : t('promotion.add.title')}</SheetTitle>
-          <SheetDescription>{t('promotion.edit.description')}</SheetDescription>
-        </SheetHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.name')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.description')}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="percentDiscount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>% {t('promotion.percentDiscount')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.startDate')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="date" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.endDate')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="date" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxDiscount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.maxDiscount')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="usageLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.usageLimit')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="specificTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.specificTime')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.paymentMethod')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-            <FormField
-              control={form.control}
-              name="minSpend"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>%{t('promotion.minSpend')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxSpend"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.maxSpend')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* <FormField
-              control={form.control}
-              name="example"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.example')}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-            {/* <FormField
-              control={form.control}
-              name="termsAndConditions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.termsAndConditions')}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('promotion.status')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value?.toString() ?? '0'}>
+    <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
+      <h2 className="text-2xl font-bold mb-4">{promotionId ? t('promotion.edit.title') : t('promotion.add.title')}</h2>
+      <p className="text-gray-600 mb-6">{t('promotion.edit.description')}</p>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.description')}</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="percentDiscount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.percentDiscount')}  %</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>{t('promotion.startDate')}</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('promotion.selectStatus')} />
-                      </SelectTrigger>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "dd-MM-yyyy")
+                        ) : (
+                          <span>{t('promotion.selectDate')}</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="1">{t('promotion.status_active')}</SelectItem>
-                      <SelectItem value="0">{t('promotion.status_inactive')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <SheetFooter>
-              <div className="flex justify-end gap-2 w-full">
-                <Button className="bg-gray-300 text-black" variant="outline" onClick={onClose}>{t('promotion.cancel')}</Button>
-                <Button className="bg-blue-500 text-white" type="submit">{t('promotion.save')}</Button>
-              </div>
-            </SheetFooter>
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      timezone="Asia/Bangkok"
+                      locale={th}
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>{t('promotion.endDate')}</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "dd-MM-yyyy")
+                        ) : (
+                          <span>{t('promotion.selectDate')}</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      timezone="Asia/Bangkok"
+                      locale={th}
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="maxDiscount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.maxDiscount')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="usageLimit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.usageLimit')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="specificTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.specificTime')}</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    <Select
+                      onValueChange={(value) => {
+                        const newValue = { ...JSON.parse(field.value || '{}'), type: value };
+                        field.onChange(JSON.stringify(newValue));
+                      }}
+                      value={cleanJsonString(field.value || '{}').type}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('promotion.selectTimeType')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="once">{t('common.once')}</SelectItem>
+                        <SelectItem value="weekly">{t('common.weekly')}</SelectItem>
+                        <SelectItem value="monthly">{t('common.monthly')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {cleanJsonString(field.value || '{}').type === 'weekly' && (
+                      <div className="flex flex-wrap gap-2">
+                        {['mon', 'tue', 'wed','thu','fri','sat','sun'].map((day) => (
+                          <FormField
+                            key={day}
+                            control={form.control}
+                            name="specificTime"
+                            render={({ field: innerField }) => (
+                              <FormItem className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={(cleanJsonString(innerField.value || '{}').daysOfWeek || []).includes(day)}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = cleanJsonString(innerField.value || '{}');
+                                    const updatedDays = checked
+                                      ? [...(currentValue.daysOfWeek || []), day]
+                                      : (currentValue.daysOfWeek || []).filter((d: string) => d !== day);
+                                    const newValue = { ...currentValue, daysOfWeek: updatedDays };
+                                    innerField.onChange(JSON.stringify(newValue));
+                                  }}
+                                />
+                                <FormLabel className="text-sm font-normal">
+                                  {t(`common.${day}`)}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="hour">{t('common.hour')}</Label>
+                        <Select
+                          onValueChange={(value) => {
+                            const currentValue = cleanJsonString(field.value || '{}');
+                            const newValue = { ...currentValue, hour: value };
+                            field.onChange(JSON.stringify(newValue));
+                          }}
+                          value={cleanJsonString(field.value || '{}').hour}
+                        >
+                          <SelectTrigger id="hour" aria-label="Hour">
+                            <SelectValue placeholder={t('common.selectHour')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                              <SelectItem key={hour} value={hour.toString()}>{hour < 10 ? `0${hour}` : hour}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="minute">{t('common.minute')}</Label>
+                        <Select
+                          onValueChange={(value) => {
+                            const currentValue = cleanJsonString(field.value || '{}');
+                            const newValue = { ...currentValue, minute: value };
+                            field.onChange(JSON.stringify(newValue));
+                          }}
+                          value={cleanJsonString(field.value || '{}').minute}
+                        >
+                          <SelectTrigger id="minute" aria-label="Minute">
+                            <SelectValue placeholder={t('common.selectMinute')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
+                              <SelectItem key={minute} value={minute.toString()}>{minute < 10 ? `0${minute}` : minute}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+          
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="minSpend"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.minSpend')} %</FormLabel>
+                <FormControl>
+                  <Input {...field} type="number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="maxSpend"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.maxSpend')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">{t('promotion.status')}</FormLabel>
+                  <FormDescription>
+                    {field.value === 1 ? t('promotion.status_active') : t('promotion.status_inactive')}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value === 1}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked ? 1 : 0);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button type="submit">{t('promotion.save')}</Button>
+            <Button type="button" variant="outline" onClick={onCancel}>{t('promotion.cancel')}</Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 };
 

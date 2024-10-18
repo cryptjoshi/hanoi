@@ -955,11 +955,12 @@ func GetPromotionById(c *fiber.Ctx) error {
 func UpdatePromotion(c *fiber.Ctx) error {
     data := new(promotiondata)
     if err := c.BodyParser(data); err != nil {
+		fmt.Println(err)
         return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "error": err.Error(),
         })
     }
-
+	
 	promotion := models.Promotion{
         Name:                data.Body.Name,
         Description:         data.Body.Description,
@@ -975,7 +976,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
         TermsAndConditions:  data.Body.TermsAndConditions,
         Status:              data.Body.Status,
     }
-
+ 
     var prefixs = struct{	
         development string
         production string
@@ -993,7 +994,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
     err = db.Debug().Model(&promotion).Where("id = ?", data.PromotionId).Updates(promotion).Error
 	if err != nil {
 		response := fiber.Map{
-			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!"+err.Error(),
 			"Status":  false,
 			}
 		return c.JSON(response)

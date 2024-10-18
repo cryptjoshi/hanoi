@@ -80,11 +80,70 @@ interface DataTableProps<TData> {
   data: TData[]
 }
 
+import { ArrowLeftIcon } from "@radix-ui/react-icons"
+
+
+function formatSpecificTime(jsonString: string,lng:string): string {
+  if (!jsonString) {
+    return '';
+  }
+
+  try {
+    // Remove any leading/trailing whitespace and quotes
+    const {t} = useTranslation(lng,'translation',{keyPrefix:'common'})
+    let cleanJsonString = jsonString.trim().replace(/^["']|["']$/g, '');
+    
+    // Replace escaped quotes with regular quotes
+    cleanJsonString = cleanJsonString.replace(/\\"/g, '"');
+    
+    // Parse the cleaned JSON string
+    const data = JSON.parse(cleanJsonString);
+    
+    const daysMap: { [key: string]: string } = {
+      'mon': t('mon'),
+      'tue': t('tue'),
+      'wed': t('wed'),
+      'thu': t('thu'),
+      'fri': t('fri'),
+      'sat': t('sat'),
+      'sun': t('sun')
+    };
+
+    const typeMap: { [key: string]: string } = {
+      'weekly': t('weekly'),
+      'once': t('once'),
+      'monthly': t('monthly')
+    };
+
+    let days = '';
+    if (data.daysOfWeek && data.daysOfWeek.length > 0) {
+      days = data.daysOfWeek.map(day => daysMap[day] || day).join(', ');
+    }
+
+    let frequency = typeMap[data.type] || '';
+    let time = '';
+
+    if (data.hour && data.minute) {
+      time = ` ${data.hour.padStart(2, '0')}:${data.minute.padStart(2, '0')}`;
+    }
+
+    const parts = [days, frequency, time].filter(Boolean);
+    return parts.join(' ');
+  } catch (error) {
+   // console.error('Error parsing specificTime:', error);
+    //console.log('Problematic string:', jsonString);
+    return '';
+  }
+}
+
+// ตัวอย่างการใช้งาน
+// const jsonString = "{\"type\":\"weekly\",\"daysOfWeek\":[\"mon\"],\"hour\":\"11\",\"minute\":\"10\"}";
+// console.log(formatSpecificTime(jsonString));
+
 export default function PromotionListDataTable({
   prefix,
   data,
   lng,
-
 }: {prefix:string, data:DataTableProps<GroupedDatabase>, lng:string}) {
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -95,6 +154,7 @@ export default function PromotionListDataTable({
   const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
   const [isAddingPromotion, setIsAddingPromotion] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showTable, setShowTable] = useState(true);
   const router = useRouter()
 
   const {t} = useTranslation(lng,'translation',{keyPrefix:'promotion'})
@@ -143,7 +203,11 @@ export default function PromotionListDataTable({
     }),
     columnHelper.accessor('specificTime', {
       header: t('specificTime'),
-      cell: info => info.getValue(),
+      cell: info => {
+        const value = info.getValue();
+      //  console.log('Raw specificTime value:', value); // For debugging
+        return typeof value === 'string' ? formatSpecificTime(value) : '';
+      }
     }),
     columnHelper.accessor('include', {
       header: t('include'),
@@ -235,10 +299,13 @@ export default function PromotionListDataTable({
   const openEditPanel = (id: number) => {
     setEditingPromotion(id);
     setIsAddingPromotion(true);
+    setShowTable(false);
   };
 
   const closeEditPanel = () => {
     setEditingPromotion(null);
+    setIsAddingPromotion(false);
+    setShowTable(true);
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -248,138 +315,143 @@ export default function PromotionListDataTable({
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mt-4 mb-4">
-       
-        <Button onClick={handleAddPromotion}>{t('addPromotion')}</Button>
-      </div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder={t('filterPromotion')}
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              {t('columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => {
-                      if (value !== column.getIsVisible()) {
-                        column.toggleVisibility(!!value)
-                      }
-                    }}
-                  >
-                    {t(column.id as string)}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+      {showTable ? (
+        <>
+          <div className="flex items-center justify-between mt-4 mb-4">
+            <Button onClick={handleAddPromotion}>{t('addPromotion')}</Button>
+          </div>
+          <div className="flex items-center py-4">
+            <Input
+              placeholder={t('filterPromotion')}
+              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  {t('columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => {
+                          if (value !== column.getIsVisible()) {
+                            column.toggleVisibility(!!value)
+                          }
+                        }}
+                      >
+                        {t(column.id as string)}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
                           )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      {t('noResults')}
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {t('noResults')}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} {t('of')}{" "}
-          {table.getFilteredRowModel().rows.length} {t('rowSelected')}.
-        </div>
-        <div className="space-x-2">
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              {table.getFilteredSelectedRowModel().rows.length} {t('of')}{" "}
+              {table.getFilteredRowModel().rows.length} {t('rowSelected')}.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                {t('previous')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                {t('next')}
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mt-4">
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={closeEditPanel}
+            className="mb-4"
           >
-            {t('previous')}
+            <ArrowLeftIcon className="mr-2 h-4 w-4" />
+            {t('backToList')}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            {t('next')}
-          </Button>
+          <EditPromotionPanel
+            promotionId={editingPromotion}
+            lng={lng}
+            prefix={prefix}
+            onClose={closeEditPanel}
+            onCancel={closeEditPanel}
+          />
         </div>
-      </div>
-      {editingPromotion && (
-        <EditPromotionPanel 
-          promotionId={editingPromotion} 
-          onClose={closeEditPanel}
-          lng={lng}
-          prefix={prefix}
-        />
       )}
-      <EditPromotionPanel
-        promotionId={editingPromotion} 
-        isOpen={isAddingPromotion}
-        lng={lng}
-        prefix={prefix}
-        onClose={handleCloseAddPromotion}
-      
-      />
     </div>
   )
 }

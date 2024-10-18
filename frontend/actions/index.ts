@@ -92,6 +92,9 @@ export const AddPromotion = async (prefix:string,body:any) =>{
 
     export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
  
+    console.log(values)
+    console.log(promotionId)
+    console.log(dbname)
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',

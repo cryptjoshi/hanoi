@@ -289,6 +289,7 @@ export default function PromotionListDataTable({
   const handleAddPromotion = () => {
     setEditingPromotion(null);
     setIsAddingPromotion(true);
+    setShowTable(false);
   };
 
   const handleCloseAddPromotion = () => {

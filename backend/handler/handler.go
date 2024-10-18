@@ -254,6 +254,7 @@ func GetPixelPath(c *fiber.Ctx) error {
 			if etag_err != nil {
 				fmt.Println(etag_err)
 			}
+			
 
 			c.Append("ETag", eTag)
 
@@ -319,10 +320,7 @@ func GetRoot(c *fiber.Ctx) error {
 	return c.SendString(message)
 }
 
-
 //  authorized handler
-
-
 
 func Signup(c *fiber.Ctx) error {
 	// var data = formData
@@ -435,88 +433,8 @@ func migrateAdmin(db *gorm.DB) {
 }
 
 
+ // database 
 
-
-// func RootLogin(c *fiber.Ctx) error {
-	 
-
-
-
-// 	loginRequest := new(models.Users)
-
-// 	if err := c.BodyParser(loginRequest); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error":err.Error(),
-// 		})
-// 	}
-// 	db, _ := database.ConnectToDB(loginRequest.Prefix)
-
-// 	user,err := repository.FindUser(db,loginRequest.Preferredname,loginRequest.Password)
-// 	if err != nil {
-// 		response := fiber.Map{
-// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-// 			"Status":  false,
-// 			"Data":    fiber.Map{ 
-// 				"id": -1,
-// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-// 		}
-	
-// 		return c.JSON(response)
-// 	}
-
-	
-// 	//day := time.Hour * 24
-
-// 	claims := jtoken.MapClaims{
-// 		"ID": user.ID,
-// 		"Walletid": user.Walletid,
-// 		"Username": user.Username,
-// 		"Role": user.Role,
-// 		"PartnersKey": user.PartnersKey,
-// 		//"exp":   time.Now().Add(day * 1).Unix(),
-// 	}
-
-// 	token := jtoken.NewWithClaims(jtoken.SigningMethodHS256,claims)
-
-// 	t,err_ := token.SignedString([]byte(jwtSecret))
-	
-	
-// 	if err_ != nil {
-// 		response := fiber.Map{
-// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-// 			"Status":  false,
-// 			"Data":    fiber.Map{ 
-// 				"id": -1,
-// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-// 		}
-// 		return c.JSON(response)
-// 	}
-// 	updates := map[string]interface{}{
-// 		"Token": t,
-// 			}
-
-// 	// อัปเดตข้อมูลยูสเซอร์
-// 	_err := repository.UpdateFieldsUserString(db,user.Username, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-// 	if _err != nil {
-// 		response := fiber.Map{
-// 			"Message": "กรุณาตรวจสอบ รหัสผู้ใช้ หรือ รหัสผ่านอีกครั้ง!",
-// 			"Status":  false,
-// 			"Data":    fiber.Map{ 
-// 				"id": -1,
-// 			}, // ตัวอย่างข้อมูลใน data สามารถเป็นโครงสร้างอื่นได้
-// 		}
-// 		return c.JSON(response)
-// 	} else {
-// 		response := fiber.Map{
-// 			"Message": "เข้าระบบสำเร็จ!",
-// 			"Status":  true,
-// 			"Data": fiber.Map{  
-// 				"Token": t, 
-// 				},
-// 		}
-// 		return c.JSON(response)
-// 	}
-// }
 type Dbstruct struct {
 	DBName string `json:"dbname"`
 	Prefix string `json:"prefix"`
@@ -763,6 +681,10 @@ func CreateDB(db *gorm.DB, dbName string) error {
     fmt.Printf("Database %s created successfully\n", dbName)
     return nil
 }
+
+
+// promotion
+
 type promotiondata struct {
 	Prefix string `json:"prefix"`
 	Body   struct {
@@ -841,8 +763,7 @@ func CreatePromotion(c *fiber.Ctx) error {
         TermsAndConditions:  data.Body.TermsAndConditions,
         Status:              data.Body.Status,
     }
-//	fmt.Println(db)
-//	fmt.Println(promotion)
+
     err = db.Create(&promotion).Error
 	
     if err != nil {
@@ -950,7 +871,6 @@ func GetPromotionById(c *fiber.Ctx) error {
    
 
 }
- 
 
 func UpdatePromotion(c *fiber.Ctx) error {
     data := new(promotiondata)
@@ -1008,9 +928,331 @@ func UpdatePromotion(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+// game
+type gameData struct {
+	Prefix string `json:"prefix"`
+	Id string `json:"id"`
+	Body   struct {
+		Id string `json:"id"`
+		ProductCode string `json:"productCode"`
+		Product string `json:"product"`
+		GameType string `json:"gameType"`
+		Active int `json:"active"`
+		Remark string `json:"remark"`
+		Position string `json:"position"`
+		Urlimage string `json:"urlimage"`
+		Name string `json:"name"`
+		Status string `json:"status"`
+	} `json:"body"`
+}
 
+func CreateGame(c *fiber.Ctx) error {
+    data := new(gameData)
+    if err := c.BodyParser(data); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+
+	game := models.Games{
+		ProductCode: data.Body.ProductCode,
+		Product: data.Body.Product,
+		GameType: data.Body.GameType,
+		Active: data.Body.Active,
+		Remark: data.Body.Remark,
+		Position: data.Body.Position,
+		Urlimage: data.Body.Urlimage,
+		Name: data.Body.Name,
+		Status: data.Body.Status,
+	}
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: data.Prefix+"_development",
+        production: data.Prefix+"_production",
+    }	
+
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	database.CheckAndCreateTable(db, models.Games{})
+	err = db.Create(&game).Error
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	response := fiber.Map{
+		"Message": "สร้างข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": game,
+	}
+	return c.JSON(response)
+}
+
+func GetGameList(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+    if err := c.BodyParser(body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }	
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	database.CheckAndCreateTable(db, models.Games{})
+	games := []models.Games{}
+	err = db.Debug().Find(&games).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	if len(games) == 0 {
+		 
+		sql := `
+		INSERT INTO Games (id, product, productCode, gametype, active, status, remark, position, urlImage) VALUES
+		(1, 1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
+		(2, 1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(3, 1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(4, 1002, 'Evolution Gaming', NULL, 2, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(5, 1003, 'All Bet', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(6, 1004, 'Big Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(8, 1011, 'Play Tech', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(9, 1020, 'WM Casino', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(10, 1022, 'Sexy Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(12, 1052, 'Dream Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(13, 1077, 'SkyWind', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(14, 1053, 'Nexus 4D', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(15, 1074, 'HKGP Lottery', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(16, 1076, 'AMB Poker', NULL, 1, '{"id":"7","name":"p2p"}', NULL, 'OK', NULL),
+		(17, 1006, 'Pragmatic Play', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(18, 1009, 'CQ9', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(19, 1011, 'Play Tech', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(20, 1013, 'Joker', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(24, 1048, 'Reevo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(25, 1049, 'EvoPlay', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(26, 1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(27, 1075, 'SlotXo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(28, 1077, 'SkyWind', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(30, 1085, 'JDB', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(31, 1091, 'Jili', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(32, 1046, 'IBC', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(33, 1081, 'BTI', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(34, 1105, 'Royal Slot Gaming', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(35, 1110, 'Red Tiger', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(36, 1012, 'SBO', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(37, 9999, 'GCLUB', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(38, 8888, 'PGSoft', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(39, 1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
+		(40, 1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(41, 1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(42, 1002, 'Evolution Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(43, 1003, 'All Bet', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(44, 1004, 'Big Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(45, 1005, 'SA Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(46, 1011, 'Play Tech', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(47, 1020, 'WM Casino', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(48, 1022, 'Sexy Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(49, 1038, 'King 855', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(50, 1052, 'Dream Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(51, 1077, 'SkyWind', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(52, 1053, 'Nexus 4D', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(53, 1074, 'HKGP Lottery', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(54, 1076, 'AMB Poker', NULL, 0, '{"id":"2","name":"Pp"}', NULL, 'OK', NULL),
+		(55, 1006, 'Pragmatic Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(56, 1009, 'CQ9', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(57, 1011, 'Play Tech', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(58, 1013, 'Joker', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(59, 1014, 'Dragon Soft', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(60, 1039, 'AMAYA', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(61, 1041, 'Habanero', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(62, 1048, 'Reevo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(63, 1049, 'EvoPlay', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(64, 1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(65, 1075, 'SlotXo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(66, 1077, 'SkyWind', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(67, 1084, 'Advant Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(68, 1085, 'JDB', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(69, 1091, 'Jili', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(70, 1046, 'IBC', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(71, 1081, 'BTI', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL)
+		`
 	
 
+	err = db.Exec(sql).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "สร้างข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	}
+	games = []models.Games{}
+	err = db.Debug().Find(&games).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": games,
+	}
+	return c.JSON(response)
+}
+
+func GetGameById(c *fiber.Ctx) error {
+	body := new(gameData)
+    if err := c.BodyParser(body); err != nil {
+		 
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",	
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	database.CheckAndCreateTable(db, models.Games{})	
+	game := models.Games{}
+	err = db.Debug().First(&game, body.Id).Error
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	response := fiber.Map{	
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": game,
+	}
+	return c.JSON(response)
+}
+ 
+func UpdateGame(c *fiber.Ctx) error {
+	body := new(gameData)
+    if err := c.BodyParser(body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }	
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",	
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	database.CheckAndCreateTable(db, models.Games{})	
+	game := models.Games{}
+	err = db.Debug().Model(&game).Where("id = ?", body.Id).Updates(game).Error
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	response := fiber.Map{
+		"Message": "อัปเดตข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": game,
+	}
+	return c.JSON(response)
+}
+
+func GetGameStatus(c *fiber.Ctx) error {
+
+	type GameStatus struct {
+		ProductCode string `json:"productCode"`
+		Status string `json:"status"`
+	}
+
+	body := new(gameData)
+    if err := c.BodyParser(body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+	
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",	
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	///database.CheckAndCreateTable(db, models.Games{})	
+	gameStatus := []GameStatus{}
+	err = db.Debug().Table("Games").Select("DISTINCT status").Find(&gameStatus).Error
+	if err != nil {	
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",	
+		"Status":  true,
+		"Data": gameStatus,
+	}
+	return c.JSON(response)
+}
+
+	
 
 
 

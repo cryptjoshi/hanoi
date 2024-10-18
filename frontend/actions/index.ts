@@ -78,6 +78,71 @@ export const GetDatabaseListByPrefix = async (prefix:string) =>{
   return response.json()
 }
 
+export const GetGameList = async (prefix:string) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/all", { method: 'POST',
+  headers: {   
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    },
+   body: JSON.stringify({"prefix":prefix})
+  })
+  return response.json()
+}
+
+export const GetGameStatus = async (prefix:string) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/status", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix})
+})
+return response.json()
+}
+
+
+
+
+export const GetGameById = async (prefix:string,id:number) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/byid", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"id":id})
+})
+return response.json()
+}
+
+export const AddGame = async (prefix:string,body:any) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/create", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"body":body})
+    })  
+    return response.json()
+}
+
+export const UpdateGame = async (prefix:string,id:any,body:any) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/update", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json', 
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"id":id,"body":body})
+    })
+    return response.json()
+}
+
+ 
+
 export const AddPromotion = async (prefix:string,body:any) =>{
  
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/create", { method: 'POST',
@@ -92,9 +157,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
 
     export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
  
-    console.log(values)
-    console.log(promotionId)
-    console.log(dbname)
+ 
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',

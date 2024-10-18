@@ -77,8 +77,12 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/promotion/create",handler.CreatePromotion)
 	app.Post("/db/promotion/update",handler.UpdatePromotion)
 	//app.Post("/db/promotion/delete/:id",handler.DeletePromotion)	
-
-
+	app.Post("/db/game/all",handler.GetGameList)
+	app.Post("/db/game/byid",handler.GetGameById)
+	app.Post("/db/game/status",handler.GetGameStatus)
+	app.Post("/db/game/create",handler.CreateGame)
+	app.Post("/db/game/update",handler.UpdateGame)
+ 
 	app.Delete("/users/logout",jwt.JwtMiddleware,users.Logout)
 
 

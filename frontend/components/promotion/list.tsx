@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/table"
 import EditPromotionPanel from './EditPromotionPanel'
 import { GetPromotion } from '@/actions'
+import { useTranslation } from '@/app/i18n/client'; 
 
 interface Promotion {
   id: string
@@ -61,6 +62,11 @@ interface Promotion {
   minSpend: number
   maxSpend: number
   termsAndConditions: string
+  include: string
+  exclude: string
+  startDate: string
+  endDate: string
+  example: string
 }
 export interface GroupedDatabase {
   // Define the properties of GroupedDatabase here
@@ -77,16 +83,21 @@ interface DataTableProps<TData> {
 export default function PromotionListDataTable({
   prefix,
   data,
-}: {prefix:string, data:DataTableProps<GroupedDatabase>}) {
+  lng,
+
+}: {prefix:string, data:DataTableProps<GroupedDatabase>, lng:string}) {
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [editingPromotion, setEditingPromotion] = useState<string | null>(null);
+  const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
   const [isAddingPromotion, setIsAddingPromotion] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const router = useRouter()
+
+  const {t} = useTranslation(lng,'translation',{keyPrefix:'promotion'})
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -97,19 +108,7 @@ export default function PromotionListDataTable({
       setIsLoading(true);
       try {
         const fetchedPromotions = await GetPromotion(prefix);
-        const serializablePromotions = fetchedPromotions.map((promo: any) => ({
-          id: promo.id,
-          name: promo.name,
-          percentDiscount: promo.percentDiscount,
-          maxDiscount: promo.maxDiscount,
-          usageLimit: promo.usageLimit,
-          specificTime: promo.specificTime,
-          paymentMethod: promo.paymentMethod,
-          minSpend: promo.minSpend,
-          maxSpend: promo.maxSpend,
-          termsAndConditions: promo.termsAndConditions,
-        }));
-        setPromotions(serializablePromotions);
+        setPromotions(fetchedPromotions.Data);
       } catch (error) {
         console.error('Error fetching promotions:', error);
       } finally {
@@ -117,51 +116,71 @@ export default function PromotionListDataTable({
       }
     };
     fetchPromotions();
-  }, [prefix])
+  }, [prefix, refreshTrigger])
 
   const columnHelper = createColumnHelper<Promotion>()
 
   const columns = useMemo(() => [
-    columnHelper.accessor('id', {
-      header: 'ID',
+    columnHelper.accessor('ID', {
+      header: t('ID'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('name', {
-      header: 'โปรโมชั่น',
+      header: t('name'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('percentDiscount', {
-      header: 'หรือรอลด',
+      header: t('percentDiscount'),
       cell: info => `${info.getValue()}%`,
     }),
     columnHelper.accessor('maxDiscount', {
-      header: 'หรือรอลดสูงสุด',
+      header: t('maxDiscount'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('usageLimit', {
-      header: 'รับได้สูงสุด',
+      header: t('usageLimit'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('specificTime', {
-      header: 'เฉพาะเวลา',
+      header: t('specificTime'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('paymentMethod', {
-      header: 'ชำระเงิน',
+    columnHelper.accessor('include', {
+      header: t('include'),
       cell: info => info.getValue(),
     }),
+    columnHelper.accessor('exclude', {
+      header: t('exclude'),
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('startDate', {
+      header: t('startDate'),
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('endDate', {
+      header: t('endDate'),
+      cell: info => info.getValue(),
+    }),
+    // columnHelper.accessor('paymentMethod', {
+    //   header: t('paymentMethod'),
+    //   cell: info => info.getValue(),
+    // }),
     columnHelper.accessor('minSpend', {
-      header: 'ยอดเงินขั้นต่ำ',
+      header: t('minSpend'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('maxSpend', {
-      header: 'ถอนได้สูงสุด',
+      header: t('maxSpend'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('termsAndConditions', {
-      header: 'เงื่อนไขการถอนยอดโบนัส',
+    columnHelper.accessor('example', {
+      header: t('example'),
       cell: info => info.getValue(),
     }),
+    // columnHelper.accessor('termsAndConditions', {
+    //   header: t('termsAndConditions'),
+    //   cell: info => info.getValue(),
+    // }),
       {
     id: "actions",
     enableHiding: false,
@@ -169,24 +188,8 @@ export default function PromotionListDataTable({
       const payment = row.original
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy Promotion ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => openEditPanel(payment.id)}>แก้ไขโปรโมชั่น</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+ 
+        <Button variant={"ghost"} onClick={() => openEditPanel(row.original.ID)}>{t('editPromotion')}</Button>
       )
     },
   },
@@ -220,19 +223,23 @@ export default function PromotionListDataTable({
   })
 
   const handleAddPromotion = () => {
+    setEditingPromotion(null);
     setIsAddingPromotion(true);
   };
 
   const handleCloseAddPromotion = () => {
     setIsAddingPromotion(false);
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  const openEditPanel = (id: string) => {
+  const openEditPanel = (id: number) => {
     setEditingPromotion(id);
+    setIsAddingPromotion(true);
   };
 
   const closeEditPanel = () => {
     setEditingPromotion(null);
+    setRefreshTrigger(prev => prev + 1);
   };
 
   if (isLoading) {
@@ -243,11 +250,11 @@ export default function PromotionListDataTable({
     <div className="w-full">
       <div className="flex items-center justify-between mt-4 mb-4">
        
-        <Button onClick={handleAddPromotion}>เพิ่มโปรโมชั่น</Button>
+        <Button onClick={handleAddPromotion}>{t('addPromotion')}</Button>
       </div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter databases..."
+          placeholder={t('filterPromotion')}
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -257,7 +264,7 @@ export default function PromotionListDataTable({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
+              {t('columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -270,11 +277,13 @@ export default function PromotionListDataTable({
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+                    onCheckedChange={(value) => {
+                      if (value !== column.getIsVisible()) {
+                        column.toggleVisibility(!!value)
+                      }
+                    }}
                   >
-                    {column.id}
+                    {t(column.id as string)}
                   </DropdownMenuCheckboxItem>
                 )
               })}
@@ -324,7 +333,7 @@ export default function PromotionListDataTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {t('noResults')}
                 </TableCell>
               </TableRow>
             )}
@@ -333,8 +342,8 @@ export default function PromotionListDataTable({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredSelectedRowModel().rows.length} {t('of')}{" "}
+          {table.getFilteredRowModel().rows.length} {t('rowSelected')}.
         </div>
         <div className="space-x-2">
           <Button
@@ -343,7 +352,7 @@ export default function PromotionListDataTable({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t('previous')}
           </Button>
           <Button
             variant="outline"
@@ -351,7 +360,7 @@ export default function PromotionListDataTable({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       </div>
@@ -359,12 +368,17 @@ export default function PromotionListDataTable({
         <EditPromotionPanel 
           promotionId={editingPromotion} 
           onClose={closeEditPanel}
+          lng={lng}
+          prefix={prefix}
         />
       )}
       <EditPromotionPanel
+        promotionId={editingPromotion} 
         isOpen={isAddingPromotion}
+        lng={lng}
+        prefix={prefix}
         onClose={handleCloseAddPromotion}
-        promotionId={null}
+      
       />
     </div>
   )

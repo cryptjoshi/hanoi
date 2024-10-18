@@ -35,7 +35,7 @@ import {
  
 import React from "react"
 import { ChevronDownIcon } from "lucide-react"
-
+import { useTranslation } from '@/app/i18n/client';
  
 
 import { useState } from "react"
@@ -54,9 +54,11 @@ interface DataTableProps<TData> {
 }
 
 export function AgentListDataTable({
+  lng,
   columns,
   data,
-}: DataTableProps<GroupedDatabase>) {
+}: DataTableProps<GroupedDatabase> & {lng:string}) {
+  const {t} = useTranslation(lng,'translation',{keyPrefix:'promotion'})
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -170,7 +172,7 @@ export function AgentListDataTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {t('noResults')}
                 </TableCell>
               </TableRow>
             )}
@@ -179,8 +181,8 @@ export function AgentListDataTable({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredSelectedRowModel().rows.length} {t('of')}{" "}
+          {table.getFilteredRowModel().rows.length} {t('rowSelected')}.
         </div>
         <div className="space-x-2">
           <Button
@@ -189,7 +191,7 @@ export function AgentListDataTable({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t('previous')}
           </Button>
           <Button
             variant="outline"
@@ -197,7 +199,7 @@ export function AgentListDataTable({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       </div>

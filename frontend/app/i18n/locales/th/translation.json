@@ -49,34 +49,59 @@
     }
     },
     "promotion": {
+        "ID": "รหัส",
         "name": "โปรโมชัน",
-        "percentDiscount": "ร้อยละลด",
-        "maxDiscount": "ลดสูงสุด",
+        "percentDiscount": "เครดิตฟรี",
+        "maxDiscount": "เครดิตฟรีสูงสุด",
         "usageLimit": "จำนวนการใช้งาน",
         "specificTime": "เฉพาะเวลา",
         "paymentMethod": "ชำระเงิน",
         "minSpend": "ยอดเงินขั้นต่ำ",
         "maxSpend": "ยอดเงินสูงสุด",
+        "example": "ตัวอย่าง",
         "termsAndConditions": "เงื่อนไขการถอนยอดโบนัส",
         "title": "โปรโมชัน",
         "description": "รายละเอียดโปรโมชัน",
         "edit": {
             "title": "แก้ไขโปรโมชัน",
-            "description": "แก้ไขรายละเอียดโปรโมชัน"
+            "description": "แก้ไขรายละเอียดโปรโมชัน",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด"
         },
         "add": {
             "title": "เพิ่มโปรโมชัน",
-            "description": "เพิ่มรายละเอียดโปรโมชัน"
+            "description": "เพิ่มรายละเอียดโปรโมชัน",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด"
         },
         "save": "บันทึก",
+        "cancel": "ยกเลิก",
         "copyPromotionID": "คัดลอกรหัสโปรโมชัน",
-        "editPromotion": "แก้ไขโปรโมชัน",
+        "editPromotion": "แก้ไข",
         "addPromotion": "เพิ่มโปรโมชัน",
         "filterPromotion": "กรองโปรโมชัน",
         "columns": "คอลัมน์",
         "rowSelected": "แถวที่เลือก",
         "previous": "ก่อนหน้า",
-        "next": "ต่อไป"
+        "next": "ต่อไป",
+        "viewagent": "ดูสมาชิก",
+        "names": "ชื่อ",
+        "prefix": "ชื่อย่อ",
+        "status": "สถานะ",
+        "action": "การดำเนินการ",
+        "endDate": "วันที่สิ้นสุด",
+        "startDate": "วันที่เริ่มต้น",
+        "selectStatus": "เลือกสถานะ",
+        "status_active": "ทำงาน",
+        "status_inactive": "ไม่ทำงาน",
+        "success": "สำเร็จ",
+        "error": "ข้อผิดพลาด",
+        "noResults": "ไม่พบข้อมูล",
+        "of": "ของ",
+        "account": "บัญชี",
+        "promotion": "โปรโมชัน",
+        "include": "รวม",
+        "exclude": "ยกเว้น"
     }
 
 }

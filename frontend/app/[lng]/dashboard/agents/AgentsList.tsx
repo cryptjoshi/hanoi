@@ -16,5 +16,5 @@ export default function AgentsList({ lng, data, columns }: AgentsListProps) {
   const sortedData = [...data].sort((a, b) => a.prefix.localeCompare(b.prefix));
  
 
-  return <AgentListDataTable columns={columns} data={sortedData} />;
+  return <AgentListDataTable lng={lng} columns={columns} data={sortedData} />;
 }

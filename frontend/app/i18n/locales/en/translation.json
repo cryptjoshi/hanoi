@@ -48,34 +48,59 @@
     }
     },
     "promotion": {
+        "ID": "ID",
         "name": "Promotion",
-        "percentDiscount": "Percent Discount",
-        "maxDiscount": "Max Discount",
-        "usageLimit": "Usage Limit",
+        "percentDiscount": "Free Credit",
+        "maxDiscount": "Max Free Credit",
+        "usageLimit": "Receive Limit",
         "specificTime": "Specific Time",
         "paymentMethod": "Payment Method",
-        "minSpend": "Min Spend",
-        "maxSpend": "Max Spend",
+        "minSpend": "Min Turnover",
+        "maxSpend": "Max Withdrawal",
+        "example": "Example",
         "termsAndConditions": "Terms and Conditions",
         "title": "Promotion",
         "description": "Promotion detail",
         "edit": {
             "title": "Edit Promotion",
-            "description": "Edit promotion detail"
+            "description": "Edit promotion detail",
+            "success": "Success",
+            "error": "Error"
         },
         "add": {
             "title": "Add Promotion",
-            "description": "Add promotion detail"
+            "description": "Add promotion detail",
+            "success": "Success",
+            "error": "Error"
         },
         "save": "Save",
+        "cancel": "Cancel",
         "copyPromotionID": "Copy Promotion ID",
-        "editPromotion": "Edit Promotion",
+        "editPromotion": "Edit",
         "addPromotion": "Add Promotion",
         "filterPromotion": "Filter Promotion",
         "columns": "Columns",
         "rowSelected": "row(s) selected",
         "previous": "Previous",
-        "next": "Next"
+        "next": "Next",
+        "viewagent": "View Agent",
+        "names": "Names",
+        "prefix": "Prefix",
+        "status": "Status",
+        "action": "Action",
+        "endDate": "End Date",
+        "startDate": "Start Date",
+        "selectStatus": "Select Status",
+        "status_active": "Active",
+        "status_inactive": "Inactive",
+        "success": "Success",
+        "error": "Error",
+        "noResults": "No results",
+        "of": "of",
+        "account": "Account",
+        "promotion": "Promotion",
+        "include": "Include",
+        "exclude": "Exclude"
     }
 }
   

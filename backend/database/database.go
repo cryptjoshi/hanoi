@@ -7,6 +7,7 @@ import (
 	"sync"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 )
 
 // var Database *gorm.DB
@@ -36,6 +37,10 @@ var (
 
 const baseDSN = "web:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
 //const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+func handleError(err error) {
+	log.Fatal(err)
+}
+
 func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
     migrator := db.Migrator()
     tableName := db.Model(model).Statement.Table
@@ -48,6 +53,10 @@ func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
         }
         fmt.Printf("Table '%s' created successfully\n", tableName)
     } else {
+		
+	if err := db.AutoMigrate(&model); err != nil {
+		handleError(err)
+	}
         fmt.Printf("Table '%s' already exists\n", tableName)
     }
 

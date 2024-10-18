@@ -22,21 +22,19 @@ type Promotion struct {
 	Widthdrawmax       decimal.Decimal   `gorm:"type:numeric" json:"Widthdrawmax"`
     Formular   string   `gorm:"size:255;not null;" json:"formular"`
 	Options   string   `gorm:"size:255;not null;" json:"options"`
-	// Bankid        string `gorm:"size:255;not null;" json:"bankid"`
-	// Bankname      string `gorm:"size:255;not null;" json:"bankname"`
-	DeletedAt     string `gorm:"size:255;not null;" json:"deletedAt"`
+	DeletedAt     string `gorm:"size:255;default:null;" json:"deletedAt"`
 	Name string `gorm:"size:255;not null;" json:"name"`
 	PercentDiscount decimal.Decimal `gorm:"type:numeric" json:"percentDiscount"`
 	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"maxDiscount"`
-	UsageLimit string `gorm:"size:255;not null;" json:"usageLimit"`
+	UsageLimit int `json:"usageLimit"`
 	SpecificTime string `gorm:"size:255;not null;" json:"specificTime"`
 	PaymentMethod string `gorm:"size:255;not null;" json:"paymentMethod"`
 	MinSpend decimal.Decimal `gorm:"type:numeric" json:"minSpend"`
 	MaxSpend decimal.Decimal `gorm:"type:numeric" json:"maxSpend"`
 	TermsAndConditions string `gorm:"size:255;not null;" json:"termsAndConditions"`
-	// Deviceid      string `gorm:"type:text"json:"deviceid"`
-	// ID            uint  `json:"id"`
-	// Level         int  `json:"level"`
-	// Pin           string `gorm:"type:text" json:"pin"`
+	Description string `gorm:"size:255;not null;" json:"description"`
+	StartDate string `gorm:"size:255;not null;" json:"startDate"`
+	EndDate string `gorm:"size:255;not null;" json:"endDate"`
 	Status        int  `json:"status"`
+	Example string `gorm:"size:255;not null;" json:"example"`
 }

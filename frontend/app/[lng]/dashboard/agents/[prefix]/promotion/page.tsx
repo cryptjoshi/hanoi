@@ -77,7 +77,7 @@ export default async function PostsPage({ params }: { params: { lng: string } })
         </BreadcrumbList>
       </Breadcrumb>
       <PlaceholderContent>
-        <PromotionList />
+        <PromotionList  />
       </PlaceholderContent>
     </ContentLayout>
   );

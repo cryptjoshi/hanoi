@@ -9,6 +9,7 @@ import { kanit } from "@/lib/fonts";
 import { dir } from 'i18next'
 import { languages } from '@/app/i18n/settings'
 import LanguageSwitcher from "@/components/LanguageSwitcher"
+import { LanguageProvider } from '@/app/contexts/LanguageContext'
 
 export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }))
@@ -49,9 +50,10 @@ export default function RootLayout({
   return (
     <html lang={lng} dir={dir(lng)}>
       <body className={`${kanit.className} ${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
-        {children}
-  
-        <Toaster />
+       
+          {children}
+          <Toaster />
+   
       </body>
     </html>
   );

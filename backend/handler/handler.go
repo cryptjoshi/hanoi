@@ -15,6 +15,7 @@ import (
 	"hanoi/models"
 	"gorm.io/gorm"
 	"math/rand"
+	"github.com/shopspring/decimal"
 	//"github.com/golang-jwt/jwt"
 	jtoken "github.com/golang-jwt/jwt/v4"
 	//"github.com/solrac97gr/basic-jwt-auth/config"
@@ -762,111 +763,248 @@ func CreateDB(db *gorm.DB, dbName string) error {
     fmt.Printf("Database %s created successfully\n", dbName)
     return nil
 }
+type promotiondata struct {
+	Prefix string `json:"prefix"`
+	Body   struct {
+		Id                  string              `json:"id"`
+		Name                string              `json:"name"`
+		Description         string              `json:"description"`
+		PercentDiscount     decimal.NullDecimal `json:"percentDiscount"`
+		StartDate           string              `json:"startDate"`
+		EndDate             string              `json:"endDate"`
+		MaxDiscount         decimal.NullDecimal `json:"maxDiscount"`
+		UsageLimit          int                 `json:"usageLimit"`
+		SpecificTime        string              `json:"specificTime"`
+		PaymentMethod       string              `json:"paymentMethod"`
+		MinSpend            decimal.NullDecimal `json:"minSpend"`
+		MaxSpend            decimal.NullDecimal `json:"maxSpend"`
+		TermsAndConditions  string              `json:"termsAndConditions"`
+		Status              int                 `json:"status"`
+	} `json:"body"`
 
+	PromotionId int `json:"promotionId"`
+}
+func CreatePromotion(c *fiber.Ctx) error {
+	
+	var data promotiondata
+ 
+	if err := c.BodyParser(&data); err != nil {
+	 
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+			"data": data,
+		})
+	}
+	 
+ 
+ 
+    var prefixs = struct{
+        development string
+        production string
+    }{
+        development: data.Prefix+"_development",
+        production: data.Prefix+"_production",
+    }
+    db, err := database.ConnectToDB(prefixs.development)
+	if db == nil {
+      
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+
+    }
+    if err != nil {
+        log.Fatal(err)
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+
+    }
+   // database.CheckAndCreateTable(db, models.Promotion{})
+   
+    promotion := models.Promotion{
+        Name:                data.Body.Name,
+        Description:         data.Body.Description,
+        PercentDiscount:     data.Body.PercentDiscount.Decimal,
+        StartDate:           data.Body.StartDate,
+        EndDate:             data.Body.EndDate,
+        MaxDiscount:         data.Body.MaxDiscount.Decimal,
+        UsageLimit:          data.Body.UsageLimit,
+        SpecificTime:        data.Body.SpecificTime,
+        PaymentMethod:       data.Body.PaymentMethod,
+        MinSpend:            data.Body.MinSpend.Decimal,
+        MaxSpend:            data.Body.MaxSpend.Decimal,
+        TermsAndConditions:  data.Body.TermsAndConditions,
+        Status:              data.Body.Status,
+    }
+//	fmt.Println(db)
+//	fmt.Println(promotion)
+    err = db.Create(&promotion).Error
+	
+    if err != nil {
+	
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+    response := fiber.Map{
+        "Message": "สร้างข้อมูลสำเร็จ",
+        "Status":  true,
+        "Data": promotion,
+    }
+
+    return c.JSON(response)
+}
 
 func GetPromotion(c *fiber.Ctx) error {
-	body := new(Dbstruct)
-	if err := c.BodyParser(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}	
-	 
-	var prefixs = struct{
-		development string
-		production string
-	}{
-		development: body.Prefix+"_development",
-		production: body.Prefix+"_production",
-	}
-	
-	db, err := database.ConnectToDB(prefixs.development)
-	if err != nil {
-		log.Fatal(err)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	 database.CheckAndCreateTable(db, models.Promotion{})
-	promotions := []models.Promotion{}
+    body := new(Dbstruct)
+    if err := c.BodyParser(body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
 
-	db.Find(&promotions)
-	return c.JSON(promotions)
+    var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+
+    db, err := database.ConnectToDB(prefixs.development)
+    if err != nil {
+       
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+    }
+    database.CheckAndCreateTable(db, models.Promotion{})
+    promotions := []models.Promotion{}
+
+     err = db.Debug().Find(&promotions).Error
+
+	// fmt.Println(promotions)
+	 if err != nil {
+		
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+	 }
+
+	 return c.JSON(fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": promotions,
+	 })
+
+	//	return c.JSON(promotions)
 }
 
 func GetPromotionById(c *fiber.Ctx) error {
-	body := new(Dbstruct)
-	if err := c.BodyParser(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+    body := new(promotiondata)
+    if err := c.BodyParser(body); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+    var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+    db, err := database.ConnectToDB(prefixs.development)
+    if err != nil {
+       
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+    }
+    promotion := models.Promotion{}
+    err = db.Debug().First(&promotion,body.PromotionId).Error
+    if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
+    }
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": promotion,
 	}
-	var prefixs = struct{
-		development string
-		production string
-	}{
-		development: body.Prefix+"_development",
-		production: body.Prefix+"_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	promotion := models.Promotion{}
-	db.First(&promotion, c.Params("id"))
-	return c.JSON(promotion)
-}
+	return c.JSON(response)
+   
 
-func CreatePromotion(c *fiber.Ctx) error {
-	body := new(Dbstruct)
-	if err := c.BodyParser(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	var prefixs = struct{
-		development string
-		production string
-	}{
-		development: body.Prefix+"_development",
-		production: body.Prefix+"_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	promotion := models.Promotion{}
-	db.Create(&promotion)
-	return c.JSON(promotion)
 }
+ 
 
 func UpdatePromotion(c *fiber.Ctx) error {
-	body := new(Dbstruct)
-	if err := c.BodyParser(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	var prefixs = struct{	
-		development string
-		production string
-	}{
-		development: body.Prefix+"_development",
-		production: body.Prefix+"_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+    data := new(promotiondata)
+    if err := c.BodyParser(data); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+
+	promotion := models.Promotion{
+        Name:                data.Body.Name,
+        Description:         data.Body.Description,
+        PercentDiscount:     data.Body.PercentDiscount.Decimal,
+        StartDate:           data.Body.StartDate,
+        EndDate:             data.Body.EndDate,
+        MaxDiscount:         data.Body.MaxDiscount.Decimal,
+        UsageLimit:          data.Body.UsageLimit,
+        SpecificTime:        data.Body.SpecificTime,
+        PaymentMethod:       data.Body.PaymentMethod,
+        MinSpend:            data.Body.MinSpend.Decimal,
+        MaxSpend:            data.Body.MaxSpend.Decimal,
+        TermsAndConditions:  data.Body.TermsAndConditions,
+        Status:              data.Body.Status,
+    }
+
+    var prefixs = struct{	
+        development string
+        production string
+    }{
+        development: data.Prefix+"_development",
+        production: data.Prefix+"_production",
+    }
+    db, err := database.ConnectToDB(prefixs.development)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": err.Error(),
+        })
+    }
+    //promotion = models.Promotion{}
+    err = db.Debug().Model(&promotion).Where("id = ?", data.PromotionId).Updates(promotion).Error
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			}
+		return c.JSON(response)
 	}
-	promotion := models.Promotion{}
-	db.Model(&promotion).Updates(promotion)
-	return c.JSON(promotion)
+ 
+	response := fiber.Map{
+		"Message": "อัปเดตข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": promotion,
+	}
+	return c.JSON(response)
 }
 
 

@@ -68,7 +68,13 @@
             "success": "สำเร็จ",
             "error": "ข้อผิดพลาด",
             "error_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
-            "success_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน"
+            "success_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
+            "gameStatus": "สถานะเกม",
+            "gameStatus_description": "สถานะเกมสำหรับโปรโมชัน",
+            "games": "ประเภทเกม",
+            "edit": "แก้ไข",
+            "options": "ตัวเลือก",
+            "delete": "ลบ"
         },
         "add": {
             "title": "เพิ่มโปรโมชัน",
@@ -77,6 +83,8 @@
             "error": "ข้อผิดพลาด",
             "error_description": "ข้อผิดพลาดในการเพิ่มโปรโมชัน"
         },
+        "selectAll": "เลือกทั้งหมด",
+        "deselectAll": "ยกเลิกเลือกทั้งหมด",
         "save": "บันทึก",
         "cancel": "ยกเลิก",
         "copyPromotionID": "คัดลอกรหัสโปรโมชัน",
@@ -102,7 +110,7 @@
         "noResults": "ไม่พบข้อมูล",
         "of": "ของ",
         "account": "บัญชี",
-        "promotion": "โปรโมชัน",
+        "promotion": "ตั้งค่าทั่วไป",
         "include": "รวม",
         "exclude": "ยกเว้น",
         "backToList": "กลับไปยังรายการ",

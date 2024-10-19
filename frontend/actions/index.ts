@@ -130,7 +130,7 @@ export const AddGame = async (prefix:string,body:any) =>{
 }
 
 export const UpdateGame = async (prefix:string,id:any,body:any) =>{
- console.log( JSON.stringify({"prefix":prefix,"id":id,"body":body}))
+  
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json', 
@@ -157,7 +157,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
 
     export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
  
- 
+   console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',

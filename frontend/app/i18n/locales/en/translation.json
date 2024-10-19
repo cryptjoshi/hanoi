@@ -67,7 +67,13 @@
             "success": "Success",
             "error": "Error",
             "error_description": "Promotion edit error description",
-            "success_description": "Promotion edit success description"
+            "success_description": "Promotion edit success description",
+            "gameStatus": "Game Status",
+            "gameStatus_description": "Game status for promotion",
+            "games": "Games",
+            "edit": "Edit",
+            "options": "Options",
+            "delete": "Delete"
         },
         "add": {
             "title": "Add Promotion",
@@ -76,6 +82,8 @@
             "error": "Error",
             "error_description": "Promotion add error description"
         },
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
         "save": "Save",
         "cancel": "Cancel",
         "copyPromotionID": "Copy Promotion ID",
@@ -111,7 +119,7 @@
         "noResults": "No results",
         "of": "of",
         "account": "Account",
-        "promotion": "Promotion",
+        "promotion": "Settings",
         "include": "Include",
         "exclude": "Exclude",
         "backToList": "Back to List",

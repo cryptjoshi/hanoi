@@ -47,8 +47,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+
+import { ArrowLeftIcon } from "@radix-ui/react-icons"
+import { useQuery } from '@tanstack/react-query'
+import { Dialog, DialogContent, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+
 import EditPromotionPanel from './EditPromotionPanel'
-import { GetPromotion } from '@/actions'
+import { GetGameStatus, GetPromotion } from '@/actions'
 import { useTranslation } from '@/app/i18n/client'; 
 
 interface Promotion {
@@ -62,8 +67,8 @@ interface Promotion {
   minSpend: number
   maxSpend: number
   termsAndConditions: string
-  include: string
-  exclude: string
+  includegames: string
+  excludegames: string
   startDate: string
   endDate: string
   example: string
@@ -80,7 +85,6 @@ interface DataTableProps<TData> {
   data: TData[]
 }
 
-import { ArrowLeftIcon } from "@radix-ui/react-icons"
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -157,8 +161,11 @@ export default function PromotionListDataTable({
   const [showTable, setShowTable] = useState(true);
   const router = useRouter()
 
-  const {t} = useTranslation(lng,'translation',{keyPrefix:'promotion'})
-
+  const {t} = useTranslation(lng,'translation',undefined)
+  const { data: gameTypes, isLoading: gameStatusLoading } = useQuery({
+    queryKey: ['gameTypes'],
+    queryFn: async () => await GetGameStatus(prefix),
+  });
   useEffect(() => {
     const fetchPromotions = async () => {
       if (!prefix) {
@@ -182,47 +189,94 @@ export default function PromotionListDataTable({
 
   const columns = useMemo(() => [
     columnHelper.accessor('ID', {
-      header: t('ID'),
+      header: t('promotion.ID'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('name', {
-      header: t('name'),
+      header: t('promotion.name'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('percentDiscount', {
-      header: t('percentDiscount'),
+      header: t('promotion.percentDiscount'),
       cell: info => `${info.getValue()}%`,
     }),
     columnHelper.accessor('maxDiscount', {
-      header: t('maxDiscount'),
+      header: t('promotion.maxDiscount'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('usageLimit', {
-      header: t('usageLimit'),
+      header: t('promotion.usageLimit'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('specificTime', {
-      header: t('specificTime'),
+      header: t('promotion.specificTime'),
       cell: info => {
         const value = info.getValue();
-      //  console.log('Raw specificTime value:', value); // For debugging
-        return typeof value === 'string' ? formatSpecificTime(value) : '';
+        return typeof value === 'string' ? formatSpecificTime(value,lng) : '';
       }
     }),
-    columnHelper.accessor('include', {
-      header: t('include'),
-      cell: info => info.getValue(),
+    columnHelper.accessor('includegames', {
+      header: t('promotion.include'),
+      cell: info => {
+        const value = info.getValue();
+        if (!gameTypes || !gameTypes.Data || typeof gameTypes.Data !== 'object') return value;
+        return value.split(',').map(id => {
+          const game = Object.values(gameTypes.Data).find((g: any) => {
+            try {
+              const status = JSON.parse(g.status);
+              return status.id.toString() === id.trim();
+            } catch (e) {
+              console.error('Error parsing game status:', e);
+              return false;
+            }
+          });
+          if (game) {
+            try {
+              const status = JSON.parse(game.status);
+              return t(`games.${status.name}`);
+            } catch (e) {
+              console.error('Error parsing game status:', e);
+              return id;
+            }
+          }
+          return id;
+        }).join(', ');
+      },
     }),
-    columnHelper.accessor('exclude', {
-      header: t('exclude'),
-      cell: info => info.getValue(),
+    columnHelper.accessor('excludegames', {
+      header: t('promotion.exclude'),
+      cell: info => {
+        const value = info.getValue();
+        if (!gameTypes || !gameTypes.Data || typeof gameTypes.Data !== 'object') return value;
+        return value.split(',').map(id => {
+          const game = Object.values(gameTypes.Data).find((g: any) => {
+            try {
+              const status = JSON.parse(g.status);
+              return status.id.toString() === id.trim();
+            } catch (e) {
+              console.error('Error parsing game status:', e);
+              return false;
+            }
+          });
+          if (game) {
+            try {
+              const status = JSON.parse(game.status);
+              return t(`games.${status.name}`);
+            } catch (e) {
+              console.error('Error parsing game status:', e);
+              return id;
+            }
+          }
+          return id;
+        }).join(', ');
+      },
     }),
     columnHelper.accessor('startDate', {
-      header: t('startDate'),
+      header: t('promotion.startDate'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('endDate', {
-      header: t('endDate'),
+      header: t('promotion.endDate'),
       cell: info => info.getValue(),
     }),
     // columnHelper.accessor('paymentMethod', {
@@ -230,15 +284,15 @@ export default function PromotionListDataTable({
     //   cell: info => info.getValue(),
     // }),
     columnHelper.accessor('minSpend', {
-      header: t('minSpend'),
+      header: t('promotion.minSpend'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('maxSpend', {
-      header: t('maxSpend'),
+      header: t('promotion.maxSpend'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('example', {
-      header: t('example'),
+      header: t('promotion.example'),
       cell: info => info.getValue(),
     }),
     // columnHelper.accessor('termsAndConditions', {
@@ -252,12 +306,41 @@ export default function PromotionListDataTable({
       const payment = row.original
 
       return (
- 
-        <Button variant={"ghost"} onClick={() => openEditPanel(row.original.ID)}>{t('editPromotion')}</Button>
+            // <DropdownMenu>
+            //   <DropdownMenuTrigger asChild>
+            //     <Button variant={"ghost"}>{t('promotion.edit.options')}</Button>
+            //   </DropdownMenuTrigger>  
+            //   <DropdownMenuContent>
+            //     <DropdownMenuItem  onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.edit')}</DropdownMenuItem>
+            //     <DropdownMenuItem onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.delete')}</DropdownMenuItem>
+            //   </DropdownMenuContent>
+            // </DropdownMenu>
+            <DropdownMenu>
+            <DropdownMenuTrigger> <Button variant={"ghost"}>{t('promotion.edit.options')}</Button></DropdownMenuTrigger>
+            <DropdownMenuContent>
+            <DropdownMenuItem  onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.edit')}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  {t('promotion.edit.delete')}
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent>
+                  {t('promotion.edit.delete_description')}
+                  <DialogFooter>
+                    <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.delete')}</Button>
+                    <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.cancel')}</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+       
       )
     },
   },
-  ], [])
+  ], [gameTypes, t])
 
   const table = useReactTable({
     data: promotions,
@@ -319,11 +402,11 @@ export default function PromotionListDataTable({
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
-            <Button onClick={handleAddPromotion}>{t('addPromotion')}</Button>
+            <Button onClick={handleAddPromotion}>{t('promotion.addPromotion')}</Button>
           </div>
           <div className="flex items-center py-4">
             <Input
-              placeholder={t('filterPromotion')}
+              placeholder={t('promotion.filterPromotion')}
               value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
                 table.getColumn("name")?.setFilterValue(event.target.value)
@@ -333,7 +416,7 @@ export default function PromotionListDataTable({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
-                  {t('columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
+                  {t('promotion.columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -402,7 +485,7 @@ export default function PromotionListDataTable({
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      {t('noResults')}
+                      {t('promotion.noResults')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -411,8 +494,8 @@ export default function PromotionListDataTable({
           </div>
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              {table.getFilteredSelectedRowModel().rows.length} {t('of')}{" "}
-              {table.getFilteredRowModel().rows.length} {t('rowSelected')}.
+              {table.getFilteredSelectedRowModel().rows.length} {t('promotion.of')}{" "}
+              {table.getFilteredRowModel().rows.length} {t('promotion.rowSelected')}.
             </div>
             <div className="space-x-2">
               <Button
@@ -421,7 +504,7 @@ export default function PromotionListDataTable({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                {t('previous')}
+                {t('promotion.previous')}
               </Button>
               <Button
                 variant="outline"
@@ -429,7 +512,7 @@ export default function PromotionListDataTable({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                {t('next')}
+                {t('promotion.next')}
               </Button>
             </div>
           </div>
@@ -442,7 +525,7 @@ export default function PromotionListDataTable({
             className="mb-4"
           >
             <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            {t('backToList')}
+            {t('promotion.backToList')}
           </Button>
           <EditPromotionPanel
             promotionId={editingPromotion}

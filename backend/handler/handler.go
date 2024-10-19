@@ -702,6 +702,8 @@ type promotiondata struct {
 		MaxSpend            decimal.NullDecimal `json:"maxSpend"`
 		TermsAndConditions  string              `json:"termsAndConditions"`
 		Status              int                 `json:"status"`
+		Includegames        string              `json:"includegames"`
+		Excludegames        string              `json:"excludegames"`
 	} `json:"body"`
 
 	PromotionId int `json:"promotionId"`
@@ -762,6 +764,8 @@ func CreatePromotion(c *fiber.Ctx) error {
         MaxSpend:            data.Body.MaxSpend.Decimal,
         TermsAndConditions:  data.Body.TermsAndConditions,
         Status:              data.Body.Status,
+        Includegames:        data.Body.Includegames,
+        Excludegames:        data.Body.Excludegames,
     }
 
     err = db.Create(&promotion).Error
@@ -895,6 +899,8 @@ func UpdatePromotion(c *fiber.Ctx) error {
         MaxSpend:            data.Body.MaxSpend.Decimal,
         TermsAndConditions:  data.Body.TermsAndConditions,
         Status:              data.Body.Status,
+        Includegames:        data.Body.Includegames,
+        Excludegames:        data.Body.Excludegames,
     }
  
     var prefixs = struct{	
@@ -910,6 +916,9 @@ func UpdatePromotion(c *fiber.Ctx) error {
             "error": err.Error(),
         })
     }
+	err = db.AutoMigrate(&models.Promotion{})
+	//db.AutoMigrate(&models.Promotion{});
+	//AutoMigrate(&models.TsxAdmin{},&models.Provider{},&models.Promotion{});
     //promotion = models.Promotion{}
     err = db.Debug().Model(&promotion).Where("id = ?", data.PromotionId).Updates(promotion).Error
 	if err != nil {

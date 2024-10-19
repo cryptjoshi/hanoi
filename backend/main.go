@@ -13,8 +13,8 @@ import (
 	//"hanoi/handler"
 	//"hanoi/users"
 	"hanoi/route"
-	//"hanoi/database"
-	//"hanoi/models"
+	// "hanoi/database"
+	// "hanoi/models"
 	//"hanoi/handler/njwt"
 	//"gorm.io/gorm"
 	"time"
@@ -50,7 +50,7 @@ import (
 // }
 // func migrateAdmin() {
  
-// 	if err := database.Database.AutoMigrate(&models.TsxAdmin{},&models.Provider{}); err != nil {
+// 	if err := database.Database.AutoMigrate(&models.TsxAdmin{},&models.Provider{},&models.Promotion{}); err != nil {
 // 		handleError(err)
 // 	}
 // 	fmt.Println("Migrations Admin Tables executed successfully")
@@ -120,7 +120,7 @@ func main() {
 
     // // Sleep เพื่อรอให้ goroutine ทำงานเสร็จ (ตัวอย่างเพื่อให้เห็นผล)
     // time.Sleep(6 * time.Second)
-	 //migrateAdmin()
+	//migrateAdmin()
 
 	 v1 := app.Group("/api/v1")
 	 route.SetupRoutes(v1)

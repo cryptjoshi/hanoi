@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AddPromotion, GetPromotionById, UpdatePromotion } from '@/actions';
+import { AddPromotion, GetPromotionById, UpdatePromotion,GetGameStatus } from '@/actions';
 import { useTranslation } from '@/app/i18n/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
@@ -19,6 +19,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useQuery } from '@tanstack/react-query';
 
 interface EditPromotionPanelProps {
   promotionId: string | null;
@@ -45,6 +47,8 @@ interface Promotion {
   termsAndConditions: string;
   example: string;
   status: string;
+  includegames: string;
+  excludegames: string;
 }
 
 // Update the form schema
@@ -70,6 +74,8 @@ const formSchema = z.object({
   termsAndConditions: z.string(),
   status: z.coerce.number(),
   example: z.string(),
+  includegames: z.string(),
+  excludegames: z.string(),
 })
 
 interface SpecificTime {
@@ -111,10 +117,17 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
     termsAndConditions: '',
     status: '0',
     example: '',
+    includegames: '',
+    excludegames: '',
   });
 
   const {t} = useTranslation(lng,'translation',undefined)
 
+  const { data: gameTypes, isLoading: gameStatusLoading } = useQuery({
+    queryKey: ['gameTypes'],
+    queryFn: async () => await GetGameStatus(prefix),
+  });
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: promotion // Initialize with an empty object
@@ -144,6 +157,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       maxSpend: values.maxSpend.toString(),
       status: values.status, // Convert status to string
       specificTime: JSON.stringify(specificTime),
+      includegames: values.includegames.toString(),
+      excludegames: values.excludegames.toString(),
     };
    
     if (promotionId) {
@@ -186,11 +201,19 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
   };
 
   return (
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
     <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
       <h2 className="text-2xl font-bold mb-4">{promotionId ? t('promotion.edit.title') : t('promotion.add.title')}</h2>
       <p className="text-gray-600 mb-6">{t('promotion.edit.description')}</p>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <Tabs defaultValue="promotion">
+        <TabsList>
+          <TabsTrigger value="promotion">{t('promotion.promotion')}</TabsTrigger>
+          <TabsTrigger value="games">{t('promotion.edit.games')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="promotion" >
+     
+
           <FormField
             control={form.control}
             name="name"
@@ -496,13 +519,83 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               </FormItem>
             )}
           />
-          <div className="flex justify-end space-x-2 mt-6">
+      
+      
+    </TabsContent>
+    <TabsContent value="games">
+      <div className="flex flex-col justify-between space-y-4">
+        <Button type="button"
+          onClick={() => {
+            const allGameIds = gameTypes?.Data?.map((item: any) => {
+              try {
+                return JSON.parse(item.status).id.toString();
+              } catch {
+                return null;
+              }
+            }).filter(Boolean) || [];
+            const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
+            const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
+            
+            if (currentIncludeGames.length === allGameIds.length) {
+              // If all games are currently included, exclude all
+              form.setValue('includegames', '');
+              form.setValue('excludegames', allGameIds.join(','));
+            } else {
+              // Otherwise, include all games
+              form.setValue('includegames', allGameIds.join(','));
+              form.setValue('excludegames', '');
+            }
+          }}
+          variant="outline"
+          className="w-full"
+          disabled={!gameTypes?.Data?.length}
+        >
+          {((form.watch('includegames')?.split(',').filter(Boolean).length || 0) === (gameTypes?.Data?.length || 0)) && gameTypes?.Data?.length > 0
+            ? t('promotion.deselectAll') 
+            : t('promotion.selectAll')}
+        </Button>
+
+        <div className="space-y-4">
+          {gameTypes?.Data?.map((item: any) => {
+            const status = JSON.parse(item.status);
+            
+            const isIncluded = form.watch('includegames')?.split(',').includes(status.id.toString());
+
+            function handleGameTypeToggle(id: string): void {
+              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean);
+              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean);
+
+              if (isIncluded) {
+                form.setValue('includegames', currentIncludeGames.filter(gameId => gameId !== id).join(','));
+                form.setValue('excludegames', [...currentExcludeGames, id].join(','));
+              } else {
+                form.setValue('excludegames', currentExcludeGames.filter(gameId => gameId !== id).join(','));
+                form.setValue('includegames', [...currentIncludeGames, id].join(','));
+              }
+            }
+
+            return (
+              <div key={status.name} className="flex items-center justify-between p-2 border rounded">
+                <span>{t(`games.${status.name}`)}</span>
+                <Switch
+                  checked={isIncluded}
+                  onCheckedChange={() => handleGameTypeToggle(status.id.toString())}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </TabsContent>
+    <div className="flex justify-end space-x-2 mt-6">
             <Button type="submit">{t('promotion.save')}</Button>
             <Button type="button" variant="outline" onClick={onCancel}>{t('promotion.cancel')}</Button>
           </div>
-        </form>
-      </Form>
+      </Tabs>
     </div>
+    
+    </form>
+    </Form>
   );
 };
 

@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Games struct {
 	gorm.Model
-	Id string `gorm:"primaryKey;column:id" json:"id"`
+	ID            int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	ProductCode string `gorm:"size:255;column:productCode" json:"productCode"`
 	Product string `gorm:"size:255;column:product" json:"product"`
 	GameType string `gorm:"size:255;column:gameType" json:"gameType"`

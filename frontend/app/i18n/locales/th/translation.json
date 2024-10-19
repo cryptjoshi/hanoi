@@ -67,7 +67,8 @@
             "description": "แก้ไขรายละเอียดโปรโมชัน",
             "success": "สำเร็จ",
             "error": "ข้อผิดพลาด",
-            "error_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน"
+            "error_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
+            "success_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน"
         },
         "add": {
             "title": "เพิ่มโปรโมชัน",
@@ -134,11 +135,19 @@
             "urlimage": "รูปภาพ URL",
             "remark": "หมายเหตุ",
             "active": "ทำงาน",
-            "status": "สถานะ"
+            "status": "สถานะ",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการแก้ไขเกม",
+            "success_description": "ข้อผิดพลาดในการแก้ไขเกม"
         },
         "add": {
             "title": "เพิ่มเกม",
-            "description": "เพิ่มรายละเอียดเกม"
+            "description": "เพิ่มรายละเอียดเกม",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการเพิ่มเกม",
+            "success_description": "ข้อผิดพลาดในการเพิ่มเกม"
         },
         "save": "บันทึก",
         "cancel": "ยกเลิก",

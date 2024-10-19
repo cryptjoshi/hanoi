@@ -44,7 +44,7 @@ func handleError(err error) {
 func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
     migrator := db.Migrator()
     tableName := db.Model(model).Statement.Table
-
+	fmt.Println(tableName)
     if !migrator.HasTable(tableName) {
         fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
         if err := migrator.CreateTable(model); err != nil {
@@ -55,9 +55,10 @@ func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
     } else {
 		
 	if err := db.AutoMigrate(&model); err != nil {
-		handleError(err)
+		//handleError(err)
+		return fmt.Errorf("Table '%s' already exists\n", tableName)
 	}
-        fmt.Printf("Table '%s' already exists\n", tableName)
+        
     }
 
     return nil

@@ -44,15 +44,18 @@ interface Games {
 
 // Update the form schema
 const formSchema = z.object({
-  name: z.string(),
-  productCode: z.string().min(1, { message: "Product Code is required" }),
-  product: z.string().min(1, { message: "Product is required" }),
-  gameType: z.string().min(1, { message: "Game Type is required" }),
-  active: z.coerce.number(),
-  remark: z.string(),
-  position: z.string(),
-  urlimage: z.string(),
-  status: z.string(),
+  name: z.string().optional(),
+  productCode: z.string().optional(),
+  product: z.string().optional(),
+  gameType: z.string().optional(),
+  active: z.union([z.number(), z.string()]).optional(),
+  remark: z.string().optional(),
+  position: z.string().optional(),
+  urlimage: z.string().optional(),
+  status: z.union([z.string(), z.object({
+    id: z.string(),
+    name: z.string()
+  })]).optional(),
 })
 
 interface gameStatus {
@@ -94,7 +97,17 @@ export const EditGamesPanel: React.FC<EditGamesPanelProps> = ({ gameId, prefix, 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: game // Initialize with an empty object
+    defaultValues: {
+      name: '',
+      productCode: '',
+      product: '',
+      gameType: '',
+      active: 0,
+      remark: '',
+      position: '',
+      urlimage: '',
+      status: '',
+    }
   })
   const fetchGame = async (prefix:string,id:number) => {
     const data = await GetGameById(prefix, id);
@@ -146,6 +159,7 @@ export const EditGamesPanel: React.FC<EditGamesPanelProps> = ({ gameId, prefix, 
       processedValues.active = Number(processedValues.active);
 
       console.log('Processed values:', processedValues);
+      console.log(gameId)
 
       if (gameId) {
         const data = await UpdateGame(prefix, gameId, processedValues);
@@ -290,7 +304,7 @@ export const EditGamesPanel: React.FC<EditGamesPanelProps> = ({ gameId, prefix, 
                       onValueChange={(value) => {
                         field.onChange(value); // Just set the value directly
                       }}
-                      value={field.value}
+                      value={field.value?.toString() || ''}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -319,7 +333,7 @@ export const EditGamesPanel: React.FC<EditGamesPanelProps> = ({ gameId, prefix, 
                 <FormLabel>{t('columns.active')}</FormLabel>
                 <Select
             onValueChange={(value) => field.onChange(parseInt(value))}
-                  value={field.value.toString()}
+                  value={field.value?.toString() || ''}
                 >
                 <FormControl>
                 <SelectTrigger>

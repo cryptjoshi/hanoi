@@ -9,7 +9,7 @@ import (
 
 type TransactionSub struct {
 	//gorm.Model
-	ID                int       `gorm:"column:id;NOT NULL"`
+	ID                int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	MemberID          int       `gorm:"type:varchar(100)";gorm:"column:MemberID"`
 	MemberName        string    `gorm:"type:varchar(255)";gorm:"column:MemberName"`
 	CurrencyID        int       `gorm:"column:CurrencyID"`

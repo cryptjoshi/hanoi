@@ -7,6 +7,7 @@ import (
 
 type Product struct {
 	gorm.Model
+	ID            int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Name         string          `gorm:"size:255;not null;" json:"name" binding:"required"`
 	SerialNumber string          `gorm:"size:255;not null;unique" json:"serialNumber" binding:"required"`
 	Quantity     uint            `json:"quantity" binding:"required"`

@@ -130,7 +130,7 @@ export const AddGame = async (prefix:string,body:any) =>{
 }
 
 export const UpdateGame = async (prefix:string,id:any,body:any) =>{
- 
+ console.log( JSON.stringify({"prefix":prefix,"id":id,"body":body}))
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json', 

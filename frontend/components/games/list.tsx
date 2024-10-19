@@ -65,6 +65,7 @@ interface DataTableProps<TData> {
 }
 
 import { ArrowLeftIcon } from "@radix-ui/react-icons"
+import EditGame from './EditGame'
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -108,6 +109,7 @@ export default function GameListDataTable({
   const [rowSelection, setRowSelection] = useState({})
   const [editingGame, setEditingGame] = useState<number | null>(null);
   const [isAddingGame, setIsAddingGame] = useState(false);
+  const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showTable, setShowTable] = useState(true);
   const router = useRouter()
@@ -123,6 +125,7 @@ export default function GameListDataTable({
       setIsLoading(true);
       try {
         const fetchedGames = await GetGameList(prefix);
+        //onsole.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
         console.error('Error fetching games:', error);
@@ -136,7 +139,7 @@ export default function GameListDataTable({
   const columnHelper = createColumnHelper<Games>()
 
   const columns = useMemo(() => [
-    columnHelper.accessor('id', {
+    columnHelper.accessor('ID', {
       header: t('columns.id'),
       cell: info => info.getValue(),
       enableHiding: false,
@@ -165,7 +168,7 @@ export default function GameListDataTable({
       header: t('columns.active'),
       cell: info => {
         const value = info.getValue();
-        return value === 1 ? t('active') : value === 0 ? t('inactive') : t('main');
+        return value === 1 ? t('active') : value === 0 ? t('inactive') : t('maintenance');
       }
     }),
     columnHelper.accessor('remark', {
@@ -225,7 +228,7 @@ export default function GameListDataTable({
 
       return (
  
-        <Button variant={"ghost"} onClick={() => openEditPanel(row.original.id)}>{t('editGame')}</Button>
+        <Button variant={"ghost"} onClick={() => openEditPanel(row.original.ID)}>{t('editGame')}</Button>
       )
       },
     },
@@ -417,8 +420,9 @@ export default function GameListDataTable({
             <ArrowLeftIcon className="mr-2 h-4 w-4" />
             {t('backToList')}
           </Button>
-          <EditGamesPanel
+          <EditGame
             gameId={editingGame}
+            isAdd={isAddingGame}
             lng={lng}
             prefix={prefix}
             onClose={closeEditPanel}

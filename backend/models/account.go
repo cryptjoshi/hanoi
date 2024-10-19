@@ -16,7 +16,7 @@ type Account struct {
 	Bankname      string `gorm:"size:255;not null;" json:"bankname"`
 	DeletedAt     string `gorm:"size:255;not null;" json:"deletedAt"`
 	Deviceid      string `gorm:"type:text"json:"deviceid"`
-	ID            uint  `json:"id"`
+	ID            uint  `gorm:"primaryKey;column:id;autoIncrement" json:"id"`
 	Level         int  `json:"level"`
 	Pin           string `gorm:"type:text" json:"pin"`
 	Status        int  `json:"status"`

@@ -8,7 +8,7 @@ import (
 
 type BanksAccount struct {
 	gorm.Model
-	ID            int       `gorm:"column:id;NOT NULL"`
+	ID            int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Accountname   string    `gorm:"type:varchar(255)";gorm:"column:accountname;NOT NULL"`
 	Accountnumber string    `gorm:"type:varchar(20)";gorm:"column:accountnumber;NOT NULL"`
 	Bankname      string    `gorm:"type:varchar(150)";gorm:"column:bankname"`

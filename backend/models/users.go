@@ -8,7 +8,7 @@ import (
 
 type Users struct {
 	//gorm.Model
-	ID               int       `gorm:"column:id;NOT NULL"`
+	ID               int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Walletid         int       `gorm:"column:walletid;NOT NULL"`
 	Username         string    `gorm:"index:idx_username,unique";gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:username;NOT NULL"`
 	Password         string    `gorm:"type:text";gorm:"column:password;NOT NULL"`

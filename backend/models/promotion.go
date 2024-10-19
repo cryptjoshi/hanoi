@@ -7,6 +7,7 @@ import (
 
 type Promotion struct {
 	gorm.Model
+	ID            int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	CreatedOn     string `gorm:"size:255;not null;" json:"CreatedOn"`
 	Promotioncode   string `gorm:"size:255;not null;" binding:"required" json:"promotioncode"`
 	Promotionname   string `gorm:"size:255;not null;" binding:"required" json:"promotionname"`

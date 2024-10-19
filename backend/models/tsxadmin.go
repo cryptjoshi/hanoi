@@ -8,7 +8,7 @@ import (
 
 type TsxAdmin struct {
 	gorm.Model
-	ID            int       `gorm:"column:id;NOT NULL"`
+	ID            int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Username      string    `gorm:"type:varchar(100)";gorm:"column:username;NOT NULL"`
 	Password      string    `gorm:"type:varchar(100)";gorm:"column:password;NOT NULL"`
 	Preferredname string    `gorm:"type:varchar(255)";gorm:"column:preferredname"`

@@ -931,10 +931,9 @@ func UpdatePromotion(c *fiber.Ctx) error {
 // game
 type gameData struct {
 	Prefix string `json:"prefix"`
-	Id string `json:"id"`
+	ID int `json:"id"`
 	Body   struct {
-		Id string `json:"id"`
-		ProductCode string `json:"productCode"`
+		ProductCode string `json:"productcode"`
 		Product string `json:"product"`
 		GameType string `json:"gameType"`
 		Active int `json:"active"`
@@ -1031,72 +1030,72 @@ func GetGameList(c *fiber.Ctx) error {
 	if len(games) == 0 {
 		 
 		sql := `
-		INSERT INTO Games (id, product, productCode, gametype, active, status, remark, position, urlImage) VALUES
-		(1, 1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
-		(2, 1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
-		(3, 1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
-		(4, 1002, 'Evolution Gaming', NULL, 2, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(5, 1003, 'All Bet', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(6, 1004, 'Big Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(8, 1011, 'Play Tech', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(9, 1020, 'WM Casino', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(10, 1022, 'Sexy Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(12, 1052, 'Dream Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(13, 1077, 'SkyWind', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(14, 1053, 'Nexus 4D', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
-		(15, 1074, 'HKGP Lottery', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
-		(16, 1076, 'AMB Poker', NULL, 1, '{"id":"7","name":"p2p"}', NULL, 'OK', NULL),
-		(17, 1006, 'Pragmatic Play', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(18, 1009, 'CQ9', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(19, 1011, 'Play Tech', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(20, 1013, 'Joker', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(24, 1048, 'Reevo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(25, 1049, 'EvoPlay', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(26, 1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(27, 1075, 'SlotXo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(28, 1077, 'SkyWind', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(30, 1085, 'JDB', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(31, 1091, 'Jili', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(32, 1046, 'IBC', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
-		(33, 1081, 'BTI', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
-		(34, 1105, 'Royal Slot Gaming', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(35, 1110, 'Red Tiger', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(36, 1012, 'SBO', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
-		(37, 9999, 'GCLUB', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(38, 8888, 'PGSoft', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(39, 1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
-		(40, 1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
-		(41, 1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
-		(42, 1002, 'Evolution Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(43, 1003, 'All Bet', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(44, 1004, 'Big Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(45, 1005, 'SA Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(46, 1011, 'Play Tech', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(47, 1020, 'WM Casino', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(48, 1022, 'Sexy Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(49, 1038, 'King 855', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(50, 1052, 'Dream Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(51, 1077, 'SkyWind', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
-		(52, 1053, 'Nexus 4D', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
-		(53, 1074, 'HKGP Lottery', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
-		(54, 1076, 'AMB Poker', NULL, 0, '{"id":"2","name":"Pp"}', NULL, 'OK', NULL),
-		(55, 1006, 'Pragmatic Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(56, 1009, 'CQ9', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(57, 1011, 'Play Tech', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(58, 1013, 'Joker', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(59, 1014, 'Dragon Soft', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(60, 1039, 'AMAYA', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(61, 1041, 'Habanero', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(62, 1048, 'Reevo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(63, 1049, 'EvoPlay', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(64, 1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(65, 1075, 'SlotXo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(66, 1077, 'SkyWind', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(67, 1084, 'Advant Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(68, 1085, 'JDB', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(69, 1091, 'Jili', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
-		(70, 1046, 'IBC', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
-		(71, 1081, 'BTI', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL)
+		INSERT INTO Games (product, productCode, gametype, active, status, remark, position, urlImage) VALUES
+		(1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
+		(1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(1002, 'Evolution Gaming', NULL, 2, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1003, 'All Bet', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1004, 'Big Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1011, 'Play Tech', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1020, 'WM Casino', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1022, 'Sexy Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1052, 'Dream Gaming', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1077, 'SkyWind', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1053, 'Nexus 4D', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(1074, 'HKGP Lottery', NULL, 1, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(1076, 'AMB Poker', NULL, 1, '{"id":"7","name":"p2p"}', NULL, 'OK', NULL),
+		(1006, 'Pragmatic Play', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1009, 'CQ9', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1011, 'Play Tech', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1013, 'Joker', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1048, 'Reevo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1049, 'EvoPlay', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1075, 'SlotXo', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1077, 'SkyWind', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1085, 'JDB', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1091, 'Jili', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1046, 'IBC', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(1081, 'BTI', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(1105, 'Royal Slot Gaming', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1110, 'Red Tiger', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1012, 'SBO', NULL, 1, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(9999, 'GCLUB', NULL, 1, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(8888, 'PGSoft', NULL, 1, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1017, 'TF Gaming', NULL, 1, '{"id":"13","name":"Esport"}', NULL, 'OK', NULL),
+		(1009, 'CQ9', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(1091, 'Jili', NULL, 1, '{"id":"8","name":"Fishing"}', NULL, 'OK', NULL),
+		(1002, 'Evolution Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1003, 'All Bet', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1004, 'Big Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1005, 'SA Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1011, 'Play Tech', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1020, 'WM Casino', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1022, 'Sexy Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1038, 'King 855', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1052, 'Dream Gaming', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1077, 'SkyWind', NULL, 0, '{"id":"2","name":"Live Casino"}', NULL, 'OK', NULL),
+		(1053, 'Nexus 4D', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(1074, 'HKGP Lottery', NULL, 0, '{"id":"5","name":"Lottery"}', NULL, 'OK', NULL),
+		(1076, 'AMB Poker', NULL, 0, '{"id":"2","name":"Pp"}', NULL, 'OK', NULL),
+		(1006, 'Pragmatic Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1009, 'CQ9', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1011, 'Play Tech', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1013, 'Joker', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1014, 'Dragon Soft', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1039, 'AMAYA', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1041, 'Habanero', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1048, 'Reevo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1049, 'EvoPlay', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1050, 'PlayStar', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1075, 'SlotXo', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1077, 'SkyWind', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1084, 'Advant Play', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1085, 'JDB', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1091, 'Jili', NULL, 0, '{"id":"1","name":"Slot"}', NULL, 'OK', NULL),
+		(1046, 'IBC', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL),
+		(1081, 'BTI', NULL, 0, '{"id":"3","name":"Sport Book"}', NULL, 'OK', NULL)
 		`
 	
 
@@ -1131,11 +1130,13 @@ func GetGameList(c *fiber.Ctx) error {
 func GetGameById(c *fiber.Ctx) error {
 	body := new(gameData)
     if err := c.BodyParser(body); err != nil {
-		 
+		fmt.Println(err)
         return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "error": err.Error(),
         })
     }
+	
+	fmt.Println(body.ID)
 
 	var prefixs = struct{
         development string
@@ -1153,7 +1154,7 @@ func GetGameById(c *fiber.Ctx) error {
 	}
 	database.CheckAndCreateTable(db, models.Games{})	
 	game := models.Games{}
-	err = db.Debug().First(&game, body.Id).Error
+	err = db.Debug().First(&game, body.ID).Error
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1174,7 +1175,7 @@ func UpdateGame(c *fiber.Ctx) error {
             "error": err.Error(),
         })
     }	
-
+	//fmt.Println(body)
 	var prefixs = struct{
         development string
         production string
@@ -1190,17 +1191,32 @@ func UpdateGame(c *fiber.Ctx) error {
 		})
 	}
 	database.CheckAndCreateTable(db, models.Games{})	
+ 
 	game := models.Games{}
-	err = db.Debug().Model(&game).Where("id = ?", body.Id).Updates(game).Error
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	
+	 game.ProductCode = body.Body.ProductCode
+	 game.Product = body.Body.Product
+	 game.GameType = body.Body.GameType
+	 game.Active = body.Body.Active
+	 game.Remark = body.Body.Remark
+	 game.Position = body.Body.Position
+	 game.Urlimage = body.Body.Urlimage
+	 game.Name = body.Body.Name
+	 game.Status = body.Body.Status
+	
+	err = db.Debug().Model(&models.Games{}).Where("id = ?", body.ID).Updates(body.Body).Error
+	if err != nil {	
+		response := fiber.Map{
+			"Message": "อัปเดตข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
 	}
 	response := fiber.Map{
 		"Message": "อัปเดตข้อมูลสำเร็จ",
 		"Status":  true,
-		"Data": game,
+		"Data": body.Body,
 	}
 	return c.JSON(response)
 }

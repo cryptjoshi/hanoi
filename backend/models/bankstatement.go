@@ -9,7 +9,7 @@ import (
 
 type BankStatement struct {
 	//gorm.Model
-	ID                int       `gorm:"column:id;NOT NULL"`
+	ID                int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Uid               string    `gorm:"type:varchar(255);column:uid;"` 
 	Accountno         string    `gorm:"type:varchar(255)";gorm:"column:accountno"`
 	Bankname          string    `gorm:"type:varchar(255)";gorm:"column:bankname"`

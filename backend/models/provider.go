@@ -9,7 +9,7 @@ import (
 
 type Provider struct {
 	gorm.Model
-	ID                int       `gorm:"column:id;NOT NULL"`
+	ID                int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Providername          string    `gorm:"type:varchar(255)";gorm:"column:providername"`
 	Balance           decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:balance"`
 	CreatedAt         time.Time `gorm:"column:createdAt;NOT NULL"`

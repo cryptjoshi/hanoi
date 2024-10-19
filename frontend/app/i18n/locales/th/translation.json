@@ -71,10 +71,12 @@
             "success_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
             "gameStatus": "สถานะเกม",
             "gameStatus_description": "สถานะเกมสำหรับโปรโมชัน",
+            "delete_description":"ต้องการจะลบรายการนี้ ใช่หรือไม่",
             "games": "ประเภทเกม",
             "edit": "แก้ไข",
             "options": "ตัวเลือก",
-            "delete": "ลบ"
+            "delete": "ลบ",
+            "cancel":"ยกเลิก"
         },
         "add": {
             "title": "เพิ่มโปรโมชัน",
@@ -91,7 +93,17 @@
         "editPromotion": "แก้ไข",
         "addPromotion": "เพิ่มโปรโมชัน",
         "filterPromotion": "กรองโปรโมชัน",
-        "columns": "คอลัมน์",
+        "columns": {
+            "id": "ID",
+            "name": "Name",
+            "percentDiscount": "Free Credit",
+            "maxDiscount": "Max Free Credit",
+            "usageLimit": "Receive Limit",
+            "specificTime": "Specific Time",
+            "paymentMethod": "Payment Method",
+            "minSpend": "Min Turnover",
+            "columns": "คอลัมน์"
+        },
         "rowSelected": "แถวที่เลือก",
         "previous": "ก่อนหน้า",
         "next": "ต่อไป",
@@ -173,7 +185,8 @@
             "urlimage": "รูปภาพ URL",
             "remark": "หมายเหตุ",
             "active": "ทำงาน",
-            "status": "สถานะ"
+            "status": "สถานะ",
+            "columns":"คอลัมน์"
 
         },
         "columnsfilter": "คอลัมน์",

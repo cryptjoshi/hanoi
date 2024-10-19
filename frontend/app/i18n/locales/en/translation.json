@@ -70,10 +70,12 @@
             "success_description": "Promotion edit success description",
             "gameStatus": "Game Status",
             "gameStatus_description": "Game status for promotion",
+            "delete_description":"Delete ,Yes?",
             "games": "Games",
             "edit": "Edit",
             "options": "Options",
-            "delete": "Delete"
+            "delete": "Delete",
+            "cancel":"Cancel"
         },
         "add": {
             "title": "Add Promotion",
@@ -98,7 +100,8 @@
             "usageLimit": "Receive Limit",
             "specificTime": "Specific Time",
             "paymentMethod": "Payment Method",
-            "minSpend": "Min Turnover"
+            "minSpend": "Min Turnover",
+            "columns":"Columns"
         },
         "columnsfilter": "Columns",
         "rowSelected": "row(s) selected",

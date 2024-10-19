@@ -328,7 +328,7 @@ export default function PromotionListDataTable({
                 </DialogTrigger>
                 <DialogContent>
                   {t('promotion.edit.delete_description')}
-                  <DialogFooter>
+                  <DialogFooter className='flex gap-2 justfy-between'>
                     <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.delete')}</Button>
                     <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.cancel')}</Button>
                   </DialogFooter>
@@ -416,7 +416,7 @@ export default function PromotionListDataTable({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
-                  {t('promotion.columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
+                  {t('promotion.columns.columns')} <ChevronDownIcon className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

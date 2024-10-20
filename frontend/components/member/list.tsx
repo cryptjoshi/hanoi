@@ -265,14 +265,19 @@ export default function MemberListDataTable({
     // }),
     {
       id: "actions",
-    enableHiding: false,
-    cell: (row:any) => {
-        
-
-      return (
- 
-        <Button variant={"ghost"} onClick={() => openEditPanel(row.original.ID)}>{t('member.columns.edit')}</Button>
-      )
+      enableHiding: false,
+      cell: ({ row }) => {
+        const member = row.original as iMember;
+        return (
+          <div>
+            <Button 
+              variant="ghost" 
+              onClick={() => openEditPanel(member)}
+            >
+              {t('member.edit.title')}
+            </Button>
+          </div>
+        );
       },
     },
   ], [])
@@ -315,9 +320,9 @@ export default function MemberListDataTable({
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const openEditPanel = (id: number) => {
+  const openEditPanel = (member: iMember) => {
   
-    setEditingGame(id);
+    setEditingGame(member.ID);
     setIsAddingGame(false);
     setShowTable(false);
   };
@@ -338,14 +343,14 @@ export default function MemberListDataTable({
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
-            <Button onClick={handleAddGame}>{t('member.columns.add')}</Button>
+            <Button onClick={handleAddGame}>{t('member.add.title')}</Button>
           </div>
           <div className="flex items-center py-4">
             <Input
               placeholder={t('member.columns.search')}
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
-                table.getColumn("name")?.setFilterValue(event.target.value)
+                table.getColumn("Username")?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />

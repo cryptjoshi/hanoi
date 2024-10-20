@@ -74,9 +74,9 @@ import {
         groupLabel: "Settings",
         menus: [
           {
-            href:  `/${lng}/dashboard/users`,
-            label: "Users",
-            icon: Users
+            href:  `/${lng}/dashboard/settings`,
+            label: "Settings",
+            icon: Settings
           },
           // {
           //   href: "/dashboard/account",

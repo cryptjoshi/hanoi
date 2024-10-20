@@ -25,7 +25,8 @@ import useAuthStore from "@/store/auth";
 
 export function UserNav() {
 
-  const {Logout} = useAuthStore()
+  const {Logout, lng} = useAuthStore()
+  
   //const userLoginStatus = JSON.parse(localStorage.getItem("userLoginStatus") || "")
   const handleLogout = () => {
     Logout();
@@ -64,13 +65,13 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <Link href="/dashboard" className="flex items-center">
+            <Link href={`/${lng}/dashboard`} className="flex items-center">
               <LayoutGrid className="w-4 h-4 mr-3 text-muted-foreground" />
               Dashboard
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <Link href="/dashboard/account" className="flex items-center">
+            <Link href={`/${lng}/dashboard/account`} className="flex items-center">
               <User className="w-4 h-4 mr-3 text-muted-foreground" />
               Account
             </Link>

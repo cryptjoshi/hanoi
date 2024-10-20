@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const memberSchema = z.object({
-  
-      //Walletid:z.number(),       
+      ID:z.number(),
+      Walletid:z.number(),       
       Username:z.string(),    
       Password:z.string(),    
       //ProviderPassword:z.string(),    

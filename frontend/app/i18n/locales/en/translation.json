@@ -225,6 +225,39 @@
         "selectStatus": "Select Status"
         
     },
+    "member": {
+        "title": "Member",
+        "description": "Member detail",
+        "edit": {
+            "title": "Edit Member",
+            "description": "Edit member detail"
+        },
+        "add": {
+            "title": "Add Member",
+            "description": "Add member detail"
+        },
+        "columns": {
+            "id": "ID",
+            "username": "Username",
+            "name": "Name",
+            "fullname": "Fullname",
+            "password": "Password",
+            "bankname": "Bank Name",
+            "banknumber": "Bank Number",
+            "balance": "Balance",
+            "status": "Status",
+            "proactive": "Pro Active",
+            "prostatus":"Pro Status",
+            "edit":"Edit",
+            "backToList":"Back to List",
+            "search":"Search",
+            "add":"Add",
+            "save":"Save",
+            "cancel":"Cancel"
+        }
+        
+        
+    },
     "common": {
         "mon": "Mon",
         "tue": "Tue",
@@ -268,7 +301,15 @@
         "select": "Select",
         "all": "All",
         "of": "of",
-        "entries": "entries"
+        "entries": "entries",
+        "search": "Search",
+        "selectStatus": "Select Status",
+        "rowSelected": "row(s) selected",
+        "active": "Active",
+        "inactive": "Inactive",
+        "maintenance": "Maintenance",
+        "selectRole": "Select Role",
+        "role": "Role"
     }
 }
   

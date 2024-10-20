@@ -6,4 +6,9 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 } 
 
-//
+export function formatNumber(num: number, decimals: number = 2): string {
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  }

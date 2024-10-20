@@ -1145,7 +1145,7 @@ func GetGameById(c *fiber.Ctx) error {
         })
     }
 	
-	fmt.Println(body.ID)
+	 
 
 	var prefixs = struct{
         development string
@@ -1239,9 +1239,11 @@ func GetGameStatus(c *fiber.Ctx) error {
 
 	body := new(gameData)
     if err := c.BodyParser(body); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": err.Error(),
-        })
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+		}
+		return c.JSON(response)
     }
 	
 	var prefixs = struct{
@@ -1277,7 +1279,169 @@ func GetGameStatus(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func GetMemberList(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+    if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }	
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
 	
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//database.CheckAndCreateTable(db, models.Users{})
+	games := []models.Users{}
+	err = db.Debug().Find(&games).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": games,
+	}
+	return c.JSON(response)
+}
+
+type MemberBody struct {
+	Prefix string `json:"prefix"`
+	ID int `json:"id"`
+	Body struct {
+		Fullname string `json:"fullname"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Status int `json:"status"`
+		Bankname string `json:"bankname"`
+		Banknumber string `json:"banknumber"`
+		ProStatus string `json:"prostatus"`
+
+	}
+}
+
+func CreateMember(c *fiber.Ctx) error {
+
+
+
+	body := new(MemberBody)
+    if err := c.BodyParser(body); err != nil {
+		fmt.Println(err)
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)	
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	member := models.Users{}
+	member.Username = body.Body.Username
+	member.Password = body.Body.Password
+	member.Status = body.Body.Status
+ 
+
+	err = db.Debug().Create(&member).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "สร้างข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "สร้างข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": body.Body,
+	}
+	return c.JSON(response)
+}
+
+func GetMemberById(c *fiber.Ctx) error {
+	body := new(MemberBody)
+    if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }	
+
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)	
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//database.CheckAndCreateTable(db, models.Users{})
+	user := models.Users{}
+	err = db.Debug().First(&user, body.ID).Error
+	if err != nil {
+		response := fiber.Map{	
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": user,
+	}
+	return c.JSON(response)
+}
 
 
 

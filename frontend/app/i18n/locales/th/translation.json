@@ -225,6 +225,36 @@
         "selectStatus": "เลือกสถานะ"
         
     },
+    "member": {
+        "title": "สมาชิก",
+        "description": "รายละเอียดสมาชิก",
+        "edit": {
+            "title": "แก้ไขสมาชิก",
+            "description": "แก้ไขรายละเอียดสมาชิก"
+        },
+        "add": {
+            "title": "เพิ่มสมาชิก",
+            "description": "เพิ่มรายละเอียดสมาชิก"
+        },
+        "columns": {
+            "id": "ID",
+            "name": "ชื่อ",
+            "username": "ชื่อผู้ใช้",
+            "fullname": "ชื่อ-สกุล",
+            "password": "รหัสผ่าน",
+            "bankname": "ชื่อธนาคาร",
+            "banknumber": "หมายเลขบัญชี",
+            "balance": "ยอดเงิน",
+            "status": "สถานะ",
+            "proactive": "โปรโมชั่นที่ใช้",
+            "columns":"คอลัมน์",
+            "prostatus":"สถานะโปรโมชั่น",
+            "edit":"แก้ไข",
+            "backToList":"กลับไปยังรายการ",
+            "search":"ค้นหา",
+            "add":"เพิ่มสมาชิก"
+        }
+    },
     "common": {
         "mon": "จันทร์",
         "tue": "อังคาร",
@@ -268,7 +298,17 @@
         "select": "เลือก",
         "all": "ทั้งหมด",
         "of": "ของ",
-        "entries": "รายการ"
+        "entries": "รายการ",
+        "search": "ค้นหา",
+        "selectStatus": "เลือกสถานะ",
+        "rowSelected": "แถวที่เลือก",
+        "active": "ทำงาน",
+        "inactive": "ไม่ทำงาน",
+        "maintenance": "ปิดปรับปรุง",
+        "selectRole": "เลือกสิทธิ์",
+        "role": "สิทธิ์",
+        "save": "บันทึก",
+        "cancel": "ยกเลิก"
     }   
 }
   

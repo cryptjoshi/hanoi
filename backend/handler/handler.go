@@ -30,6 +30,8 @@ import (
 	"strconv"
 	"time"
 	"strings"
+	"io/ioutil"
+	"encoding/json"
 )
 
 var Words = []string{
@@ -60,8 +62,8 @@ var is_connection = false
 var has_channel = false
 var has_queue = false
 
-var redis_master_host = os.Getenv("REDIS_HOST")
-var redis_master_port = os.Getenv("REDIS_PORT")
+var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
+var redis_master_port = "6379" //os.Getenv("REDIS_PORT")
 var redis_master_password = os.Getenv("REDIS_PASSWORD")
 var redis_slave_host = os.Getenv("REDIS_SLAVE_HOST")
 var redis_slave_port = os.Getenv("REDIS_SLAVE_PORT")
@@ -78,6 +80,8 @@ var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
 
+
+
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if len(value) == 0 {
@@ -85,6 +89,21 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
+
+
+type ExchangeRate struct {
+	Currency string `json:"currency"`
+	Rate float64 `json:"rate"`
+}
+
+type ExchangeRateResponse struct {
+	Base string `json:"base"`
+	Date string `json:"date"`
+	Rates []ExchangeRate `json:"rates"`
+}
+
+
+
 
 func InitAMQP() {
 	fmt.Println("Init AMQP RABBIT")
@@ -1444,6 +1463,98 @@ func GetMemberById(c *fiber.Ctx) error {
 }
 
 
+func GetExchangeRates(c *fiber.Ctx) error {
+    // เชื่อมต่อ Redis
+	type ExchangeRateBody struct {
+		Currency string `json:"currency"`
+	}
+
+	cbody := new(ExchangeRateBody)
+    if err := c.BodyParser(cbody); err != nil {
+		fmt.Println(err)
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }
+
+	rdb := redis.NewClient(&redis.Options{
+        Addr:     redis_master_host + ":" + redis_master_port,
+        Password: "",//redis_master_password,
+        DB:       0, // ใช้ database 0
+    })
+	 
+    // ทดสอบการเชื่อมต่อ Redis
+    pong, err := rdb.Ping(ctx).Result()
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).SendString("Error connecting to Redis")
+        // อาจจะ return error หรือจัดการข้อผิดพลาดตามที่คุณต้องการ
+    } else {
+        fmt.Println("เชื่อมต่อ Redis สำเร็จ:", pong)
+    }
+	
+
+    // ตรวจสอบว่ามีข้อมูลใน Redis หรือไม่
+    cachedRates, err := rdb.Get(ctx, "exchange_rates").Result()
+    if err == nil {
+        // ถ้ามีข้อมูลใน Redis ส่งกลับเลย
+        return c.SendString(cachedRates)
+    }
+	//fmt.Println(cachedRates)
+	fmt.Println("ถ้าไม่มีข้อมูลใน Redis ดึงข้อมูลจาก API")
+    // ถ้าไม่มีข้อมูลใน Redis ดึงข้อมูลจาก API
+	resp, err := http.Get("https://api.exchangerate-api.com/v4/latest/"+cbody.Currency)
+    if err != nil {
+		
+        // ถ้าไม่สามารถเข้าถึง API ได้ ลองดึงข้อมูลเก่าจาก Redis
+        oldRates, err := rdb.Get(ctx, "old_exchange_rates").Result()
+        if err == nil {
+            return c.SendString(oldRates)
+        }
+        return c.Status(fiber.StatusInternalServerError).SendString("Error fetching exchange rates")
+    }
+    
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).SendString("Error reading response body")
+    }
+	defer resp.Body.Close()
+    var exchangeRates ExchangeRateResponse
+	//fmt.Println(body)
+    err = json.Unmarshal(body, &exchangeRates)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).SendString("Error parsing JSON")
+    }
+
+    // แปลงข้อมูลกลับเป็น JSON string
+    ratesJSON, err := json.Marshal(exchangeRates)
+	
+    if err != nil {
+		
+        return c.Status(fiber.StatusInternalServerError).SendString("Error converting to JSON")
+    }
+
+    // บันทึกข้อมูลลง Redis พร้อมกำหนดเวลาหมดอายุ 1 ชั่วโมง
+    err = rdb.Set(ctx, "exchange_rates", ratesJSON, 24*time.Hour).Err()
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).SendString("Error caching exchange rates")
+    }
+
+
+    // บันทึกข้อมูลเดียวกันไว้เป็นข้อมูลสำรองโดยไม่มีกำหนดเวลาหมดอายุ
+    err = rdb.Set(ctx, "old_exchange_rates", ratesJSON, 0).Err()
+    if err != nil {
+        // Log error, but don't return it to the user
+       // log.Printf("Error caching old exchange rates: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Error caching old exchange rates")
+    }
+
+    // ส่งข้อมูลกลับไปยังผู้ใช้
+    return c.SendString(string(ratesJSON))
+}
 
 
 

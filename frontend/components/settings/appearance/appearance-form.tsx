@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ChevronDownIcon } from "@radix-ui/react-icons"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useState, useEffect } from "react"
+import { GetExchangeRate } from "@/actions"
 
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
@@ -46,12 +48,13 @@ interface Props {
 }
 
 export function AppearanceForm({ lng, id }: Props) {
-
   const {t} = useTranslation(lng,'translation','')
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues,
   })
+
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null)
 
   function onSubmit(data: AppearanceFormValues) {
     toast({
@@ -64,10 +67,24 @@ export function AppearanceForm({ lng, id }: Props) {
     })
   }
 
+  useEffect(() => {
+    const fetchExchangeRate = async (from: string, to: string) => {
+      // This is a placeholder. You should use a real API for production.
+     const data = await GetExchangeRate(from)
+      setExchangeRate(data.rates[to])
+    }
+
+    if (form.watch("currency") === "USD") {
+      fetchExchangeRate("USD", "THB")
+    } else if (form.watch("currency") === "THB") {
+      fetchExchangeRate("THB", "USD")
+    }
+  }, [form.watch("currency")])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-      <FormField
+        <FormField
           control={form.control}
           name="currency"
           render={({ field }) => (
@@ -83,12 +100,20 @@ export function AppearanceForm({ lng, id }: Props) {
                     {...field}
                   >
                     <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
                     <option value="THB">THB</option>
                   </select>
                 </FormControl>
                 <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
               </div>
+              {exchangeRate && (
+                <div className="mt-2">
+                  {field.value === "USD" ? (
+                    <p>1 USD = {exchangeRate.toFixed(2)} THB</p>
+                  ) : (
+                    <p>1 THB = {(1 / exchangeRate).toFixed(4)} USD</p>
+                  )}
+                </div>
+              )}
               <FormDescription>
                 {t("settings.appearance.currency_description")}
               </FormDescription>
@@ -202,5 +227,3 @@ export function AppearanceForm({ lng, id }: Props) {
     </Form>
   )
 }
-
- 

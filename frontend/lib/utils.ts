@@ -12,3 +12,5 @@ export function formatNumber(num: number, decimals: number = 2): string {
       maximumFractionDigits: decimals,
     });
   }
+
+

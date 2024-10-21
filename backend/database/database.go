@@ -44,7 +44,9 @@ func handleError(err error) {
 func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
     migrator := db.Migrator()
     tableName := db.Model(model).Statement.Table
-	fmt.Println(tableName)
+	if tableName == "" {
+		return fmt.Errorf("table name is empty")
+	}
     if !migrator.HasTable(tableName) {
         fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
         if err := migrator.CreateTable(model); err != nil {

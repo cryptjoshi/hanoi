@@ -68,7 +68,7 @@
             "success": "สำเร็จ",
             "error": "ข้อผิดพลาด",
             "error_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
-            "success_description": "ข้อผิดพลาดในการแก้ไขโปรโมชัน",
+            "success_description": "สำเร็จในการแก้ไขโปรโมชัน",
             "gameStatus": "สถานะเกม",
             "gameStatus_description": "สถานะเกมสำหรับโปรโมชัน",
             "delete_description":"ต้องการจะลบรายการนี้ ใช่หรือไม่",
@@ -76,14 +76,19 @@
             "edit": "แก้ไข",
             "options": "ตัวเลือก",
             "delete": "ลบ",
-            "cancel":"ยกเลิก"
+            "cancel":"ยกเลิก",
+            "deleting":"กำลังลบ...",
+            "invalid_date_format":"รูปแบบวันที่ไม่ถูกต้อง ใช้ dd-MM-yyyy",
+            "delete_confirm":"ลบโปรโมชัน?"
         },
         "add": {
             "title": "เพิ่มโปรโมชัน",
             "description": "เพิ่มรายละเอียดโปรโมชัน",
             "success": "สำเร็จ",
             "error": "ข้อผิดพลาด",
-            "error_description": "ข้อผิดพลาดในการเพิ่มโปรโมชัน"
+            "error_description": "ข้อผิดพลาดในการเพิ่มโปรโมชัน",
+            "validationError": "ข้อผิดพลาดในการตรวจสอบข้อมูล",
+            "success_description": "สำเร็จในการเพิ่มโปรโมชัน"
         },
         "selectAll": "เลือกทั้งหมด",
         "deselectAll": "ยกเลิกเลือกทั้งหมด",
@@ -265,14 +270,23 @@
             "font": "ฟอนต์",
             "font_description": "ฟอนต์ที่ใช้ในระบบ",
             "theme": "ธีม",
-            "theme_description": "ธีมที่ใช้ในระบบ"
+            "theme_description": "ธีมที่ใช้ในระบบ",
+            "base_currency": "สกุลเงินหน้าสมาชิก",
+            "base_currency_description": "สกุลเงินหน้าสมาชิก",
+            "target_currency": "สกุลเงินหน้าลูกค้า",
+            "target_currency_description": "สกุลเงินหน้าลูกค้า"
+        },
+        "about": {
+            "title": "เกี่ยวกับ",
+            "description": "รายละเอียดเกี่ยวกับ",
+            "name": "ชื่อ",
+            "email": "อีเมล"
         },
         "title": "ตั้งค่า",
         "profile": "ตั้งค่าทั่วไป",
         "profile_description": "ตั้งค่าทั่วไปสำหรับสมาชิก",
         "general": "ทั่วไป",
         "general_description": "ตั้งค่าทั่วไปสำหรับสมาชิก",
-        "about": "เกี่ยวกับ",
         "about_description": "รายละเอียดเกี่ยวกับ"
     },
     "common": {

@@ -50,14 +50,18 @@ import {
 
 import { ArrowLeftIcon } from "@radix-ui/react-icons"
 import { useQuery } from '@tanstack/react-query'
-import { Dialog, DialogContent, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+//import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from '@/components/ui/dialog'
 
 import EditPromotionPanel from './EditPromotionPanel'
-import { GetGameStatus, GetPromotion } from '@/actions'
+import { GetGameStatus, GetPromotion,DeletePromotion} from '@/actions'
 import { useTranslation } from '@/app/i18n/client'; 
+import { ResponsiveDialog } from '../responsive-dialog'
+import DeletePromotionDialog from './DeletePromotionDialog'
+import { format, parse } from 'date-fns';
 
 interface Promotion {
   id: string
+  ID: string
   name: string
   percentDiscount: number
   maxDiscount: number
@@ -121,7 +125,7 @@ function formatSpecificTime(jsonString: string,lng:string): string {
 
     let days = '';
     if (data.daysOfWeek && data.daysOfWeek.length > 0) {
-      days = data.daysOfWeek.map(day => daysMap[day] || day).join(', ');
+      days = data.daysOfWeek.map((day: string) => daysMap[day] || day).join(', ');
     }
 
     let frequency = typeMap[data.type] || '';
@@ -157,9 +161,15 @@ export default function PromotionListDataTable({
   const [rowSelection, setRowSelection] = useState({})
   const [editingPromotion, setEditingPromotion] = useState<number | null>(null);
   const [isAddingPromotion, setIsAddingPromotion] = useState(false);
+  
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showTable, setShowTable] = useState(true);
-  const router = useRouter()
+ 
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
 
   const {t} = useTranslation(lng,'translation',undefined)
   const { data: gameTypes, isLoading: gameStatusLoading } = useQuery({
@@ -221,7 +231,7 @@ export default function PromotionListDataTable({
         const value = info.getValue();
         if (!gameTypes || !gameTypes.Data || typeof gameTypes.Data !== 'object') return value;
         return value.split(',').map(id => {
-          const game = Object.values(gameTypes.Data).find((g: any) => {
+          const game: any = Object.values(gameTypes.Data).find((g: any) => {
             try {
               const status = JSON.parse(g.status);
               return status.id.toString() === id.trim();
@@ -249,7 +259,7 @@ export default function PromotionListDataTable({
         const value = info.getValue();
         if (!gameTypes || !gameTypes.Data || typeof gameTypes.Data !== 'object') return value;
         return value.split(',').map(id => {
-          const game = Object.values(gameTypes.Data).find((g: any) => {
+          const game: any = Object.values(gameTypes.Data).find((g: any) => {
             try {
               const status = JSON.parse(g.status);
               return status.id.toString() === id.trim();
@@ -273,11 +283,21 @@ export default function PromotionListDataTable({
     }),
     columnHelper.accessor('startDate', {
       header: t('promotion.startDate'),
-      cell: info => info.getValue(),
+      cell: info => {
+        const date = info.getValue();
+        if (!date) return '';
+        // Parse the date string from backend format and then format it to desired format
+        return format(parse(date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy');
+      },
     }),
     columnHelper.accessor('endDate', {
       header: t('promotion.endDate'),
-      cell: info => info.getValue(),
+      cell: info => {
+        const date = info.getValue();
+        if (!date) return '';
+        // Parse the date string from backend format and then format it to desired format
+        return format(parse(date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy');
+      },
     }),
     // columnHelper.accessor('paymentMethod', {
     //   header: t('paymentMethod'),
@@ -302,45 +322,37 @@ export default function PromotionListDataTable({
       {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
+    cell: ({ row }: { row: any }  ) => {
+      const promotion = row.original
 
       return (
-            // <DropdownMenu>
-            //   <DropdownMenuTrigger asChild>
-            //     <Button variant={"ghost"}>{t('promotion.edit.options')}</Button>
-            //   </DropdownMenuTrigger>  
-            //   <DropdownMenuContent>
-            //     <DropdownMenuItem  onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.edit')}</DropdownMenuItem>
-            //     <DropdownMenuItem onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.delete')}</DropdownMenuItem>
-            //   </DropdownMenuContent>
-            // </DropdownMenu>
-            <DropdownMenu>
-            <DropdownMenuTrigger> <Button variant={"ghost"}>{t('promotion.edit.options')}</Button></DropdownMenuTrigger>
-            <DropdownMenuContent>
-            <DropdownMenuItem  onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.edit')}</DropdownMenuItem>
+        <DropdownMenu open={openDropdown === promotion.ID} onOpenChange={(open) => {
+          if (open) setOpenDropdown(promotion.ID)
+          else setOpenDropdown(null)
+        }}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">{t('promotion.edit.options')}</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => openEditPanel(promotion.ID)}>
+              {t('promotion.edit.edit')}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-              <Dialog>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  {t('promotion.edit.delete')}
-                  </DropdownMenuItem>
-                </DialogTrigger>
-                <DialogContent>
-                  {t('promotion.edit.delete_description')}
-                  <DialogFooter className='flex gap-2 justfy-between'>
-                    <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.delete')}</Button>
-                    <Button onClick={() => openEditPanel(row.original.ID)}>{t('promotion.edit.cancel')}</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-       
+            <DropdownMenuItem  
+              onClick={() => {
+                setSelectedPromotionId(promotion.ID);
+                setIsDeleteOpen(true);
+              }}
+              className="w-full justify-start flex text-red-500 rounded-md p-2 transition-all duration-75 hover:bg-neutral-100"
+            >
+              {t('promotion.edit.delete')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )
     },
   },
-  ], [gameTypes, t])
+  ], [gameTypes, t, openDropdown])
 
   const table = useReactTable({
     data: promotions,
@@ -381,6 +393,7 @@ export default function PromotionListDataTable({
   };
 
   const openEditPanel = (id: number) => {
+   console.log('openEditPanel', id);
     setEditingPromotion(id);
     setIsAddingPromotion(true);
     setShowTable(false);
@@ -399,6 +412,25 @@ export default function PromotionListDataTable({
 
   return (
     <div className="w-full">
+      <ResponsiveDialog
+        lng={lng}
+        isOpen={isDeleteOpen}
+        setIsOpen={setIsDeleteOpen}
+        title={t('promotion.edit.delete_description')}
+        ns='translation'
+        prefixkey='promotion'
+      >
+        <DeletePromotionDialog 
+          prefix={prefix} 
+          lng={lng} 
+          promotionId={selectedPromotionId ?? ''}
+          setIsOpen={setIsDeleteOpen} 
+          onDeleteSuccess={() => {
+            setRefreshTrigger(prev => prev + 1);
+          }}
+        />
+      </ResponsiveDialog>
+
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
@@ -519,7 +551,7 @@ export default function PromotionListDataTable({
         </>
       ) : (
         <div className="mt-4">
-          <Button
+                <Button
             variant="outline"
             onClick={closeEditPanel}
             className="mb-4"
@@ -528,7 +560,7 @@ export default function PromotionListDataTable({
             {t('promotion.backToList')}
           </Button>
           <EditPromotionPanel
-            promotionId={editingPromotion}
+            promotionId={editingPromotion ?? null}
             lng={lng}
             prefix={prefix}
             onClose={closeEditPanel}

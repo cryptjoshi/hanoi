@@ -97,10 +97,11 @@ type ExchangeRate struct {
 }
 
 type ExchangeRateResponse struct {
-	Base string `json:"base"`
-	Date string `json:"date"`
-	Rates []ExchangeRate `json:"rates"`
+    Base  string             `json:"base"`
+    Date  string             `json:"date"`
+    Rates map[string]float64 `json:"rates"`
 }
+
 
 
 
@@ -707,7 +708,6 @@ func CreateDB(db *gorm.DB, dbName string) error {
 type promotiondata struct {
 	Prefix string `json:"prefix"`
 	Body   struct {
-		Id                  string              `json:"id"`
 		Name                string              `json:"name"`
 		Description         string              `json:"description"`
 		PercentDiscount     decimal.NullDecimal `json:"percentDiscount"`
@@ -732,11 +732,12 @@ func CreatePromotion(c *fiber.Ctx) error {
 	var data promotiondata
  
 	if err := c.BodyParser(&data); err != nil {
-	 
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-			"data": data,
-		})
+	 fmt.Println(err)
+		return c.JSON(fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!" + err.Error(),
+			"Status":  false,
+			"Data": err.Error(),
+		})	
 	}
 	 
  
@@ -830,6 +831,7 @@ func GetPromotion(c *fiber.Ctx) error {
 		return c.JSON(response)
     }
     database.CheckAndCreateTable(db, models.Promotion{})
+	
     promotions := []models.Promotion{}
 
      err = db.Debug().Find(&promotions).Error
@@ -856,8 +858,11 @@ func GetPromotion(c *fiber.Ctx) error {
 func GetPromotionById(c *fiber.Ctx) error {
     body := new(promotiondata)
     if err := c.BodyParser(body); err != nil {
+		fmt.Println(err)
         return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": err.Error(),
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+			"error": err.Error(),
         })
     }
     var prefixs = struct{
@@ -935,7 +940,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
             "error": err.Error(),
         })
     }
-	err = db.AutoMigrate(&models.Promotion{})
+	//err = db.AutoMigrate(&models.Promotion{})
 	//db.AutoMigrate(&models.Promotion{});
 	//AutoMigrate(&models.TsxAdmin{},&models.Provider{},&models.Promotion{});
     //promotion = models.Promotion{}
@@ -952,6 +957,49 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		"Message": "อัปเดตข้อมูลสำเร็จ",
 		"Status":  true,
 		"Data": promotion,
+	}
+	return c.JSON(response)
+}
+
+func DeletePromotion(c *fiber.Ctx) error {
+	body := new(promotiondata)
+	if err := c.BodyParser(body); err != nil {
+		fmt.Println(err)
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!" + err.Error(),
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+
+	var prefixs = struct{	
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	//db.AutoMigrate(&models.Promotion{})
+	//fmt.Println(body)
+	err = db.Debug().Delete(&models.Promotion{}, "id = ?", body.PromotionId).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}	
+	response := fiber.Map{
+		"Message": "ลบข้อมูลสำเร็จ",
+		"Status":  true,
 	}
 	return c.JSON(response)
 }
@@ -1500,6 +1548,7 @@ func GetExchangeRates(c *fiber.Ctx) error {
     cachedRates, err := rdb.Get(ctx, "exchange_rates").Result()
     if err == nil {
         // ถ้ามีข้อมูลใน Redis ส่งกลับเลย
+		fmt.Println("ถ้ามีข้อมูลใน Redis ส่งกลับเลย")
         return c.SendString(cachedRates)
     }
 	//fmt.Println(cachedRates)
@@ -1511,21 +1560,25 @@ func GetExchangeRates(c *fiber.Ctx) error {
         // ถ้าไม่สามารถเข้าถึง API ได้ ลองดึงข้อมูลเก่าจาก Redis
         oldRates, err := rdb.Get(ctx, "old_exchange_rates").Result()
         if err == nil {
+			fmt.Println("ถ้าไม่สามารถเข้าถึง API ได้ ลองดึงข้อมูลเก่าจาก Redis")
             return c.SendString(oldRates)
         }
         return c.Status(fiber.StatusInternalServerError).SendString("Error fetching exchange rates")
     }
     
 
-    body, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
         return c.Status(fiber.StatusInternalServerError).SendString("Error reading response body")
     }
-	defer resp.Body.Close()
+    defer resp.Body.Close()
+
     var exchangeRates ExchangeRateResponse
-	//fmt.Println(body)
     err = json.Unmarshal(body, &exchangeRates)
     if err != nil {
+        // Log the error and the response body for debugging
+        fmt.Printf("Error parsing JSON: %v\n", err)
+        fmt.Printf("Response body: %s\n", string(body))
         return c.Status(fiber.StatusInternalServerError).SendString("Error parsing JSON")
     }
 

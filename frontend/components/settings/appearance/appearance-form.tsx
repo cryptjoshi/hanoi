@@ -25,15 +25,19 @@ import { useTranslation } from "@/app/i18n/client"
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark"], {
     required_error: "Please select a theme.",
-  }),
+  }).optional(),
   font: z.enum(["inter", "manrope", "system"], {
     invalid_type_error: "Select a font",
     required_error: "Please select a font.",
-  }),
-  currency: z.enum(["USD", "EUR", "THB"], {
-    invalid_type_error: "Select a currency",
-    required_error: "Please select a currency.",
-  }),
+  }).optional(),
+  baseCurrency: z.enum(["USD", "EUR", "THB"], {
+    invalid_type_error: "Select a base currency",
+    required_error: "Please select a base currency.",
+  }).optional(),
+  targetCurrency: z.enum(["USD", "EUR", "THB"], {
+    invalid_type_error: "Select a target currency",
+    required_error: "Please select a target currency.",
+  }).optional(),
 })
 
 type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
@@ -41,6 +45,9 @@ type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
 // This can come from your database or API.
 const defaultValues: Partial<AppearanceFormValues> = {
   theme: "light",
+  font: "inter",
+  baseCurrency: "USD",
+  targetCurrency: "THB",
 }
 interface Props {
   lng: string;
@@ -54,7 +61,7 @@ export function AppearanceForm({ lng, id }: Props) {
     defaultValues,
   })
 
-  const [exchangeRate, setExchangeRate] = useState<number | null>(null)
+  const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number } | null>(null)
 
   function onSubmit(data: AppearanceFormValues) {
     toast({
@@ -68,59 +75,110 @@ export function AppearanceForm({ lng, id }: Props) {
   }
 
   useEffect(() => {
-    const fetchExchangeRate = async (from: string, to: string) => {
-      // This is a placeholder. You should use a real API for production.
-     const data = await GetExchangeRate(from)
-      setExchangeRate(data.rates[to])
+    const fetchExchangeRates = async (base: string, target: string) => {
+      try {
+        const usdData = await GetExchangeRate("USD")
+        const baseToUsd = base === "USD" ? 1 : 1 / usdData.rates[base]
+        const targetToUsd = target === "USD" ? 1 : 1 / usdData.rates[target]
+        
+        const baseToTarget = baseToUsd / targetToUsd
+        const targetToBase = targetToUsd / baseToUsd
+
+        setExchangeRates({
+          [base]: 1,
+          [target]: baseToTarget,
+          [`${target}To${base}`]: targetToBase
+        })
+      } catch (error) {
+        console.error("Error fetching exchange rates:", error)
+        setExchangeRates(null)
+      }
     }
 
-    if (form.watch("currency") === "USD") {
-      fetchExchangeRate("USD", "THB")
-    } else if (form.watch("currency") === "THB") {
-      fetchExchangeRate("THB", "USD")
+    const baseCurrency = form.watch("baseCurrency")
+    const targetCurrency = form.watch("targetCurrency")
+
+    if (baseCurrency && targetCurrency && baseCurrency !== targetCurrency) {
+      fetchExchangeRates(baseCurrency, targetCurrency)
+    } else {
+      setExchangeRates(null)
     }
-  }, [form.watch("currency")])
+  }, [form.watch("baseCurrency"), form.watch("targetCurrency")])
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="currency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("settings.appearance.currency")}</FormLabel>
-              <div className="relative w-max">
-                <FormControl>
-                  <select
-                    className={cn(
-                      buttonVariants({ variant: "outline" }),
-                      "w-[200px] appearance-none font-normal"
-                    )}
-                    {...field}
-                  >
-                    <option value="USD">USD</option>
-                    <option value="THB">THB</option>
-                  </select>
-                </FormControl>
-                <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
-              </div>
-              {exchangeRate && (
-                <div className="mt-2">
-                  {field.value === "USD" ? (
-                    <p>1 USD = {exchangeRate.toFixed(2)} THB</p>
-                  ) : (
-                    <p>1 THB = {(1 / exchangeRate).toFixed(4)} USD</p>
-                  )}
+        <div className="flex space-x-4">
+          <FormField
+            control={form.control}
+            name="baseCurrency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("settings.appearance.base_currency")}</FormLabel>
+                <div className="relative w-max">
+                  <FormControl>
+                    <select
+                      className={cn(
+                        buttonVariants({ variant: "outline" }),
+                        "w-[200px] appearance-none font-normal"
+                      )}
+                      {...field}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="THB">THB</option>
+                    </select>
+                  </FormControl>
+                  <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
                 </div>
-              )}
-              <FormDescription>
-                {t("settings.appearance.currency_description")}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+                <FormMessage />
+                <p>1 {form.watch("baseCurrency")}</p>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="targetCurrency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("settings.appearance.target_currency")}</FormLabel>
+                <div className="relative w-max">
+                  <FormControl>
+                    <select
+                      className={cn(
+                        buttonVariants({ variant: "outline" }),
+                        "w-[200px] appearance-none font-normal"
+                      )}
+                      {...field}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="THB">THB</option>
+                    </select>
+                  </FormControl>
+                  <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
+                </div>
+                <FormMessage />
+                <p>{exchangeRates && exchangeRates[form.watch("targetCurrency") || "USD"] 
+                    ? exchangeRates[form.watch("targetCurrency") || "USD"].toFixed(4) 
+                    : '1'} {form.watch("targetCurrency")}</p>
+              </FormItem>
+            )}
+          />
+        </div>
+        {/* <div className="mt-2">
+          {form.watch("baseCurrency") === form.watch("targetCurrency") ? (
+            <p>1 {form.watch("baseCurrency")} = 1 {form.watch("targetCurrency")} (1:1)</p>
+          ) : exchangeRates && exchangeRates[form.watch("targetCurrency")] ? (
+            <p>1 {form.watch("baseCurrency")} = {exchangeRates[form.watch("targetCurrency")].toFixed(4)} {form.watch("targetCurrency")}</p>
+          ) : (
+            <p>Loading...</p>
           )}
-        />
+        </div> */}
+        <FormDescription>
+          {/* {t("settings.appearance.currency_description")} */}
+        </FormDescription>
+        
         <FormField
           control={form.control}
           name="font"

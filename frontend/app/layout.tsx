@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import "./globals.css";
 import { kanit } from "@/lib/fonts";
  
-
+import clsx from 'clsx';
 import { dir } from 'i18next'
 import { languages } from '@/app/i18n/settings'
 import LanguageSwitcher from "@/components/LanguageSwitcher"
@@ -47,9 +47,18 @@ export default function RootLayout({
   children: React.ReactNode;
   params: { lng: string };
 }>) {
+  const isRTL = lng === 'ar';
   return (
-    <html lang={lng} dir={dir(lng)}>
-      <body className={`${kanit.className} ${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
+    <html lang={lng} dir={isRTL ? 'rtl' : 'ltr'}>
+      <body 
+        className={clsx(
+          kanit.className,
+          geistSans.variable,
+          geistMono.variable,
+          'antialiased relative min-h-screen',
+          isRTL && 'rtl'
+        )}
+      >
         <Providers>
           {children}
           <Toaster />

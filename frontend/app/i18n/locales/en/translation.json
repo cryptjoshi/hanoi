@@ -75,14 +75,19 @@
             "edit": "Edit",
             "options": "Options",
             "delete": "Delete",
-            "cancel":"Cancel"
+            "cancel":"Cancel",
+            "deleting":"Deleting...",
+            "invalid_date_format":"Invalid date format. Use dd-MM-yyyy",
+            "delete_confirm":"Delete promotion?"
         },
         "add": {
             "title": "Add Promotion",
             "description": "Add promotion detail",
             "success": "Success",
             "error": "Error",
-            "error_description": "Promotion add error description"
+            "error_description": "Promotion add error description",
+            "validationError": "Validation error",
+            "success_description": "Promotion add success description"
         },
         "selectAll": "Select All",
         "deselectAll": "Deselect All",
@@ -262,20 +267,29 @@
         "appearance": {
             "title": "Appearance",
             "description": "Appearance description",
-            "update_preferences": "Update preferences",
+            "update_preferences": "Update",
             "currency": "Currency",
             "currency_description": "Currency description",
             "font": "Font",
             "font_description": "Font description",
             "theme": "Theme",
-            "theme_description": "Theme description"
+            "theme_description": "Theme description",
+            "base_currency": "Agent Currency",
+            "base_currency_description": "Base Currency description",
+            "target_currency": "Member Currency",
+            "target_currency_description": "Target Currency description"
+        },
+        "about": {
+            "title": "About",
+            "description": "About description",
+            "name": "Name",
+            "email": "Email"
         },
         "title": "Settings",
         "profile": "Profile",
         "profile_description": "Profile description",
         "general": "General",
         "general_description": "General description",
-        "about": "About",
         "about_description": "About description"
     },
     "common": {

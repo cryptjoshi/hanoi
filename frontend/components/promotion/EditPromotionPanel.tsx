@@ -11,8 +11,8 @@ import { toast } from "@/hooks/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { cn } from "@/lib/utils"
-import { format, parse } from "date-fns"
-import th from "date-fns/locale/th"
+import { format, parse,isValid } from "date-fns"
+import { th } from "date-fns/locale"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -21,18 +21,26 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useQuery } from '@tanstack/react-query';
+import { useToast } from "@/hooks/use-toast"
+import { useQueryClient } from '@tanstack/react-query';
 
 interface EditPromotionPanelProps {
-  promotionId: string | null;
+  promotionId: number | null;
   lng: string;
   prefix: string;
   onClose: () => void;
   onCancel: () => void;
 }
-
+interface SpecificTime {
+  type?: string;
+  daysOfWeek?: string[];
+  hour?: string;
+  minute?: string;
+}
 // Update the Promotion interface
 interface Promotion {
   id: string;
+  ID: string;
   name: string;
   description: string;
   percentDiscount: number;
@@ -56,34 +64,26 @@ const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string(),
   percentDiscount: z.coerce.number(),
-  startDate: z.string(),
-  endDate: z.string(),
+  startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
+    message: "Invalid date format"
+  }),
+  endDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
+    message: "Invalid date format"
+  }),
   maxDiscount: z.coerce.number(),
   usageLimit: z.coerce.number(),
-  specificTime: z.string().refine((val) => {
-    try {
-      const parsed = JSON.parse(val);
-      return parsed && typeof parsed === 'object';
-    } catch {
-      return false;
-    }
-  }, { message: "Invalid JSON string" }),
-  paymentMethod: z.string(),
   minSpend: z.coerce.number(),
   maxSpend: z.coerce.number(),
-  termsAndConditions: z.string(),
+  termsAndConditions: z.string().optional(),
   status: z.coerce.number(),
-  example: z.string(),
+  example: z.string().optional(),
   includegames: z.string(),
   excludegames: z.string(),
+  specificTime: z.string().optional(),
+  paymentMethod: z.string().optional(),
 })
 
-interface SpecificTime {
-  type?: string;
-  daysOfWeek?: string[];
-  hour?: string;
-  minute?: string;
-}
+ 
 
 function cleanJsonString(jsonString: string): SpecificTime {
   if (!jsonString) {
@@ -99,101 +99,136 @@ function cleanJsonString(jsonString: string): SpecificTime {
   }
 }
 
+// Helper function to check if a string is a valid date
+const isValidDateString = (dateString: string) => {
+  return !isNaN(Date.parse(dateString));
+};
+
 export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotionId, prefix, lng, onClose, onCancel }) => {
- 
-  const [promotion, setPromotion] = useState<Promotion>({
-    id: '',
-    name: '',
-    description: '',
-    percentDiscount: 0,
-    startDate: '',
-    endDate: '',
-    maxDiscount: 0,
-    usageLimit: 0,
-    specificTime: '',
-    paymentMethod: '',
-    minSpend: 0,
-    maxSpend: 0,
-    termsAndConditions: '',
-    status: '0',
-    example: '',
-    includegames: '',
-    excludegames: '',
-  });
-
-  const {t} = useTranslation(lng,'translation',undefined)
-
+  const { toast } = useToast()
+  const {t} = useTranslation(lng, 'translation', undefined)
+  const queryClient = useQueryClient();
   const { data: gameTypes, isLoading: gameStatusLoading } = useQuery({
     queryKey: ['gameTypes'],
     queryFn: async () => await GetGameStatus(prefix),
   });
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: promotion // Initialize with an empty object
+  // Update the schema with translated messages
+  const updatedFormSchema = formSchema.extend({
+    startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
+      message: t('promotion.edit.invalid_date_format')
+    }),
+    endDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
+      message: t('promotion.edit.invalid_date_format')
+    }),
+  });
+
+  const form = useForm<z.infer<typeof updatedFormSchema>>({
+    resolver: zodResolver(updatedFormSchema),
+    defaultValues: {} as z.infer<typeof updatedFormSchema>
   })
-  const fetchPromotion = async (prefix:string,promotionId:string) => {
-    const data = await GetPromotionById(prefix, promotionId);
-    form.reset(data.Data as z.infer<typeof formSchema>);
-  };
-  useEffect(() => {
+
+  const fetchPromotion = async () => {
     if (promotionId) {
-      
-      fetchPromotion(prefix,promotionId);
-    } else {
-      form.reset({} as z.infer<typeof formSchema>);
+      try {
+        const data = await GetPromotionById(prefix, promotionId);
+        if (data.Status) {
+          const formattedData = {
+            ...data.Data,
+            percentDiscount: Number(data.Data.percentDiscount),
+            maxDiscount: Number(data.Data.maxDiscount),
+            usageLimit: Number(data.Data.usageLimit),
+            minSpend: Number(data.Data.minSpend),
+            maxSpend: Number(data.Data.maxSpend),
+            startDate: data.Data.startDate ? format(new Date(data.Data.startDate), 'dd-MM-yyyy') : '',
+            endDate: data.Data.endDate ? format(new Date(data.Data.endDate), 'dd-MM-yyyy') : '',
+          };
+          // Remove ID from formattedData before setting form values
+          const { ID, ...formData } = formattedData;
+          form.reset(formData as z.infer<typeof updatedFormSchema>);
+        } else {
+          toast({
+            title: t("promotion.fetch.error"),
+            description: data.Message,
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching promotion:", error);
+        toast({
+          title: t("promotion.fetch.error"),
+          description: t("promotion.fetch.error_description"),
+          variant: "destructive",
+        })
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchPromotion();
   }, [promotionId]);
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = async (values: z.infer<typeof updatedFormSchema>) => {
+    // Validate the form before submitting
+    const result = await form.trigger();
+    if (!result) {
+      // If validation fails, show errors in toast
+      const errors = form.formState.errors;
+      let errorMessage = t('form.validationError');
+      Object.keys(errors).forEach((key) => {
+        // @ts-ignore
+        errorMessage += `\n${t(`promotion.${key}`)}: ${errors[key]?.message}`;
+      });
 
-    const specificTime = cleanJsonString(values.specificTime);
-    const stringifiedValues = {
+      toast({
+        title: t('form.error'),
+        description: errorMessage,
+        variant: "destructive",
+      })
+      return; // Stop the submission
+    }
+
+    const formattedValues = {
       ...values,
+      startDate: values.startDate ? format(parse(values.startDate, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '',
+      endDate: values.endDate ? format(parse(values.endDate, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '',
       percentDiscount: values.percentDiscount.toString(),
       maxDiscount: values.maxDiscount.toString(),
-      usageLimit: values.usageLimit,
       minSpend: values.minSpend.toString(),
       maxSpend: values.maxSpend.toString(),
-      status: values.status, // Convert status to string
-      specificTime: JSON.stringify(specificTime),
-      includegames: values.includegames.toString(),
-      excludegames: values.excludegames.toString(),
     };
-   
-    if (promotionId) {
-      const data = await UpdatePromotion(prefix, promotionId, stringifiedValues);
 
+    if (promotionId) {
+      const data = await UpdatePromotion(prefix, promotionId, formattedValues);
       if (data.Status) {
-     
         toast({
           title: t("promotion.edit.success"),
           description: t("promotion.edit.success_description"),
           variant: "default",
         })
+        queryClient.invalidateQueries({ queryKey: ['promotions'] });
         onClose();
       } else {
         toast({
           title: t("promotion.edit.error"),
-          description:  t("promotion.edit.error_description")+data.Message,
+          description: t("promotion.edit.error_description") + data.Message,
           variant: "destructive",
         })
       }
     } else {
-    
-      const data = await AddPromotion(prefix,stringifiedValues)
+      const data = await AddPromotion(prefix, formattedValues);
       if (data.Status) {
-      
         toast({
           title: t("promotion.add.success"),
           description: t("promotion.add.success_description"),
           variant: "default",
         })
+        queryClient.invalidateQueries({ queryKey: ['promotions'] });
         onClose();
       } else {
         toast({
           title: t("promotion.add.error"),
-          description:  t("promotion.add.error_description")+data.Message,
+          description: t("promotion.add.error_description") + data.Message,
           variant: "destructive",
         })
       }
@@ -245,9 +280,9 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             name="percentDiscount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('promotion.percentDiscount')}  %</FormLabel>
+                <FormLabel>{t('promotion.percentDiscount')} %</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} type="number" onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -257,7 +292,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             control={form.control}
             name="startDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col mt-2">
                 <FormLabel>{t('promotion.startDate')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -270,7 +305,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "dd-MM-yyyy")
+                          format(parse(field.value, "dd-MM-yyyy", new Date()), "dd-MM-yyyy")
                         ) : (
                           <span>{t('promotion.selectDate')}</span>
                         )}
@@ -281,14 +316,13 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      timezone="Asia/Bangkok"
-                      locale={th}
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
+                      selected={field.value ? parse(field.value, "dd-MM-yyyy", new Date()) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, "dd-MM-yyyy") : '')}
                       initialFocus
+                      locale={th}
+                      weekStartsOn={0} 
+                      dir="ltr"
+                      className="ltr-calendar" 
                     />
                   </PopoverContent>
                 </Popover>
@@ -296,11 +330,12 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               </FormItem>
             )}
           />
+          
           <FormField
             control={form.control}
             name="endDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col mt-2">
                 <FormLabel>{t('promotion.endDate')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -312,8 +347,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                           !field.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? (
-                          format(field.value, "dd-MM-yyyy")
+                        {field.value && isValid(parse(field.value, "dd-MM-yyyy", new Date())) ? (
+                          format(parse(field.value, "dd-MM-yyyy", new Date()), "dd-MM-yyyy")
                         ) : (
                           <span>{t('promotion.selectDate')}</span>
                         )}
@@ -324,14 +359,13 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      timezone="Asia/Bangkok"
-                      locale={th}
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
+                      selected={field.value ? parse(field.value, "dd-MM-yyyy", new Date()) : undefined}
+                      onSelect={(date) => field.onChange(date ? format(date, "dd-MM-yyyy") : '')}
                       initialFocus
+                      locale={th}
+                      weekStartsOn={0} 
+                      dir="ltr"
+                      className="ltr-calendar" // 0 represents Sunday
                     />
                   </PopoverContent>
                 </Popover>
@@ -375,7 +409,11 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                   <div className="space-y-4">
                     <Select
                       onValueChange={(value) => {
-                        const newValue = { ...JSON.parse(field.value || '{}'), type: value };
+                        const currentValue = cleanJsonString(field.value || '{}');
+                        const newValue: SpecificTime = { type: value };
+                        if (value !== 'once') {
+                          newValue.daysOfWeek = currentValue.daysOfWeek;
+                        }
                         field.onChange(JSON.stringify(newValue));
                       }}
                       value={cleanJsonString(field.value || '{}').type}
@@ -408,7 +446,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                                     const updatedDays = checked
                                       ? [...(currentValue.daysOfWeek || []), day]
                                       : (currentValue.daysOfWeek || []).filter((d: string) => d !== day);
-                                    const newValue = { ...currentValue, daysOfWeek: updatedDays };
+                                    const newValue: SpecificTime = { ...currentValue, daysOfWeek: updatedDays };
                                     innerField.onChange(JSON.stringify(newValue));
                                   }}
                                 />
@@ -501,8 +539,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             control={form.control}
             name="status"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border mt-2 p-2">
+                <div className="">
                   <FormLabel className="text-base">{t('promotion.status')}</FormLabel>
                   <FormDescription>
                     {field.value === 1 ? t('promotion.status_active') : t('promotion.status_inactive')}
@@ -588,7 +626,23 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       </div>
     </TabsContent>
     <div className="flex justify-end space-x-2 mt-6">
-            <Button type="submit">{t('promotion.save')}</Button>
+            <Button type="submit" onClick={async () => {
+              const result = await form.trigger();
+              if (!result) {
+                const errors = form.formState.errors;
+                let errorMessage = t('form.validationError');
+                Object.keys(errors).forEach((key) => {
+                  // @ts-ignore
+                  errorMessage += `\n${t(`promotion.${key}`)}: ${errors[key]?.message}`;
+                });
+
+                toast({
+                  title: t('form.error'),
+                  description: errorMessage,
+                  variant: "destructive",
+                })
+              }
+            }}>{t('promotion.save')}</Button>
             <Button type="button" variant="outline" onClick={onCancel}>{t('promotion.cancel')}</Button>
           </div>
       </Tabs>

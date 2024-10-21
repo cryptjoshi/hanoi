@@ -242,6 +242,17 @@ return response.json()
 }
 } 
 
+export const DeletePromotion = async (dbname:string,id:any) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/delete", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":dbname,"promotionId":id})
+})
+return response.json()
+}
+
 export const GetExchangeRate = async (currency:string) =>{
   try{
   const response = await fetch(`http://152.42.185.164:4006/api/v1/db/exchange/rate`,{method:'POST',

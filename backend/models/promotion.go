@@ -23,7 +23,6 @@ type Promotion struct {
 	Widthdrawmax       decimal.Decimal   `gorm:"type:numeric" json:"Widthdrawmax"`
     Formular   string   `gorm:"size:255;not null;" json:"formular"`
 	Options   string   `gorm:"size:255;not null;" json:"options"`
-	DeletedAt     string `gorm:"size:255;default:null;" json:"deletedAt"`
 	Name string `gorm:"size:255;not null;" json:"name"`
 	PercentDiscount decimal.Decimal `gorm:"type:numeric" json:"percentDiscount"`
 	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"maxDiscount"`
@@ -38,4 +37,5 @@ type Promotion struct {
 	EndDate string `gorm:"size:255;not null;" json:"endDate"`
 	Status        int  `json:"status"`
 	Example string `gorm:"size:255;not null;" json:"example"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

@@ -13,7 +13,7 @@
     BreadcrumbSeparator
   } from "@/components/ui/breadcrumb";
   import { AccountForm } from "@/app/forms/account/account-form";
-  import { ProfileForm } from "@/components/agents/new/profile-register";
+  //import { ProfileForm } from "@/components/agents/new/profile-register";
   import SettingsProfilePage from "@/components/agents/new/page";
   import SettingsLayout from "@/components/agents/new/layout";
    

@@ -258,6 +258,26 @@
         
         
     },
+    "settings": {
+        "appearance": {
+            "title": "Appearance",
+            "description": "Appearance description",
+            "update_preferences": "Update preferences",
+            "currency": "Currency",
+            "currency_description": "Currency description",
+            "font": "Font",
+            "font_description": "Font description",
+            "theme": "Theme",
+            "theme_description": "Theme description"
+        },
+        "title": "Settings",
+        "profile": "Profile",
+        "profile_description": "Profile description",
+        "general": "General",
+        "general_description": "General description",
+        "about": "About",
+        "about_description": "About description"
+    },
     "common": {
         "mon": "Mon",
         "tue": "Tue",

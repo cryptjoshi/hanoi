@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useTranslation } from "@/app/i18n/client"
 
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark"], {
@@ -27,6 +28,10 @@ const appearanceFormSchema = z.object({
     invalid_type_error: "Select a font",
     required_error: "Please select a font.",
   }),
+  currency: z.enum(["USD", "EUR", "THB"], {
+    invalid_type_error: "Select a currency",
+    required_error: "Please select a currency.",
+  }),
 })
 
 type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
@@ -35,8 +40,14 @@ type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
 const defaultValues: Partial<AppearanceFormValues> = {
   theme: "light",
 }
+interface Props {
+  lng: string;
+  id: string;
+}
 
-export function AppearanceForm() {
+export function AppearanceForm({ lng, id }: Props) {
+
+  const {t} = useTranslation(lng,'translation','')
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues,
@@ -44,7 +55,7 @@ export function AppearanceForm() {
 
   function onSubmit(data: AppearanceFormValues) {
     toast({
-      title: "You submitted the following values:",
+      title: t("settings.appearance.update_preferences"),
       description: (
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
@@ -56,12 +67,41 @@ export function AppearanceForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <FormField
+          control={form.control}
+          name="currency"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("settings.appearance.currency")}</FormLabel>
+              <div className="relative w-max">
+                <FormControl>
+                  <select
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-[200px] appearance-none font-normal"
+                    )}
+                    {...field}
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="THB">THB</option>
+                  </select>
+                </FormControl>
+                <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
+              </div>
+              <FormDescription>
+                {t("settings.appearance.currency_description")}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="font"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Font</FormLabel>
+              <FormLabel>{t("settings.appearance.font")}</FormLabel>
               <div className="relative w-max">
                 <FormControl>
                   <select
@@ -79,7 +119,7 @@ export function AppearanceForm() {
                 <ChevronDownIcon className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
               </div>
               <FormDescription>
-                Set the font you want to use in the dashboard.
+                {t("settings.appearance.font_description")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -90,9 +130,9 @@ export function AppearanceForm() {
           name="theme"
           render={({ field }) => (
             <FormItem className="space-y-1">
-              <FormLabel>Theme</FormLabel>
+              <FormLabel>{t("settings.appearance.theme")}</FormLabel>
               <FormDescription>
-                Select the theme for the dashboard.
+                {t("settings.appearance.theme_description")}
               </FormDescription>
               <FormMessage />
               <RadioGroup
@@ -157,8 +197,10 @@ export function AppearanceForm() {
           )}
         />
 
-        <Button type="submit">Update preferences</Button>
+        <Button type="submit">{t("settings.appearance.update_preferences")}</Button>
       </form>
     </Form>
   )
 }
+
+ 

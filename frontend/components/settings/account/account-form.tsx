@@ -33,6 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useTranslation } from "@/app/i18n/client"
 
 const languages = [
   { label: "English", value: "en" },
@@ -71,7 +72,8 @@ const defaultValues: Partial<AccountFormValues> = {
   // dob: new Date("2023-01-23"),
 }
 
-export function AccountForm() {
+export function AccountForm({ lng }: { lng: string }) {
+  const { t } =  useTranslation(lng, "translation",undefined)
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues,

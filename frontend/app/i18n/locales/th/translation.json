@@ -255,6 +255,26 @@
             "add":"เพิ่มสมาชิก"
         }
     },
+    "settings": {
+        "appearance": {
+            "title": "ตั้งค่า",
+            "description": "ตั้งค่าทั่วไป",
+            "update_preferences": "อัปเดตการตั้งค่า",
+            "currency": "สกุลเงิน",
+            "currency_description": "สกุลเงินที่ใช้ในระบบ",
+            "font": "ฟอนต์",
+            "font_description": "ฟอนต์ที่ใช้ในระบบ",
+            "theme": "ธีม",
+            "theme_description": "ธีมที่ใช้ในระบบ"
+        },
+        "title": "ตั้งค่า",
+        "profile": "ตั้งค่าทั่วไป",
+        "profile_description": "ตั้งค่าทั่วไปสำหรับสมาชิก",
+        "general": "ทั่วไป",
+        "general_description": "ตั้งค่าทั่วไปสำหรับสมาชิก",
+        "about": "เกี่ยวกับ",
+        "about_description": "รายละเอียดเกี่ยวกับ"
+    },
     "common": {
         "mon": "จันทร์",
         "tue": "อังคาร",

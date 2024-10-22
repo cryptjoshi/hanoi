@@ -359,7 +359,9 @@
         "inactive": "Inactive",
         "maintenance": "Maintenance",
         "selectRole": "Select Role",
-        "role": "Role"
+        "role": "Role",
+        "save": "Save",
+        "cancel": "Cancel"
     }
 }
   

@@ -1,9 +1,0 @@
-.custom-calendar .react-datepicker__week {
-  display: flex;
-  flex-direction: row-reverse;
-}
-
-.custom-calendar .react-datepicker__day-names {
-  display: flex;
-  flex-direction: row-reverse;
-}

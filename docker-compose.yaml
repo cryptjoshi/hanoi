@@ -27,14 +27,41 @@ services:
       caddy.reverse_proxy: "{{upstreams 80}}"
       caddy.tls: "internal"
 
-  frontend:
-    container_name: frontend
+  zookeeper:
+    container_name: zookeeper
     build:
-        context: ./frontend
+        context: ./zookeeper
         dockerfile: ./Dockerfile
         target: development
     volumes:
-        - ./frontend:/app
+        - ./zookeeper:/app
+        - /app/node_modules
+        #- /app/.next
+    expose:
+        - '4002'
+    ports:
+        - "4002:4002"
+    working_dir: /app
+    env_file: .env
+    # labels:
+    #   caddy: paribrand.shop
+    #   caddy.reverse_proxy: "{{upstreams 4001}}"
+    #   caddy.tls: "internal"
+    # environment:
+    #    - VIRTUAL_HOST=dashboard.tsxbet.com
+    #    - VIRTUAL_PORT=4001
+    #    - NEXT_PUBLIC_PREFIX=PKD
+    networks:
+        - proxy-net
+
+  frontend_admin:
+    container_name: frontend_admin
+    build:
+        context: ./frontend_admin
+        dockerfile: ./Dockerfile
+        target: development
+    volumes:
+        - ./frontend_admin:/app
         - /app/node_modules
         #- /app/.next
     expose:

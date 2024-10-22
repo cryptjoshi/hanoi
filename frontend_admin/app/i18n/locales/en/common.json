@@ -1,0 +1,16 @@
+{
+    "welcome": "Welcome to our website",
+    "description": "This is an example of i18n in Next.js",
+    "agents": {
+        "title": "Agent",
+        "description":"Agent detail"
+    },
+    "login": {
+        "title": "Login",
+        "username": "Username",
+        "password": "Password",
+        "submit": "Submit"
+      }
+
+  }
+  

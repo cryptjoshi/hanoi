@@ -1479,6 +1479,7 @@ func CreateMember(c *fiber.Ctx) error {
 	member.Username = body.Body.Username
 	member.Password = body.Body.Password
 	member.Status = body.Body.Status
+	member.Role = "user"
  
 
 	err = db.Debug().Create(&member).Error

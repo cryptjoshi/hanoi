@@ -19,19 +19,19 @@ export default async function SettingsProfilePage({ params }: { params: { lng: s
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
+            <Link href={`/${lng}`}>{t(`menu.home`)}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href={`/${lng}/dashboard`}>{t(`menu.dashboard`)}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/settings">Settings</Link>
+            <Link href={`/${lng}/dashboard/settings`}>{t(`menu.settings`)}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>

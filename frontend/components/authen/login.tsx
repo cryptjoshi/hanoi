@@ -50,7 +50,7 @@ export default function Login({lng}:{lng:string}) {
      
      if (response) {
   
-        router.push(`/${lng}/dashboard`);
+      router.push(`/${lng}/dashboard`);
     } else {
   
       toast({

@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/tooltip";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
+import { useTranslation } from "@/app/i18n/client";
 //import { useTranslation } from '@/app/i18n'
 
 export default  function DashboardPage({ params: { lng } }) {
   //const { t } = await useTranslation(lng)
+  const { t } =  useTranslation(lng,'translation' ,'menu');
   const sidebar = useStore(useSidebar, (x) => x);
   if (!sidebar) return null;
   const { settings, setSettings } = sidebar;
@@ -32,12 +34,12 @@ export default  function DashboardPage({ params: { lng } }) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Home</Link>
+              <Link href={`/${lng}`}>{t(`menu.home`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            <BreadcrumbPage>{t(`menu.dashboard`)}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -51,11 +53,11 @@ export default  function DashboardPage({ params: { lng } }) {
                   onCheckedChange={(x) => setSettings({ isHoverOpen: x })}
                   checked={settings.isHoverOpen}
                 />
-                <Label htmlFor="is-hover-open">Hover Open</Label>
+                <Label htmlFor="is-hover-open">{t(`menu.hover_open`)}</Label>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>When hovering on the sidebar in mini state, it will open</p>
+              <p>{t(`menu.hover_open`)}</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -66,11 +68,11 @@ export default  function DashboardPage({ params: { lng } }) {
                   onCheckedChange={(x) => setSettings({ disabled: x })}
                   checked={settings.disabled}
                 />
-                <Label htmlFor="disable-sidebar">Disable Sidebar</Label>
+                <Label htmlFor="disable-sidebar">{t(`menu.disable_sidebar`)}</Label>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Hide sidebar</p>
+              <p>{t(`menu.disable_sidebar`)}</p>
             </TooltipContent>
           </Tooltip>
         </div>

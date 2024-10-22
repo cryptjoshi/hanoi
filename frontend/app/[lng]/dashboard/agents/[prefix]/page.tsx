@@ -13,33 +13,46 @@
     BreadcrumbSeparator
   } from "@/components/ui/breadcrumb";
   import EditAgentSettings from "@/components/agents/edit/page";
+import { useTranslation } from "@/app/i18n";
+import useAuthStore from "@/store/auth";
    
-  export default function AgentAction({ params }: { params: { lng: string, prefix: string } }) {
-    const { lng,prefix } = params;
+  export default async function AgentAction({ params }: { params: {  prefix: string,lng:string } }) {
+    const { prefix,lng } = params;
+    
+    
+    
+    const {t} = await useTranslation(lng,'translation');
     return (
-      <ContentLayout title="View Agent" >
+      <ContentLayout title={t(`agents.title`)+" "+prefix} >
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href={`/${lng}/`}>Home</Link>
+                <Link href={`/${lng}/`}>{t(`menu.home`)}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href={`/${lng}/dashboard`}>Dashboard</Link>
+                <Link href={`/${lng}/dashboard`}>{t(`menu.dashboard`)}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href={`/${lng}/dashboard/agents`}>Agents</Link>
+                <Link href={`/${lng}/dashboard/agents`}>{t(`agents.title`)}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          
+              <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={`/${lng}/dashboard/agents`}>{t(`menu.all_agents`)}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Edit</BreadcrumbPage>
+              <BreadcrumbPage>{t(`menu.edit`)}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

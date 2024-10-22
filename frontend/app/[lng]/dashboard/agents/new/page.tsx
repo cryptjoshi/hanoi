@@ -14,34 +14,35 @@ import { AccountForm } from "@/app/forms/account/account-form";
 import { ProfileForm } from "@/components/agents/new/profile-register";
 import SettingsProfilePage from "@/components/agents/new/page";
 import SettingsLayout from "@/components/agents/new/layout";
- 
+import { useTranslation } from "@/app/i18n";
 
-export default function NewPostPage({ params }: { params: { lng: string } }) {
+export default async function NewPostPage({ params }: { params: { lng: string } }) {
   const { lng } = params;
+  const { t } = await useTranslation(lng, "translation")
   return (
-    <ContentLayout title="New Agent" >
+    <ContentLayout title={t(`menu.new_agent`)} >
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}/`}>Home</Link>
+              <Link href={`/${lng}`}>{t(`menu.home`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}/dashboard`}>Dashboard</Link>
+              <Link href={`/${lng}/dashboard`}>{t(`menu.dashboard`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}/dashboard/agents`}>Agents</Link>
+              <Link href={`/${lng}/dashboard/agents`}>{t(`menu.agent`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>New</BreadcrumbPage>
+            <BreadcrumbPage>{t(`menu.new_agent`)}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

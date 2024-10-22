@@ -56,23 +56,23 @@ export default async function PostsPage({ params }: { params: { lng: string } })
   }, [] as DatabaseEntry[]);
  
   return (
-    <ContentLayout title="All Agents">
+    <ContentLayout title={t(`menu.agent`)}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}`}>Home</Link>
+              <Link href={`/${lng}`}>{t(`menu.home`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}/dashboard`}>Dashboard</Link>
+              <Link href={`/${lng}/dashboard`}>{t(`menu.dashboard`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Agents</BreadcrumbPage>
+            <BreadcrumbPage>{t(`menu.agent`)}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

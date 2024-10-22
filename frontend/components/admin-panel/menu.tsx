@@ -16,17 +16,20 @@ import {
   TooltipProvider
 } from "@/components/ui/tooltip";
 import useAuthStore  from "@/store/auth";
+import { useTranslation } from "@/app/i18n/client";
 
 
 interface MenuProps {
-  isOpen: boolean | undefined;
+  isOpen: boolean | undefined;  
 }
 
 export function Menu({ isOpen }: MenuProps) {
   const pathname = usePathname();
-  const lng = useParams().lng as string;
-  const menuList = getMenuList(pathname, lng);
+  const lng = useParams().lng as string;  
   const {Logout} = useAuthStore()
+  const menuList = getMenuList(pathname, lng);
+  
+  const {t} = useTranslation(lng,'translation',undefined);
 
   const handleLogout = () => {
     Logout();
@@ -41,7 +44,7 @@ export function Menu({ isOpen }: MenuProps) {
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="text-sm font-medium text-muted-foreground px-4 pb-2 max-w-[248px] truncate">
-                  {groupLabel}
+                  {t(`menu.${groupLabel}`)}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
                 <TooltipProvider>
@@ -52,7 +55,7 @@ export function Menu({ isOpen }: MenuProps) {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>{groupLabel}</p>
+                      <p>{t(`menu.${groupLabel}`)}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -91,14 +94,14 @@ export function Menu({ isOpen }: MenuProps) {
                                       : "translate-x-0 opacity-100"
                                   )}
                                 >
-                                  {label}
+                                  {t(`menu.${label}`)}
                                 </p>
                               </Link>
                             </Button>
                           </TooltipTrigger>
                           {isOpen === false && (
                             <TooltipContent side="right">
-                              {label}
+                              {t(`menu.${label}`)}
                             </TooltipContent>
                           )}
                         </Tooltip>
@@ -116,6 +119,7 @@ export function Menu({ isOpen }: MenuProps) {
                         }
                         submenus={submenus}
                         isOpen={isOpen}
+                        lng={lng}
                       />
                     </div>
                   )
@@ -140,12 +144,12 @@ export function Menu({ isOpen }: MenuProps) {
                         isOpen === false ? "opacity-0 hidden" : "opacity-100"
                       )}
                     >
-                      Sign out
+                      {t(`menu.sign_out`)}
                     </p>
                   </Button>
                 </TooltipTrigger>
                 {isOpen === false && (
-                  <TooltipContent side="right" >Sign out</TooltipContent>
+                    <TooltipContent side="right" >{t(`menu.sign_out`)}</TooltipContent>
                 )}
               </Tooltip>
             </TooltipProvider>

@@ -10,7 +10,7 @@ import { PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
 
 export function Sidebar() {
-  const {isLoggedIn} =  useAuthStore();
+  const {isLoggedIn,lng} =  useAuthStore();
   const sidebar = useStore(useSidebar, (x) => x);
   if (!sidebar) return null;
   const { isOpen, toggleOpen, getOpenState, setIsHover, settings } = sidebar;
@@ -37,7 +37,7 @@ export function Sidebar() {
           variant="link"
           asChild
         >
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={`/${lng}/dashboard`} className="flex items-center gap-2">
             <PanelsTopLeft className="w-6 h-6 mr-1" />
             <h1
               className={cn(
@@ -51,7 +51,7 @@ export function Sidebar() {
             </h1>
           </Link>
         </Button>
-        <Menu isOpen={getOpenState()} />
+        <Menu isOpen={getOpenState()}  />
       </div>
     </aside>
   );

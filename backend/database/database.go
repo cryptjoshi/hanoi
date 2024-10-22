@@ -43,24 +43,24 @@ func handleError(err error) {
 
 func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
     migrator := db.Migrator()
+    // ใช้ db.Model(model) เพื่อกำหนดค่า Statement.Table
     tableName := db.Model(model).Statement.Table
-	if tableName == "" {
-		return fmt.Errorf("table name is empty")
-	}
+    if tableName == "" {
+        return fmt.Errorf("table name is empty, please ensure the model is correctly defined")
+    }
+    
     if !migrator.HasTable(tableName) {
         fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
-        if err := migrator.CreateTable(model); err != nil {
+        if err := db.AutoMigrate(model); err != nil {
             return fmt.Errorf("failed to create table '%s': %v", tableName, err)
-			//fmt.Printf("Table '%s' already exists\n", tableName)
         }
         fmt.Printf("Table '%s' created successfully\n", tableName)
     } else {
-		
-	if err := db.AutoMigrate(&model); err != nil {
-		//handleError(err)
-		return fmt.Errorf("Table '%s' already exists\n", tableName)
-	}
-        
+        fmt.Printf("Table '%s' already exists. Updating schema...\n", tableName)
+        if err := db.AutoMigrate(model); err != nil {
+            return fmt.Errorf("failed to update table '%s': %v", tableName, err)
+        }
+        fmt.Printf("Table '%s' schema updated successfully\n", tableName)
     }
 
     return nil

@@ -15,10 +15,10 @@ interface LayoutProps {
 
 export default function Layout({
   children,
-  params
+  params: { lng }
 }: LayoutProps) {
   return (
-    <div lang={params.lng} dir={dir(params.lng)}>
+    <div lang={lng} dir={dir(lng)}>
       {children}
     </div>
   )

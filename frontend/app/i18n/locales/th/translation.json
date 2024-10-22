@@ -290,20 +290,26 @@
         "about_description": "รายละเอียดเกี่ยวกับ"
     },
     "menu": {
-        "dashboard": "หน้าแรก",
+        "dashboard": "แดชบอร์ด",
+        "home": "หน้าแรก",
         "account": "บัญชี",
-        "sign_out": "ออกจากระบบ",
+        "sign_out": "ออกจากระบบ",        
         "profile": "ตั้งค่า",
         "appearance": "ตั้งค่า",
         "notifications": "การแจ้งเตือน",
         "promotion": "โปรโมชั่น",
-        "agent": "ผู้ดูแลระบบ",
-        "all_agents": "ผู้ดูแลระบบทั้งหมด",
-        "new_agent": "ผู้ดูแลระบบใหม่",
+        "agent": "สมาชิก",
+        "all_agents": "สมาชิกทั้งหมด",
+        "new_agent": "สมาชิกใหม่",
         "contents": "เนื้อหา",
+        "edit": "แก้ไข",
         "games": "เกม",
         "members": "สมาชิก",
-        "settings": "ตั้งค่า"
+        "setting": "ตั้งค่า",
+        "settings": "ตั้งค่า",
+        "disable_sidebar": "ปิดซ้าย",
+        "hover_open": "เมื่อคลิกที่ซ้ายมือในสถานะย่อของซ้ายมือจะเปิด",
+        "is_hover_open": "เปิดจากคลิก"
     },
     "common": {
         "mon": "จันทร์",

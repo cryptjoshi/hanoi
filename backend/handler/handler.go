@@ -830,8 +830,11 @@ func GetPromotion(c *fiber.Ctx) error {
 			}
 		return c.JSON(response)
     }
-    database.CheckAndCreateTable(db, models.Promotion{})
-	
+    //database.CheckAndCreateTable(db, models.Promotion{})
+	err = db.AutoMigrate(&models.Promotion{})
+	if err != nil {
+		fmt.Println("err:",err)
+	}
     promotions := []models.Promotion{}
 
      err = db.Debug().Find(&promotions).Error
@@ -1055,7 +1058,11 @@ func CreateGame(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	database.CheckAndCreateTable(db, models.Games{})
+	//database.CheckAndCreateTable(db, models.Games{})
+	err = db.AutoMigrate(&models.Games{})
+	if err != nil {
+		fmt.Println("err:",err)
+	}
 	err = db.Create(&game).Error
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -1092,7 +1099,12 @@ func GetGameList(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	database.CheckAndCreateTable(db, models.Games{})
+	//err = database.CheckAndCreateTable(db, models.Games{})
+	err = db.AutoMigrate(&models.Games{})
+	if err != nil {
+		fmt.Println("err:",err)
+	}
+
 	games := []models.Games{}
 	err = db.Debug().Find(&games).Error
 	if err != nil {
@@ -1228,7 +1240,11 @@ func GetGameById(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	database.CheckAndCreateTable(db, models.Games{})	
+	//database.CheckAndCreateTable(db, models.Games{})	
+	err = db.AutoMigrate(&models.Games{})
+	if err != nil {
+		fmt.Println("err:",err)
+	}
 	game := models.Games{}
 	err = db.Debug().First(&game, body.ID).Error
 	if err != nil {

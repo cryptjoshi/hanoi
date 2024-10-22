@@ -306,7 +306,13 @@
         "contents": "Contents",
         "games": "Game",
         "members": "Member",
-        "settings": "Settings"
+        "setting": "Settings",
+        "settings": "Settings",
+        "home": "Home",
+        "edit": "Edit",
+        "disable_sidebar": "Disable Sidebar",
+        "hover_open": "When hovering on the sidebar in mini state, it will open",
+        "is_hover_open": "Hover Open"
     },
     "common": {
         "mon": "Mon",

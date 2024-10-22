@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "@/app/i18n/client";
 
 type Submenu = {
   href: string;
@@ -40,6 +41,7 @@ interface CollapseMenuButtonProps {
   active: boolean;
   submenus: Submenu[];
   isOpen: boolean | undefined;
+  lng: string;
 }
 
 export function CollapseMenuButton({
@@ -47,9 +49,11 @@ export function CollapseMenuButton({
   label,
   active,
   submenus,
-  isOpen
+  isOpen,
+  lng
 }: CollapseMenuButtonProps) {
   const pathname = usePathname();
+  const {t} = useTranslation(lng,'translation',undefined);
   const isSubmenuActive = submenus.some((submenu) =>
     submenu.active === undefined ? submenu.href === pathname : submenu.active
   );
@@ -82,7 +86,7 @@ export function CollapseMenuButton({
                     : "-translate-x-96 opacity-0"
                 )}
               >
-                {label}
+                {t(`menu.${label}`)}
               </p>
             </div>
             <div
@@ -125,7 +129,7 @@ export function CollapseMenuButton({
                     : "-translate-x-96 opacity-0"
                 )}
               >
-                {label}
+                {t(`menu.${label}`)}
               </p>
             </Link>
           </Button>
@@ -153,7 +157,7 @@ export function CollapseMenuButton({
                         isOpen === false ? "opacity-0" : "opacity-100"
                       )}
                     >
-                      {label}
+                      {t(`menu.${label}`)}
                     </p>
                   </div>
                 </div>
@@ -161,13 +165,13 @@ export function CollapseMenuButton({
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="right" align="start" alignOffset={2}>
-            {label}
+            {t(`menu.${label}`)}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <DropdownMenuContent side="right" sideOffset={25} align="start">
         <DropdownMenuLabel className="max-w-[190px] truncate">
-          {label}
+          {t(`menu.${label}`)}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {submenus.map(({ href, label, active }, index) => (
@@ -179,7 +183,7 @@ export function CollapseMenuButton({
               }`}
               href={href}
             >
-              <p className="max-w-[180px] truncate">{label}</p>
+              <p className="max-w-[180px] truncate">{t(`menu.${label}`)}</p>
             </Link>
           </DropdownMenuItem>
         ))}

@@ -27,34 +27,45 @@ import {
     menus: Menu[];
   };
   
-  export function getMenuList(pathname: string, lng: string): Group[] {
+  function isActive(menuPath: string, currentPath: string): boolean {
+    return currentPath.startsWith(menuPath);
+  }
+  
+  export function getMenuList(pathname: string, lng: string | undefined): Group[] {
+    // Ensure lng is a string, use a default if it's undefined
+    const language = typeof lng === 'string' ? lng : 'en';
+
     return [
       {
         groupLabel: "",
         menus: [
           {
-            href: `/${lng}/dashboard`,
-            label: "Dashboard",
+            href: `/${language}/dashboard`,
+            label: "dashboard",
             icon: LayoutGrid,
+            active: isActive(`/${language}/dashboard`, pathname),
             submenus: []
           }
         ]
       },
       {
-        groupLabel: "Contents",
+        groupLabel: "contents",
         menus: [
           {
             href: "",
-            label: "Agent",
+            label: "agent",
             icon: SquarePen,
+            active: isActive(`/${language}/dashboard/agents`, pathname),
             submenus: [
               {
-                href: `/${lng}/dashboard/agents`,
-                label: "All Agents"
+                href: `/${language}/dashboard/agents`,
+                label: "all_agents",
+                active: isActive(`/${language}/dashboard/agents`, pathname)
               },
               {
-                href: `/${lng}/dashboard/agents/new`,
-                label: "New Agent"
+                href: `/${language}/dashboard/agents/new`,
+                label: "new_agent",
+                active: pathname === `/${language}/dashboard/agents/new`
               }
             ]
           },
@@ -71,12 +82,13 @@ import {
         ]
       },
       {
-        groupLabel: "Settings",
+        groupLabel: "settings",
         menus: [
           {
-            href:  `/${lng}/dashboard/settings`,
-            label: "Settings",
-            icon: Settings
+            href: `/${language}/dashboard/settings`,
+            label: "setting",
+            icon: Settings,
+            active: isActive(`/${language}/dashboard/settings`, pathname)
           },
           // {
           //   href: "/dashboard/account",

@@ -43,7 +43,7 @@ interface DatabaseEntry {
 export default async function PostsPage({ params }: { params: { lng: string } }) {
   const { lng } = params;
   const data: DatabaseResponse = await GetDatabaseList();
-  const { t } = await useTranslation(lng, "agents")
+  const { t } = await useTranslation(lng, "translation")
   
 
   // แปลงข้อมูลจาก object เป็น DatabaseEntry[]
@@ -56,23 +56,29 @@ export default async function PostsPage({ params }: { params: { lng: string } })
   }, [] as DatabaseEntry[]);
  
   return (
-    <ContentLayout title="All Agents">
+    <ContentLayout title={t(`menu.all_agents`)}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}`}>Home</Link>
+              <Link href={`/${lng}`}>{t(`menu.home`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href={`/${lng}/dashboard`}>Dashboard</Link>
+              <Link href={`/${lng}/dashboard`}>{t(`menu.dashboard`)}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Agents</BreadcrumbPage>
+            <BreadcrumbLink asChild>
+              <Link href={`/${lng}/dashboard/agents`}>{t(`menu.agent`)}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{t(`menu.all_agents`)}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

@@ -271,10 +271,10 @@
             "font_description": "ฟอนต์ที่ใช้ในระบบ",
             "theme": "ธีม",
             "theme_description": "ธีมที่ใช้ในระบบ",
-            "base_currency": "สกุลเงินหน้าสมาชิก",
-            "base_currency_description": "สกุลเงินหน้าสมาชิก",
-            "target_currency": "สกุลเงินหน้าลูกค้า",
-            "target_currency_description": "สกุลเงินหน้าลูกค้า"
+            "base_currency": "สกุลเงินหลัก",
+            "base_currency_description": "สกุลเงินหลัก",
+            "target_currency": "สกุลเงินลูกค้า",
+            "target_currency_description": "สกุลเงินลูกค้า"
         },
         "about": {
             "title": "เกี่ยวกับ",
@@ -288,6 +288,22 @@
         "general": "ทั่วไป",
         "general_description": "ตั้งค่าทั่วไปสำหรับสมาชิก",
         "about_description": "รายละเอียดเกี่ยวกับ"
+    },
+    "menu": {
+        "dashboard": "หน้าแรก",
+        "account": "บัญชี",
+        "sign_out": "ออกจากระบบ",
+        "profile": "ตั้งค่า",
+        "appearance": "ตั้งค่า",
+        "notifications": "การแจ้งเตือน",
+        "promotion": "โปรโมชั่น",
+        "agent": "ผู้ดูแลระบบ",
+        "all_agents": "ผู้ดูแลระบบทั้งหมด",
+        "new_agent": "ผู้ดูแลระบบใหม่",
+        "contents": "เนื้อหา",
+        "games": "เกม",
+        "members": "สมาชิก",
+        "settings": "ตั้งค่า"
     },
     "common": {
         "mon": "จันทร์",

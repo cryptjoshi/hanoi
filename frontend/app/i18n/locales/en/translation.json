@@ -292,6 +292,22 @@
         "general_description": "General description",
         "about_description": "About description"
     },
+    "menu": {
+        "dashboard": "Dashboard",
+        "account": "Account",
+        "sign_out": "Sign out",
+        "profile": "Profile",
+        "appearance": "Appearance",
+        "notifications": "Notifications",
+        "promotion": "Promotion",
+        "agent": "Agent",
+        "all_agents": "All Agents",
+        "new_agent": "New Agent",
+        "contents": "Contents",
+        "games": "Game",
+        "members": "Member",
+        "settings": "Settings"
+    },
     "common": {
         "mon": "Mon",
         "tue": "Tue",

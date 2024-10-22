@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator"
 import { AppearanceForm } from "@/app/forms/appearance/appearance-form"
 
-export default function SettingsAppearancePage() {
+export default function SettingsAppearancePage({ params: { lng,prefix } }: { params: { lng: string,prefix: string } }) {
   return (
     <div className="space-y-6">
       <div>
@@ -12,7 +12,7 @@ export default function SettingsAppearancePage() {
         </p>
       </div>
       <Separator />
-      <AppearanceForm />
+      <AppearanceForm lng={lng} prefix={prefix} />
     </div>
   )
 }

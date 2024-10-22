@@ -269,6 +269,17 @@ export const GetExchangeRate = async (currency:string) =>{
 }
 }
 
+export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/update", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"id":id,"body":body})
+    })
+    return response.json()
+}
+
 export async function navigate(path:string) {
   redirect(path)
 }

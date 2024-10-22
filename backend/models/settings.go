@@ -2,7 +2,7 @@ package models
 
 import "gorm.io/gorm"
 
-type Master struct {
+type Settings struct {
 	gorm.Model
 	CompanyName string `gorm:"size:255;column:companyCode" json:"companyNamee"`
 	BaseCurrency string `gorm:"size:255;column:baseCurrency" json:"baseCurrency"`
@@ -14,6 +14,6 @@ type Master struct {
 }
 
 
-func (Master) TableName() string {
-	return "Master"
+func (Settings) TableName() string {
+	return "Settings"
 }

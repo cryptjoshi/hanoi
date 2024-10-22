@@ -5,7 +5,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useState, useEffect } from "react"
-import { GetExchangeRate } from "@/actions"
+import { GetExchangeRate, UpdateMaster } from "@/actions"
 
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
@@ -50,12 +50,12 @@ const defaultValues: Partial<AppearanceFormValues> = {
   targetCurrency: "THB",
 }
 interface Props {
-  lng: string;
-  id: string;
+  prefix: string;
 }
 
-export function AppearanceForm({ lng, id }: Props) {
-  const {t} = useTranslation(lng,'translation','')
+export function AppearanceForm({ lng, prefix }: { lng: string, prefix: string }) {
+
+  const {t} = useTranslation(lng,'translation',undefined)
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues,
@@ -64,14 +64,37 @@ export function AppearanceForm({ lng, id }: Props) {
   const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number } | null>(null)
 
   function onSubmit(data: AppearanceFormValues) {
-    toast({
-      title: t("settings.appearance.update_preferences"),
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
+
+    const updateData = {
+      baseCurrency: data.baseCurrency,
+      customerCurrency: data.targetCurrency,
+      baseRate: exchangeRates[data.baseCurrency || "USD"],
+      customerRate: exchangeRates[data.targetCurrency || "USD"]
+    }
+
+    const update = async (prefix:string) => {
+      const response = await UpdateMaster(prefix,1,updateData)
+  
+      if(response.Status){
+        toast({
+          title: t("settings.appearance.update_preferences"),
+        description: (
+          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+            <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+          </pre>
+          ),
+        })
+      }else{
+        toast({
+          title: t("settings.appearance.update_preferences"),
+          description: response.Message,
+        })
+      }
+    }
+
+    update(prefix)
+    
+
   }
 
   useEffect(() => {

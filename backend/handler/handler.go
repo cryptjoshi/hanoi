@@ -462,8 +462,27 @@ type Dbstruct struct {
 	Dbnames []string `json:"dbnames"`
 }
 
+func createDatabase(dbName string)  *gorm.DB {
+	
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+    
 
+    // Connect to MySQL without a specific database
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    if err != nil {
+		return nil
+    }
 
+		createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci", dbName)
+		if err := db.Exec(createDBQuery).Error; err != nil {
+       
+		return nil
+		}
+	newDsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, dbName)
+    newDB, err := gorm.Open(mysql.Open(newDsn), &gorm.Config{})
+
+	return newDB
+}
 // Function to connect and create a database with a specific prefix and name
 func CreateDatabase(c *fiber.Ctx)  (error) {
     
@@ -1526,6 +1545,66 @@ func GetMemberById(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func UpdateMember(c *fiber.Ctx) error {
+
+	
+
+	body := new(MemberBody)
+    if err := c.BodyParser(body); err != nil {
+		fmt.Println(err)
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }
+	var prefixs = struct{
+        development string
+        production string
+    }{
+        development: body.Prefix+"_development",
+        production: body.Prefix+"_production",
+    }
+	
+	db, err := database.ConnectToDB(prefixs.development)	
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	member := models.Users{}
+	member.Username = body.Body.Username
+	member.Password = body.Body.Password
+	member.Status = body.Body.Status
+	member.Bankname = body.Body.Bankname
+	member.Banknumber = body.Body.Banknumber
+	member.ProStatus = body.Body.ProStatus
+
+
+ 
+
+	err = db.Debug().Model(&member).Where("id = ?", body.ID).Updates(body.Body).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "อัพเดตข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "อัพเดตข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": body.Body,
+	}
+	return c.JSON(response)
+
+}
 
 func GetExchangeRates(c *fiber.Ctx) error {
     // เชื่อมต่อ Redis
@@ -1625,7 +1704,52 @@ func GetExchangeRates(c *fiber.Ctx) error {
     return c.SendString(string(ratesJSON))
 }
 
+func UpdateMaster(c *fiber.Ctx) error {
 
+
+	type MasterBody struct {
+		Prefix string `json:"prefix"`
+		ID int `json:"id"`
+		Body models.Settings `json:"body"`
+	}
+	body := new(MasterBody)
+    if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.JSON(response)
+    }
+	var settings models.Settings
+
+	db := createDatabase("master")
+	if db == nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+		 
+		}
+
+		return c.JSON(response)
+	}
+
+	
+	db.AutoMigrate(&models.Settings{})
+	var RowsAffected int64
+	db.Debug().Model(&settings).Select("id").Scan(&settings).Count(&RowsAffected)
+	if RowsAffected == 0 {
+		db.Debug().Create(&body.Body)
+	}else{
+		db.Debug().Model(&settings).Updates(body.Body)
+	}
+	response := fiber.Map{
+		"Message": "อัพเดตข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data": body.Body,
+	}
+	return c.JSON(response)
+}
 
 
 

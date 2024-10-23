@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, PersistOptions } from 'zustand/middleware';
+import { Signin } from '@/actions';
 //import { useRouter } from 'next/router';
 
 export interface AuthStore {
@@ -47,17 +48,18 @@ const useAuthStore = create<AuthStore>()(
       Signin: async (body: User) => {
       //  const router = useRouter()
         try {
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username: body.username, password: body.password, prefix: "psc" }),
-          });
+          const response = await Signin({ username: body.username, password: body.password });
+          // const response = await fetch(endpoint, {
+          //   method: 'POST',
+          //   headers: {
+          //     'Accept': 'application/json',
+          //     'Content-Type': 'application/json',
+          //   },
+          //   body: JSON.stringify({ username: body.username, password: body.password, prefix: "psc" }),
+          // });
 
           const data = await response.json();
-          //console.log(data.Status)
+          // //console.log(data.Status)
           if (data.Status) {
             set({
               isLoggedIn: true,
@@ -65,8 +67,8 @@ const useAuthStore = create<AuthStore>()(
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
-           // router.redirect("/");
-            // location.replace("/dashboard"); // หากต้องการ redirect ควรพิจารณาให้แน่ใจว่าใช้งานใน context ที่ถูกต้อง
+            //router.redirect("/");
+            //location.replace("/dashboard"); // หากต้องการ redirect ควรพิจารณาให้แน่ใจว่าใช้งานใน context ที่ถูกต้อง
             return true
           } else {
             set({ isLoggedIn: false, accessToken: null });
@@ -74,7 +76,7 @@ const useAuthStore = create<AuthStore>()(
             document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
             return false
           }
-         // return false
+        // return false
         } catch (error) {
           console.error(error);
           return false;

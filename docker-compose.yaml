@@ -27,14 +27,14 @@ services:
       caddy.reverse_proxy: "{{upstreams 80}}"
       caddy.tls: "internal"
 
-  zookeeper:
-    container_name: zookeeper
+  zookeep:
+    container_name: zookeep
     build:
-        context: ./zookeeper
+        context: ./zookeep
         dockerfile: ./Dockerfile
         target: development
     volumes:
-        - ./zookeeper:/app
+        - ./zookeep:/app
         - /app/node_modules
         #- /app/.next
     expose:

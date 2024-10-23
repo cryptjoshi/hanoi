@@ -30,7 +30,8 @@ export function UserNav() {
   //const userLoginStatus = JSON.parse(localStorage.getItem("userLoginStatus") || "")
   const handleLogout = () => {
     Logout();
-    location.replace('/'); // เปลี่ยนไปยังหน้าแรกหลังจาก logout
+    location.replace(`/${lng}`); 
+   // location.replace('/'); // เปลี่ยนไปยังหน้าแรกหลังจาก logout
   };
   return (
     <DropdownMenu>

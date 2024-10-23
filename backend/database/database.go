@@ -73,13 +73,15 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	prefix = strings.ToLower(prefix)
+
 	// Check if the connection already exists
 	if db, exists := dbConnections[prefix]; exists {
 		return db, nil
 	}
 
 	// Read database prefixes and environment from environment variable
-	prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
+	//prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
 	env := os.Getenv("ENVIRONMENT") // Read the environment variable
 	var dbName string
 	suffix := "development" // Default to dev
@@ -104,6 +106,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// Create the DSN for the selected database
 	dsn := fmt.Sprintf(baseDSN, dbName)
+	fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		SkipDefaultTransaction:                   true,

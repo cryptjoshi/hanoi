@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import  type { JSX } from 'react';
 import { useTranslation } from '@/app/i18n/client';
-import { GetUserInfo } from '@/actions';
+import { GetUserInfo,GetPromotion } from '@/actions';
 import { formatNumber } from '@/lib/utils';
  
 
@@ -18,6 +18,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
   const [loading, setLoading] = React.useState(true);
   const [balance, setBalance] = React.useState(0);
   const [user, setUser] = React.useState(null);
+  const [promotion, setPromotion] = React.useState(null);
 const [currency, setCurrency] = React.useState('USD');
 
   React.useEffect(() => {
@@ -26,9 +27,11 @@ const [currency, setCurrency] = React.useState('USD');
       const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
     
       
-      if (userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
+
+      if (userLoginStatus) {
+                if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user = await GetUserInfo(userLoginStatus.state.accessToken);
-       
+     
         if(user.Status){
           setBalance(user.Data.balance);
           setUser(user.Data);
@@ -38,6 +41,17 @@ const [currency, setCurrency] = React.useState('USD');
         router.push(`/${lng}/login`);
         return;
         }
+        const promotion = await GetPromotion(user.Data.prefix);
+        if(promotion.Status){
+          setPromotion(promotion.Data);
+        }
+      } else {
+        router.push(`/${lng}/login`);
+        return;
+        }
+      } else {
+        router.push(`/${lng}/login`);
+        return;
       }
       setLoading(false);
     };
@@ -73,23 +87,27 @@ const [currency, setCurrency] = React.useState('USD');
  
      <div className="p-4 sm:p-6">
        <h3 className="font-bold text-sm sm:text-base mb-2">{t('latestEvents')}</h3>
-       <Card className="bg-black text-white p-3 sm:p-4">
+
+       {promotion && promotion.map((item, index) => (
+       <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">
            <div>
-             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{t('swcTradingCompetition')}</h4>
-             <p className="text-green-400 text-xs sm:text-sm">{t('9800000SWCtobewon')}</p>
+             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.title}</h4>
+             <p className="text-green-400 text-xs sm:text-sm">{item.description}</p>
            </div>
            <div className="text-right">
-             <span className="text-xs sm:text-sm">{t('2/5')}</span>
+             <span className="text-xs sm:text-sm">{item.end_date}</span>
            </div>
          </div>
        </Card>
+       ))}
+
      </div>
 
     
      <div className="p-4 sm:p-6">
        <div className="flex justify-between items-center mb-2">
-         <h3 className="font-bold text-sm sm:text-base">{t('copyTrading')}</h3>
+         <h3 className="font-bold text-sm sm:text-base">{t('lastgameplay')}</h3>
          <Button variant="ghost" size="sm" className="text-xs sm:text-sm">{t('viewMore')}</Button>
        </div>
        <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2">

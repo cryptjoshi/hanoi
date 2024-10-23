@@ -244,7 +244,7 @@ export const GetPromotion = async (dbname:string) =>{
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body: JSON.stringify({"prefix":dbname})
+      body: JSON.stringify({"prefix":dbname.toLowerCase()})
 })
 return response.json()
 }catch(error){

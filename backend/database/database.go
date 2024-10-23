@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 	"os"
-	"strings"
+ 	"strings"
 	"sync"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -69,14 +69,17 @@ func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
 func ConnectToDB(prefix string) (*gorm.DB, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
-
+	
+	prefix = strings.ToLower(prefix)
+ 
+	
 	// Check if the connection already exists
 	if db, exists := dbConnections[prefix]; exists {
 		return db, nil
 	}
 
 	// Read database prefixes and environment from environment variable
-	prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
+	//prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
 	env := os.Getenv("ENVIRONMENT") // Read the environment variable
 	var dbName string
 	suffix := "development" // Default to dev
@@ -84,17 +87,24 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	if env == "production" {
 		suffix = "production"
 	}
-	
-	// Determine the database name based on the prefix
-	if contains(prefixes, prefix) {
-		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
-	} else {
-		//return nil, fmt.Errorf("unknown prefix: %s", prefix)
+	// fmt.Printf("%s %s",prefixes,suffix)
+	// // Determine the database name based on the prefix
+	// if contains(prefixes, prefix) {
+	// 	dbName = fmt.Sprintf("%s_%s", prefix, suffix)
+	// } else {
+	// 	//return nil, fmt.Errorf("unknown prefix: %s", prefix)
+	// 	dbName = fmt.Sprintf("%s", prefix)
+	// }
+	//fmt.Println("Prefix:"+prefix)
+	if strings.Contains(prefix, suffix)  {
+		//suffix = "production"
 		dbName = fmt.Sprintf("%s", prefix)
+	} else {
+		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
 	}
-
 	// Create the DSN for the selected database
 	dsn := fmt.Sprintf(baseDSN, dbName)
+	fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		SkipDefaultTransaction: true,

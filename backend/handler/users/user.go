@@ -45,6 +45,7 @@
 		UserID           int             `json:"userid"`
 		Username         string             `json:"username"`
 		//TransactionAmount decimal.Decimal `json:"transactionamount"`
+		Password		string              `json:"password"`
 		Status           string             `json:"status"`
 		Startdate        string 			`json:"startdate"`
 		Stopdate        string 		  	`json:"stopdate"`
@@ -64,28 +65,35 @@ var jwtSecret = os.Getenv("PASSWORD_SECRET")
 func Login(c *fiber.Ctx) error {
 	// var data = formData
 	// c.Bind(&data)
-	loginRequest := new(models.Users)
+	loginRequest := new(Body)
 
 	if err := c.BodyParser(loginRequest); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":err.Error(),
-		})
+		response := fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!"+err.Error(),
+			"Status":  false,
+		}
+		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 	var user models.Users
-	 
+
+	// fmt.Printf("%s",loginRequest)
+
 	db, err := database.ConnectToDB(loginRequest.Prefix)
+
     if err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error; err != nil {
         response := fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
 			"Status":  false,
 		}
-		return c.JSON(response)
+		return c.Status(fiber.StatusUnauthorized).JSON(response)
     }
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error":err.Error(),
-		})
+		response := fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+		}
+		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
 	//day := time.Hour * 24
@@ -111,19 +119,34 @@ func Login(c *fiber.Ctx) error {
 	// อัปเดตข้อมูลยูสเซอร์
 	_err := repository.UpdateUserFields(db,user.ID, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 	if _err != nil {
-		fmt.Println("Error:", _err)
+		if err != nil {	
+			response := fiber.Map{
+				"Message": "ดึงข้อมูลผิดพลาด",
+				"Status":  false,
+				"Data": err.Error(),
+			}
+			return c.Status(fiber.StatusUnauthorized).JSON(response)
+		}
 	} else {
 		fmt.Println("User fields updated successfully")
 	}
 
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	if err != nil {	
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data": err.Error(),
+		}
+		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
-	return c.JSON(models.LoginResponse{
-		Token: t,
-	})
+	response := fiber.Map{
+		"Token": t,
+		"Status":  true,
+	}
+	return c.JSON(response)
+	// return c.JSON(models.LoginResponse{
+	// 	Token: t,
+	// })
 
 }
 
@@ -151,7 +174,7 @@ func GetUsers(c *fiber.Ctx) error {
 	if _err != nil {
 	
 		response := fiber.Map{
-		"Message": "โทเคนไม่ถูกต้อง!!",
+		"Message": "ไม่พบการเชื่อมต่อดาต้าเบส!!",
 		"Status":  false,
 		"Data": fiber.Map{ 
 		"prefix": prefix,
@@ -265,19 +288,21 @@ func GetUser(c *fiber.Ctx) error {
 	
 	 
 	var users models.Users
- 
+	
 	db,_err := handler.GetDBFromContext(c)
 	prefix := c.Locals("Prefix")
+	fmt.Println("prefix:", prefix)
 	if _err != nil {
 	
-		response := fiber.Map{
-		"Message": "โทเคนไม่ถูกต้อง!!",
-		"Status":  false,
-		"Data": fiber.Map{ 
-		"prefix": prefix,
-			},
-		}
-		return c.JSON(response)
+		// response := fiber.Map{
+		// "Message": "โทเคนไม่ถูกต้อง!!",
+		// "Status":  false,
+		// "Data": fiber.Map{ 
+		// "prefix": prefix,
+		// 	},
+		// }
+		// return c.JSON(response)
+		db,_ = database.ConnectToDB(prefix.(string))
 	}
 	id := c.Locals("Walletid")
 	u_err := db.Debug().Where("id= ?",id).Find(&users).Error

@@ -839,7 +839,7 @@ func GetPromotion(c *fiber.Ctx) error {
         development: body.Prefix+"_development",
         production: body.Prefix+"_production",
     }
-
+	//fmt.Printf("prefixs: %s",prefixs)
     db, err := database.ConnectToDB(prefixs.development)
     if err != nil {
        

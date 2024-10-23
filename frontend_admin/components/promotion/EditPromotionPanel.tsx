@@ -140,6 +140,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             usageLimit: Number(data.Data.usageLimit),
             minSpend: Number(data.Data.minSpend),
             maxSpend: Number(data.Data.maxSpend),
+            example: data.Data.example,
             startDate: data.Data.startDate ? format(new Date(data.Data.startDate), 'dd-MM-yyyy') : '',
             endDate: data.Data.endDate ? format(new Date(data.Data.endDate), 'dd-MM-yyyy') : '',
           };

@@ -43,6 +43,8 @@ services:
         - "4002:4002"
     working_dir: /app
     env_file: .env
+    environment:
+      - NEXT_PUBLIC_ENVIRONMENT=development
     # labels:
     #   caddy: paribrand.shop
     #   caddy.reverse_proxy: "{{upstreams 4001}}"

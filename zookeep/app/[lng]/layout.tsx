@@ -18,7 +18,7 @@ export default function Layout({
   params: { lng }
 }: LayoutProps) {
   return (
-    <div lang={lng} dir={dir(lng)}>
+    <div lng={lng} dir={dir(lng)}>
       {children}
     </div>
   )

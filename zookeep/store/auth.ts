@@ -24,6 +24,7 @@ export interface AuthStore {
 export type User = {
     username: string;
     password: string;
+    prefix:string;
 };
 
 const endpoint =   "http://152.42.185.164:4006/api/v1/db/login"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
@@ -46,9 +47,10 @@ const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       customerCurrency: "THB",
       Signin: async (body: User) => {
-      //  const router = useRouter()
+       // const router = useRouter()
         try {
-          const response = await Signin({ username: body.username, password: body.password });
+        
+          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix});
           // const response = await fetch(endpoint, {
           //   method: 'POST',
           //   headers: {
@@ -58,12 +60,12 @@ const useAuthStore = create<AuthStore>()(
           //   body: JSON.stringify({ username: body.username, password: body.password, prefix: "psc" }),
           // });
 
-          const data = await response.json();
-          // //console.log(data.Status)
+           
+         // console.log(data)
           if (data.Status) {
             set({
               isLoggedIn: true,
-              accessToken: data?.token,
+              accessToken: data?.Token,
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";

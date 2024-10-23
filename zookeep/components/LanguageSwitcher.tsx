@@ -41,15 +41,15 @@ export default function LanguageSwitcher() {
       <TooltipTrigger asChild>
     <Button 
       onClick={handleLanguageChange}
-      className="rounded-full w-10 h-10 bg-background mr-2"
-      variant="outline"
+      className="h-5 w-5 sm:h-5 sm:w-5 mt-2 shadow"
+      variant="ghost"
       size="icon"
       title={`Current language: ${currentLang.toUpperCase()}. Click to change.`}
     >
       {FlagComponent ? (
-        <FlagComponent className="w-6 h-6" />
+        <FlagComponent className="w-4 h-4" />
       ) : (
-        <TbLanguage className="w-6 h-6" />
+        <TbLanguage className="w-4 h-4" />
       )}
     </Button>
     </TooltipTrigger>

@@ -1,0 +1,20 @@
+{
+    "menu":{
+    "home":"หน้าแรก",
+    "market":"ตลาด",
+    "buy":"ซื้อขาย",
+    "futures":"ฟิวเจอร์ส",
+    "assets":"ทรัพย์สิน"
+    },
+    "balance":"ยอดเงิน",
+    "deposit":"ฝาก",
+    "buy":"ซื้อ",
+    "withdraw":"ถอน",
+    "latestEvents":"เหตุการณ์ล่าสุด",
+    "swcTradingCompetition":"SWC Trading Competition",
+    "9800000SWCtobewon":"9,800,000 SWC to be won!",
+    "2/5":"2/5",
+    "copyTrading":"คัดลอกการซื้อขาย",
+    "viewMore":"ดูเพิ่มเติม",
+    "7DROI":"7D ROI"
+}

@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
   // ตรวจสอบว่าเป็น root path หรือไม่
   if (url.pathname === '/') {
     lng = request.cookies.get('NEXT_LOCALE')?.value || fallbackLng;
-    return NextResponse.redirect(new URL(`/${lng}/dashboard`, request.url));
+    return NextResponse.redirect(new URL(`/${lng}/home`, request.url));
   }
 
   if (!languages.includes(lng)) {
@@ -23,7 +23,7 @@ export function middleware(request: NextRequest) {
 
   // ตรวจสอบเส้นทางเมื่อเข้าหน้าแรกของภาษานั้นๆ
   if (url.pathname === `/${lng}` || url.pathname === `/${lng}/`) {
-    const redirectPath = isLoggedIn ? `/${lng}/dashboard` : `/${lng}/login`;
+    const redirectPath = isLoggedIn ? `/${lng}/home` : `/${lng}/login`;
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 

@@ -839,7 +839,7 @@ func GetPromotion(c *fiber.Ctx) error {
 	}
 	promotions := []models.Promotion{}
 
-	err = db.Debug().Find(&promotions).Error
+	err = db.Debug().Where("status=1 and enddate>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
 
 	// fmt.Println(promotions)
 	if err != nil {
@@ -1352,6 +1352,16 @@ func GetGameStatus(c *fiber.Ctx) error {
 	cachedStatus, err := rdb.Get(ctx, "game_status").Result()
 	if err == nil {
 		// If cached data is found, return it
+		type Status struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		}
+
+		// Define the main struct that includes the status
+		type Product struct {
+			ProductCode string `json:"productCode"`
+			Status      Status `json:"status"`
+		}
 		var products []Product
 		var tempProducts []struct {
 			ProductCode string `json:"productCode"`
@@ -1359,7 +1369,7 @@ func GetGameStatus(c *fiber.Ctx) error {
 		}
 
 		// Unmarshal the main JSON
-		if err := json.Unmarshal([]byte(redisData), &tempProducts); err != nil {
+		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
 		}
 
@@ -1374,12 +1384,11 @@ func GetGameStatus(c *fiber.Ctx) error {
 				Status:      status,
 			})
 		}
-		response := fiber.Map{
-			"Message": "ดึงข้อมูลสำเร็จ",
-			"Status":  true,
-			"Data":    products,
-		}
-		return c.JSON(response)
+
+		// Print the result
+		// for _, product := range products {
+		// 	fmt.Printf("Product Code: %s, Status: %+v\n", product.ProductCode, product.Status)
+		// }
 
 	}
 

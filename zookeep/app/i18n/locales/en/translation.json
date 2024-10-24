@@ -312,7 +312,10 @@
         "edit": "Edit",
         "disable_sidebar": "Disable Sidebar",
         "hover_open": "When hovering on the sidebar in mini state, it will open",
-        "is_hover_open": "Hover Open"
+        "is_hover_open": "Hover Open",
+        "deposit": "Deposit",
+        "withdraw": "Withdraw",
+        "history": "History"
     },
     "common": {
         "mon": "Mon",
@@ -367,7 +370,10 @@
         "selectRole": "Select Role",
         "role": "Role",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "accept": "Accept",
+        "promotionAccept": "Promotion accepted",
+        "success": "Success"
     }
 }
   

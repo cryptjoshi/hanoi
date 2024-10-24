@@ -309,7 +309,10 @@
         "settings": "ตั้งค่า",
         "disable_sidebar": "ปิดซ้าย",
         "hover_open": "เมื่อคลิกที่ซ้ายมือในสถานะย่อของซ้ายมือจะเปิด",
-        "is_hover_open": "เปิดจากคลิก"
+        "is_hover_open": "เปิดจากคลิก",
+        "deposit": "ฝาก",
+        "withdraw": "ถอน",
+        "history": "ประวัติ"
     },
     "common": {
         "mon": "จันทร์",
@@ -364,7 +367,10 @@
         "selectRole": "เลือกสิทธิ์",
         "role": "สิทธิ์",
         "save": "บันทึก",
-        "cancel": "ยกเลิก"
+        "cancel": "ยกเลิก",
+        "accept": "ยอมรับ",
+        "promotionAccept": "โปรโมชั่นยอมรับ",
+        "success": "สำเร็จ"
     }   
 }
   

@@ -25,7 +25,10 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
   const [currency, setCurrency] = React.useState('USD');
 
   const {prefix,Logout,setPrefix} = useAuthStore();
-
+  const handleSignOut = () => {
+    Logout();
+    router.push(`/${lng}/login`);
+  };
   React.useEffect(() => {
     const fetchBalance = async () => {
       setLoading(true);
@@ -33,7 +36,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
     
       
 
-      if (userLoginStatus) {
+      if (userLoginStatus.state) {
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user = await GetUserInfo(userLoginStatus.state.accessToken);
      
@@ -71,9 +74,18 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
       <div className="p-4 sm:p-6">
-       <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
-       <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(parseFloat(balance))}</h2>
-       <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(parseFloat(balance))} {currency}</p>
+       <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
+          <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(parseFloat(balance))}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(parseFloat(balance))} {currency}</p>
+        </div>
+        <div>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
+        </div>
+      </div>
       <div className="flex space-x-2 sm:space-x-4 mt-4">
           <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3">{t('deposit')}</Button>
           <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline">{t('withdraw')}</Button>
@@ -107,16 +119,19 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
      </div>
 
    
-     <div className="mt-auto fixed bottom-0 left-0 right-0 bg-background border-t flex justify-between p-2 sm:p-3">
-       {['Home', 'market', 'buy', 'futures', 'sign_out'].map((item, index) => (
-         <Button key={index} variant="ghost" className="flex-col py-1 px-2 sm:py-2 sm:px-3">
-           {item=="sign_out" ?
-            <span className="text-[10px] sm:text-xs mt-1" onClick={()=>Logout()}>{t(`menu.${item.toLowerCase()}`)}</span> 
-            : 
-            <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>}
-         </Button>
-       ))}
-     </div>
+     <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
+      
+        {['Home', 'Deposit', 'Withdraw', 'History', 'sign_out'].map((item, index) => (
+          <Button 
+            key={index} 
+            variant="ghost" 
+            className="flex-col py-1 px-2 sm:py-2 sm:px-3"
+            onClick={item === 'sign_out' ? handleSignOut : undefined}
+          >
+            <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
+          </Button>
+        ))}
+      </div>
    </div>
   );
 };

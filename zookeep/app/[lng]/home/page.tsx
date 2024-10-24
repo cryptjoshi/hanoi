@@ -21,6 +21,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { useTranslation } from "@/app/i18n/client";
 import WalletInterface from "@/components/home/WalletInterface";
+import HomePage from "@/components/home/home";
 //import { useTranslation } from '@/app/i18n'
 
 export default  function DashboardPage({ params: { lng } }) {
@@ -31,7 +32,7 @@ export default  function DashboardPage({ params: { lng } }) {
   const { settings, setSettings } = sidebar;
   return (
     <ContentLayout title="Dashboard">
-        <WalletInterface lng={lng}/>
+        <HomePage lng={lng}/>
     </ContentLayout>
   );
 }

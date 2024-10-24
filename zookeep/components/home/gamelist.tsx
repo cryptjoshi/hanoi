@@ -9,7 +9,7 @@ const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
   useEffect(() => {
     
     fetchGameStatus(prefix)
-    console.log('fetchGameStatus',gameStatus)
+    //console.log('fetchGameStatus',gameStatus)
   }, [prefix, fetchGameStatus])
 
   if (!gameStatus) {

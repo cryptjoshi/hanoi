@@ -1,116 +1,139 @@
 'use client'
-import React from 'react'
-import type { ReactElement } from 'react'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Home, DollarSign, Bell, Coin, Plus, Activity, CreditCard, PieChart, Settings } from "lucide-react"
-import useAuthStore from '@/store/auth'
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Avatar} from "@/components/ui/avatar";
+import { Card } from '@/components/ui/card';
+import { Bell, Search, Wallet, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import  type { JSX } from 'react';
+import { useTranslation } from '@/app/i18n/client';
+import { GetUserInfo,GetPromotion } from '@/actions';
+import { formatNumber } from '@/lib/utils';
+import useGameStore from '@/store/gameStore';
+import useAuthStore from '@/store/auth';
+import GameList from './gamelist';
+import PromotionList from './promotionlist';
 
 
-function HomePage(): ReactElement {
-    const {user} = useAuthStore()
+export default function HomePage({lng}:{lng:string}): JSX.Element {
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(true);
+  const [balance, setBalance] = React.useState(0);
+  const [user, setUser] = React.useState(null);
+
+  const [currency, setCurrency] = React.useState('USD');
+
+  const {prefix,Logout,setPrefix} = useAuthStore();
+  const handleSignOut = () => {
+    Logout();
+    router.push(`/${lng}/login`);
+  };
+  React.useEffect(() => {
+    const fetchBalance = async () => {
+      setLoading(true);
+      const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
     
-  return (
-    <div className="max-w-md mx-auto p-4 bg-indigo-600 min-h-screen">
-      <Card className="bg-white shadow-lg rounded-3xl">
-        <CardHeader className="flex justify-between items-center">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src="/placeholder-avatar.jpg" alt="Profile picture" />
-            <AvatarFallback>N</AvatarFallback>
-          </Avatar>
-          <div className="text-right">
-            <CardTitle className="text-lg">Nasim</CardTitle>
-            <p className="text-sm text-muted-foreground">10 April, 2020</p>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">Current Balance</p>
-            <p className="text-4xl font-bold text-indigo-600">$4,239.98</p>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
-              <div>
-                <p className="font-semibold">Deposit</p>
-                <p className="text-sm text-muted-foreground">10 April, 2020</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-green-600">$321.00</p>
-                <p className="text-sm text-muted-foreground">6% of Current Balance</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
-              <div>
-                <p className="font-semibold">Expenses</p>
-                <p className="text-sm text-muted-foreground">10 April, 2020</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-red-600">$142.89</p>
-                <p className="text-sm text-muted-foreground">3.5% of Current Balance</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Send Money To</h3>
-            <div className="flex space-x-4">
-              {['Kathryn', 'Eleanor', 'Diana'].map((name) => (
-                <div key={name} className="flex flex-col items-center">
-                  <Avatar className="h-12 w-12 mb-1">
-                    <AvatarFallback>{name[0]}</AvatarFallback>
-                  </Avatar>
-                  <p className="text-xs">{name}</p>
-                </div>
-              ))}
-              <Button variant="outline" size="icon" className="h-12 w-12 rounded-full">
-                <Plus className="h-6 w-6" />
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold">Expenses</h3>
-              <Button variant="ghost" size="sm">See All</Button>
-            </div>
-            <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
-              <div className="flex items-center">
-                <div className="bg-red-500 p-2 rounded-full mr-3">
-                  <Activity className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold">Strava</p>
-                  <p className="text-xs text-muted-foreground">10:05, 12 April 2020</p>
-                </div>
-              </div>
-              <p className="font-semibold text-red-600">-$124.00</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
       
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4">
-        <div className="flex justify-around">
-          <Button variant="ghost" size="icon">
-            <Home className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <CreditCard className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <PieChart className="h-6 w-6" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Settings className="h-6 w-6" />
-          </Button>
+
+      if (userLoginStatus.state) {
+                if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
+        const user = await GetUserInfo(userLoginStatus.state.accessToken);
+     
+        if(user.Status){
+          setBalance(user.Data.balance);
+          setUser(user.Data);
+          setCurrency(userLoginStatus.state.customerCurrency);
+          setPrefix(user.Data.prefix);
+        } else {
+          // Redirect to login page if token is null
+        router.push(`/${lng}/login`);
+        return;
+        }
+       
+     
+      } else {
+        router.push(`/${lng}/login`);
+        return;
+        }
+      } else {
+        router.push(`/${lng}/login`);
+        return;
+      }
+      setLoading(false);
+    };
+
+    fetchBalance();
+   
+  }, [lng, router]);
+
+
+
+  const { t } = useTranslation(lng,'home',undefined);
+
+  return loading ? <div>Loading...</div> : (
+    <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
+      <div className="p-4 sm:p-6">
+       <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
+          <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(parseFloat(balance))}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(parseFloat(balance))} {currency}</p>
+        </div>
+        <div>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
         </div>
       </div>
-    </div>
-  )
-}
+      <div className="flex space-x-2 sm:space-x-4 mt-4">
+          <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3">{t('deposit')}</Button>
+          <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline">{t('withdraw')}</Button>
+         </div>
+     </div>
+    
+ 
+ 
+      <GameList prefix={prefix} lng={lng} />
+ 
+      <PromotionList prefix={prefix} lng={lng} />
 
+    
+     <div className="p-4 sm:p-6">
+       <div className="flex justify-between items-center mb-2">
+         <h3 className="font-bold text-sm sm:text-base">{t('lastgameplay')}</h3>
+         <Button variant="ghost" size="sm" className="text-xs sm:text-sm">{t('viewMore')}</Button>
+       </div>
+       <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+         {['LTGao', 'XTUSER-', '稳稳的'].map((trader, index) => (
+           <Card key={index} className="flex-shrink-0 w-28 sm:w-32 p-2 sm:p-3">
+             <div className="text-center mb-2">
+               <Avatar className="mx-auto w-8 h-8 sm:w-10 sm:h-10" />
+               <p className="text-xs sm:text-sm font-bold mt-1">{trader}</p>
+             </div>
+             <p className="text-[10px] sm:text-xs text-center">{t('7DROI')}</p>
+             <p className="text-xs sm:text-sm text-green-500 text-center font-bold">+{Math.floor(Math.random() * 100)}%</p>
+           </Card>
+         ))}
+       </div>
+     </div>
 
-export default HomePage
+   
+     <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
+      
+        {['Home', 'Deposit', 'Withdraw', 'History', 'sign_out'].map((item, index) => (
+          <Button 
+            key={index} 
+            variant="ghost" 
+            className="flex-col py-1 px-2 sm:py-2 sm:px-3"
+            onClick={item === 'sign_out' ? handleSignOut : undefined}
+          >
+            <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
+          </Button>
+        ))}
+      </div>
+   </div>
+  );
+};
+
  

@@ -263,15 +263,15 @@ func JwtMiddleware(c *fiber.Ctx) error {
 	
 	claims := &Claims{}
 	tokenString := c.Get("Authorization")[7:]
-	fmt.Printf("token : %s",tokenString)
+	//fmt.Printf("token : %s",tokenString)
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         
-		fmt.Println("claims",claims.Walletid)
-
+		//fmt.Println("claims",claims.Walletid)
+		//fmt.Printf("claims : %s",claims)
 		c.Locals("Walletid", claims.Walletid)
         c.Locals("ID", claims.ID)
         c.Locals("username", claims.Username)

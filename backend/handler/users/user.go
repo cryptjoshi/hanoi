@@ -692,8 +692,8 @@ func UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	//prefix := c.Locals("Prefix")
-	fmt.Printf("%s",c.Locals("walletid"))
+	username := c.Locals("username")
+	//fmt.Printf("USERNAME:%s",c.Locals("username"))
 	db, _err := handler.GetDBFromContext(c)
 	if _err != nil {
 		response := fiber.Map{
@@ -703,9 +703,9 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var users []models.Users
-	fmt.Printf("%s",body)
-	err := db.Find(&users, body.ID).Error
+	var users models.Users
+	fmt.Printf("Body: %s",body)
+	err := db.Debug().Where("username=?",username).Find(&users).Error
 	if err != nil {
 		response := fiber.Map{
 			"status":  false,
@@ -714,8 +714,14 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	user := users[0]
-	db.Model(&user).Updates(body.Body)
+	user := users
+	updates := map[string]interface{}{
+		"Token": "",
+	}
+
+	// อัปเดตข้อมูลยูสเซอร์
+	repository.UpdateFieldsUserString(db, user.username, updates)
+	///db.Debug().Model(&user).Updates(body.Body)
 	response := fiber.Map{
 		"status":  true,
 		"message": "สำเร็จ",

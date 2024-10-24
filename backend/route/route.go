@@ -60,15 +60,6 @@ func SetupRoutes(app fiber.Router) {
 	// user
 	app.Post("/users/all", jwt.JwtMiddleware, users.GetUsers)
 	app.Post("/users/login", users.Login)
-<<<<<<< HEAD
-	app.Post("/users/register", users.Register)
-	app.Post("/users/balance", jwt.JwtMiddleware, users.GetBalance)
-	app.Post("/users/sum/balance", jwt.JwtMiddleware, users.GetBalanceSum)
-	app.Post("/users/info", jwt.JwtMiddleware, users.GetUser)
-	app.Post("/users/statement", jwt.JwtMiddleware, users.GetUserStatement)
-	app.Post("/users/transactions", jwt.JwtMiddleware, users.GetUserTransaction)
-	app.Post("/users/update", jwt.JwtMiddleware, users.UpdateUser)
-=======
 	app.Post("/users/register",users.Register)
 	app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
 	app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
@@ -93,7 +84,6 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/game/status",handler.GetGameStatus)
 	app.Post("/db/game/create",handler.CreateGame)
 	app.Post("/db/game/update",handler.UpdateGame)
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 
 	app.Post("/db/create", handler.CreateDatabase)
 	app.Post("/db/login", handler.RootLogin)

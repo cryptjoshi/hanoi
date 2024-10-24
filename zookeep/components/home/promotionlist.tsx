@@ -1,26 +1,33 @@
 'use client'
 import { useEffect,useState } from 'react'
 import { useTranslation } from '@/app/i18n/client';
+import { useRouter } from 'next/navigation';
 import { GetPromotion, UpdateUser } from '@/actions';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import {useAuthStore} from '@/store/auth'
+import useAuthStore from '@/store/auth'
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
- 
+  const router = useRouter();
 const {t} = useTranslation(lng,'translation',undefined);
 const [promotion, setPromotion] = useState(null);
 const { toast } = useToast();
 const {accessToken} = useAuthStore()
   const handleAccept =  (id:number) => {
-    
-     UpdateUser(accessToken,prefix,{pro_status:id})
+    if(accessToken){
+     UpdateUser(prefix,accessToken,{pro_status:id})
     toast({
       title: t('common.success'),
       description: t('common.promotionAccept'),
     })
-    
+  } else {
+    toast({
+      title: t('common.unsuccess'),
+      description: t('common.unsuccess'),
+    })
+    router.push(`/${lng}/login`);
+  }
   }
 
 

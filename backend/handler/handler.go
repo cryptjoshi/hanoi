@@ -815,17 +815,17 @@ func GetPromotion(c *fiber.Ctx) error {
 		})
 	}
 
-    var prefixs = struct{
-        development string
-        production string
-    }{
-        development: body.Prefix+"_development",
-        production: body.Prefix+"_production",
-    }
+	var prefixs = struct {
+		development string
+		production  string
+	}{
+		development: body.Prefix + "_development",
+		production:  body.Prefix + "_production",
+	}
 	//fmt.Printf("prefixs: %s",prefixs)
-    db, err := database.ConnectToDB(prefixs.development)
-    if err != nil {
-       
+	db, err := database.ConnectToDB(prefixs.development)
+	if err != nil {
+
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
 			"Status":  false,

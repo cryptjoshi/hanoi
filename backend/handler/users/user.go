@@ -685,6 +685,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	body := new(UpdateBody)
 	if err := c.BodyParser(body); err != nil {
+		
 		response := fiber.Map{
 			"status":  false,
 			"message": err.Error(),
@@ -692,7 +693,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	//prefix := c.Locals("Prefix")
-
+	fmt.Printf("%s",c.Locals("walletid"))
 	db, _err := handler.GetDBFromContext(c)
 	if _err != nil {
 		response := fiber.Map{
@@ -703,6 +704,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	var users []models.Users
+	fmt.Printf("%s",body)
 	err := db.Find(&users, body.ID).Error
 	if err != nil {
 		response := fiber.Map{

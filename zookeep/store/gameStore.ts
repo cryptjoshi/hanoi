@@ -15,9 +15,10 @@ const useGameStore = create<GameStore>((set) => ({
   fetchGameStatus: async (prefix: string) => {
     try {
       const response = await GetGameStatus(prefix)
+    //  console.log('response',response)
        if(response.Status){
         const mappedData = response.Data.map((item: any) => {
-            const status = JSON.parse(item.status); // แปลง JSON string เป็นอ็อบเจ็กต์
+            const status = item.status // แปลง JSON string เป็นอ็อบเจ็กต์
             return {
                 id: status.id,
                 name: status.name

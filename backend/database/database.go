@@ -2,12 +2,13 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"os"
- 	"strings"
+	"strings"
 	"sync"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 )
 
 // var Database *gorm.DB
@@ -36,43 +37,44 @@ var (
 )
 
 const baseDSN = "web:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
-//const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+
+// const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
 func handleError(err error) {
 	log.Fatal(err)
 }
 
 func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
-    migrator := db.Migrator()
-    // ใช้ db.Model(model) เพื่อกำหนดค่า Statement.Table
-    tableName := db.Model(model).Statement.Table
-    if tableName == "" {
-        return fmt.Errorf("table name is empty, please ensure the model is correctly defined")
-    }
-    
-    if !migrator.HasTable(tableName) {
-        fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
-        if err := db.AutoMigrate(model); err != nil {
-            return fmt.Errorf("failed to create table '%s': %v", tableName, err)
-        }
-        fmt.Printf("Table '%s' created successfully\n", tableName)
-    } else {
-        fmt.Printf("Table '%s' already exists. Updating schema...\n", tableName)
-        if err := db.AutoMigrate(model); err != nil {
-            return fmt.Errorf("failed to update table '%s': %v", tableName, err)
-        }
-        fmt.Printf("Table '%s' schema updated successfully\n", tableName)
-    }
+	migrator := db.Migrator()
+	// ใช้ db.Model(model) เพื่อกำหนดค่า Statement.Table
+	tableName := db.Model(model).Statement.Table
+	if tableName == "" {
+		return fmt.Errorf("table name is empty, please ensure the model is correctly defined")
+	}
 
-    return nil
+	if !migrator.HasTable(tableName) {
+		fmt.Printf("Table '%s' does not exist. Creating...\n", tableName)
+		if err := db.AutoMigrate(model); err != nil {
+			return fmt.Errorf("failed to create table '%s': %v", tableName, err)
+		}
+		fmt.Printf("Table '%s' created successfully\n", tableName)
+	} else {
+		fmt.Printf("Table '%s' already exists. Updating schema...\n", tableName)
+		if err := db.AutoMigrate(model); err != nil {
+			return fmt.Errorf("failed to update table '%s': %v", tableName, err)
+		}
+		fmt.Printf("Table '%s' schema updated successfully\n", tableName)
+	}
+
+	return nil
 }
+
 // Connect function to establish a database connection based on the prefix
 func ConnectToDB(prefix string) (*gorm.DB, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	
+
 	prefix = strings.ToLower(prefix)
- 
-	
+
 	// Check if the connection already exists
 	if db, exists := dbConnections[prefix]; exists {
 		return db, nil
@@ -87,7 +89,13 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	if env == "production" {
 		suffix = "production"
 	}
-	// fmt.Printf("%s %s",prefixes,suffix)
+
+	if strings.Contains(prefix, suffix) {
+		//suffix = "production"
+		dbName = fmt.Sprintf("%s", prefix)
+	} else {
+		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
+	}
 	// // Determine the database name based on the prefix
 	// if contains(prefixes, prefix) {
 	// 	dbName = fmt.Sprintf("%s_%s", prefix, suffix)
@@ -95,20 +103,14 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	// 	//return nil, fmt.Errorf("unknown prefix: %s", prefix)
 	// 	dbName = fmt.Sprintf("%s", prefix)
 	// }
-	//fmt.Println("Prefix:"+prefix)
-	if strings.Contains(prefix, suffix)  {
-		//suffix = "production"
-		dbName = fmt.Sprintf("%s", prefix)
-	} else {
-		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
-	}
+
 	// Create the DSN for the selected database
 	dsn := fmt.Sprintf(baseDSN, dbName)
 	fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
-		SkipDefaultTransaction: true,
-		PrepareStmt: true,
+		SkipDefaultTransaction:                   true,
+		PrepareStmt:                              true,
 	})
 
 	if err == nil {

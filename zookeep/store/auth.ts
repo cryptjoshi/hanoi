@@ -9,12 +9,14 @@ export interface AuthStore {
     accessTokenData: string | null;
     refreshToken: string | null;
     customerCurrency: string | null;
+    prefix:string;
     Signin: (body: User) => Promise<boolean>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
     setAccessToken: (accessToken: string | null) => void;
     setRefreshToken: (refreshToken: string | null) => void;
     setCustomerCurrency: (customerCurrency: string | null) => void;
+    setPrefix:(prefix:string | null) => void;
     init: () => void;
     clearTokens: () => void;
     lng: string;
@@ -24,6 +26,7 @@ export interface AuthStore {
 export type User = {
     username: string;
     password: string;
+    prefix:string;
 };
 
 const endpoint =   "http://152.42.185.164:4006/api/v1/db/login"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
@@ -46,9 +49,10 @@ const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       customerCurrency: "THB",
       Signin: async (body: User) => {
-      //  const router = useRouter()
+       // const router = useRouter()
         try {
-          const response = await Signin({ username: body.username, password: body.password });
+        
+          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix});
           // const response = await fetch(endpoint, {
           //   method: 'POST',
           //   headers: {
@@ -58,12 +62,13 @@ const useAuthStore = create<AuthStore>()(
           //   body: JSON.stringify({ username: body.username, password: body.password, prefix: "psc" }),
           // });
 
-          const data = await response.json();
-          // //console.log(data.Status)
+           
+         // console.log(data)
           if (data.Status) {
             set({
               isLoggedIn: true,
-              accessToken: data?.token,
+              accessToken: data?.Token,
+              prefix:body.prefix
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
@@ -100,15 +105,17 @@ const useAuthStore = create<AuthStore>()(
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       setCustomerCurrency: (customerCurrency: string | null) => set({ customerCurrency }),
       init: () => {
-        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency } = get();
+        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency,setPrefix } = get();
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';
         const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
         const lng = getCookie('lng') || 'en'; // Get language from cookie or use default
+        const prefix = localStorage.getItem('prefix');
         setIsLoggedIn(isloggedIn);
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
         setLng(lng);
+        setPrefix(prefix);
       },
       clearTokens: () => {
         set({

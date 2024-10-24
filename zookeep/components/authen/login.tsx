@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
+  prefix: z.string().optional(),
 });
 
 // Infer the type from the schema
@@ -45,12 +46,13 @@ export default function Login({lng}:{lng:string}) {
   const onSubmit: SubmitHandler<LoginFormData> = async (data:LoginFormData) => {
     setIsSubmitting(true);
     try {
+      data.prefix = data.prefix || "ckd"
       const response = await Signin(data);  
     
      
      if (response) {
   
-      router.push(`/${lng}/dashboard`);
+      router.push(`/${lng}/home`);
     } else {
   
       toast({
@@ -78,7 +80,7 @@ export default function Login({lng}:{lng:string}) {
 
   React.useEffect(() => {
   if (isLoggedIn) {
-      router.push(`/${lng}/dashboard`);  
+      router.push(`/${lng}/home`);  
   }
 }, [isLoggedIn, router]);
 

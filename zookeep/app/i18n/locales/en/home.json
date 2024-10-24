@@ -1,0 +1,22 @@
+{
+    "menu":{
+        "home":"Home",
+        "market":"Market",
+        "buy":"Buy",
+        "futures":"Futures",
+        "assets":"Assets"
+    },
+    "balance":"Balance",
+    "deposit":"Deposit",
+    "buy":"Buy",
+    "withdraw":"Withdraw",
+    "latestEvents":"Latest Events",
+    "swcTradingCompetition":"SWC Trading Competition",
+    "9800000SWCtobewon":"9,800,000 SWC to be won!",
+    "2/5":"2/5",
+    "copyTrading":"Copy Trading",
+    "viewMore":"View More",
+    "7DROI":"7D ROI",
+    "lastgameplay":"Last Game play"
+     
+}

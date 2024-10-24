@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 type User = {
     username: string;
     password: string;
+    prefix:string;
 }
 
 type Dbstruct = {
@@ -26,7 +27,7 @@ export const Signin = async (body:User) =>{
             'Content-Type': 'application/json',
             //'Authorization': 'Bearer ' +  token
             },
-            body: JSON.stringify({"username":body.username,password:body.password})
+            body: JSON.stringify({"username":body.username,password:body.password,prefix:body.prefix})
           })
        return response.json()
 }
@@ -100,6 +101,17 @@ export const GetMemberById = async (prefix:string,id:number) =>{
       body: JSON.stringify({"prefix":prefix,"ID":id})
 })
 return response.json()
+}
+
+export const GetUserInfo = async (token:string) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/users/info", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+  })
+  return response.json()
 }
 
 export const AddMember = async (prefix:string,body:any) =>{
@@ -232,7 +244,7 @@ export const GetPromotion = async (dbname:string) =>{
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body: JSON.stringify({"prefix":dbname})
+      body: JSON.stringify({"prefix":dbname.toLowerCase()})
 })
 return response.json()
 }catch(error){
@@ -283,3 +295,4 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
 export async function navigate(path:string) {
   redirect(path)
 }
+

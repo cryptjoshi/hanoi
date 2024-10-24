@@ -714,14 +714,12 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	user := users
-	updates := map[string]interface{}{
-		"Token": "",
-	}
+	//user := users
+	//updates := map[string]interface{}{
+	//	"Token": "",
+	//}
 
-	// อัปเดตข้อมูลยูสเซอร์
-	repository.UpdateFieldsUserString(db, user.username, updates)
-	///db.Debug().Model(&user).Updates(body.Body)
+	db.Debug().Model(models.Users{}).Where("username=?", username).Updates(body.Body)
 	response := fiber.Map{
 		"status":  true,
 		"message": "สำเร็จ",

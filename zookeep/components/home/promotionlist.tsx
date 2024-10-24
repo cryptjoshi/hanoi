@@ -1,15 +1,11 @@
 'use client'
 import { useEffect,useState } from 'react'
 import { useTranslation } from '@/app/i18n/client';
-<<<<<<< HEAD
 import { GetPromotion, UpdateUser } from '@/actions';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
-=======
-import { GetPromotion } from '@/actions';
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
  

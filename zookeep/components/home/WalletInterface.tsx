@@ -123,7 +123,6 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
      </div>
 
    
-<<<<<<< HEAD
      <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
       
         {['Home', 'Deposit', 'Withdraw', 'History', 'sign_out'].map((item, index) => (
@@ -137,16 +136,6 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
           </Button>
         ))}
       </div>
-=======
-     <div className="mt-auto fixed bottom-0 left-0 right-0 bg-background border-t flex justify-between p-2 sm:p-3">
-       {['Home', 'market', 'buy', 'futures', 'assets'].map((item, index) => (
-         <Button key={index} variant="ghost" className="flex-col py-1 px-2 sm:py-2 sm:px-3">
-           
-           <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
-         </Button>
-       ))}
-     </div>
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
    </div>
   );
 };

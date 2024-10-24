@@ -8,10 +8,7 @@ const {t} = useTranslation(lng,'translation',undefined);
 
   useEffect(() => {
     fetchGameStatus(prefix)
-<<<<<<< HEAD
     //console.log('fetchGameStatus',gameStatus)
-=======
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
   }, [prefix, fetchGameStatus])
 
   if (!gameStatus) {

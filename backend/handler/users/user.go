@@ -685,7 +685,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	body := new(UpdateBody)
 	if err := c.BodyParser(body); err != nil {
-		
+
 		response := fiber.Map{
 			"status":  false,
 			"message": err.Error(),
@@ -704,8 +704,8 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	var users models.Users
-	fmt.Printf("Body: %s",body)
-	err := db.Debug().Where("username=?",username).Find(&users).Error
+	fmt.Printf("Body: %s", body)
+	err := db.Debug().Where("username=?", username).Find(&users).Error
 	if err != nil {
 		response := fiber.Map{
 			"status":  false,

@@ -2,6 +2,7 @@
 import { useEffect,useState } from 'react'
 import { useTranslation } from '@/app/i18n/client';
 import { GetPromotion } from '@/actions';
+import { Card } from '@/components/ui/card';
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
  
@@ -12,6 +13,7 @@ const [promotion, setPromotion] = useState(null);
     const fetchPromotion = async (prefix:string) => {
     const promotion = await GetPromotion(prefix);
         if(promotion.Status){
+         //   console.log('promotion',promotion.Data)
           setPromotion(promotion.Data);
         }
     }
@@ -32,7 +34,7 @@ const [promotion, setPromotion] = useState(null);
        <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">
            <div>
-             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.title}</h4>
+             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.name}</h4>
              <p className="text-green-400 text-xs sm:text-sm">{item.description}</p>
            </div>
            <div className="text-right">

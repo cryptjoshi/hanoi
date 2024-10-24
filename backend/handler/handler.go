@@ -1352,7 +1352,35 @@ func GetGameStatus(c *fiber.Ctx) error {
 	cachedStatus, err := rdb.Get(ctx, "game_status").Result()
 	if err == nil {
 		// If cached data is found, return it
-		return c.SendString(cachedStatus)
+		var products []Product
+		var tempProducts []struct {
+			ProductCode string `json:"productCode"`
+			Status      string `json:"status"` // Keep status as string for initial parsing
+		}
+
+		// Unmarshal the main JSON
+		if err := json.Unmarshal([]byte(redisData), &tempProducts); err != nil {
+			log.Fatalf("Error unmarshalling JSON: %v", err)
+		}
+
+		// Step 2: Iterate through the temporary products and unmarshal the status
+		for _, item := range tempProducts {
+			var status Status
+			if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
+				log.Fatalf("Error unmarshalling status JSON: %v", err)
+			}
+			products = append(products, Product{
+				ProductCode: item.ProductCode,
+				Status:      status,
+			})
+		}
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลสำเร็จ",
+			"Status":  true,
+			"Data":    products,
+		}
+		return c.JSON(response)
+
 	}
 
 	// If no cached data, query the database

@@ -24,7 +24,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
 
   const [currency, setCurrency] = React.useState('USD');
 
-  const {prefix} = useAuthStore();
+  const {prefix,Logout,setPrefix} = useAuthStore();
 
   React.useEffect(() => {
     const fetchBalance = async () => {
@@ -41,6 +41,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
           setBalance(user.Data.balance);
           setUser(user.Data);
           setCurrency(userLoginStatus.state.customerCurrency);
+          setPrefix(user.Data.prefix);
         } else {
           // Redirect to login page if token is null
         router.push(`/${lng}/login`);
@@ -107,10 +108,12 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
 
    
      <div className="mt-auto fixed bottom-0 left-0 right-0 bg-background border-t flex justify-between p-2 sm:p-3">
-       {['Home', 'market', 'buy', 'futures', 'assets'].map((item, index) => (
+       {['Home', 'market', 'buy', 'futures', 'sign_out'].map((item, index) => (
          <Button key={index} variant="ghost" className="flex-col py-1 px-2 sm:py-2 sm:px-3">
-           
-           <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
+           {item=="sign_out" ?
+            <span className="text-[10px] sm:text-xs mt-1" onClick={()=>Logout()}>{t(`menu.${item.toLowerCase()}`)}</span> 
+            : 
+            <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>}
          </Button>
        ))}
      </div>

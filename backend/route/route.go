@@ -60,6 +60,7 @@ func SetupRoutes(app fiber.Router) {
 	// user
 	app.Post("/users/all", jwt.JwtMiddleware, users.GetUsers)
 	app.Post("/users/login", users.Login)
+<<<<<<< HEAD
 	app.Post("/users/register", users.Register)
 	app.Post("/users/balance", jwt.JwtMiddleware, users.GetBalance)
 	app.Post("/users/sum/balance", jwt.JwtMiddleware, users.GetBalanceSum)
@@ -67,6 +68,32 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/users/statement", jwt.JwtMiddleware, users.GetUserStatement)
 	app.Post("/users/transactions", jwt.JwtMiddleware, users.GetUserTransaction)
 	app.Post("/users/update", jwt.JwtMiddleware, users.UpdateUser)
+=======
+	app.Post("/users/register",users.Register)
+	app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
+	app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
+	app.Post("/users/info",jwt.JwtMiddleware,users.GetUser)
+	app.Post("/users/statement",jwt.JwtMiddleware,users.GetUserStatement)
+	app.Post("/users/transactions",jwt.JwtMiddleware,users.GetUserTransaction)
+	app.Post("/users/update",jwt.JwtMiddleware,users.UpdateUser)
+    
+	app.Post("/db/create",handler.CreateDatabase)
+	app.Post("/db/login",handler.RootLogin)
+	app.Post("/db/list",handler.GetDatabaseList)
+	app.Post("/db/prefix",handler.GetDatabaseByPrefix)
+	
+	app.Post("/db/promotion/all",handler.GetPromotion)
+	app.Post("/db/promotion/byid",handler.GetPromotionById)
+	app.Post("/db/promotion/create",handler.CreatePromotion)
+	app.Post("/db/promotion/update",handler.UpdatePromotion)
+	app.Post("/db/promotion/delete",handler.DeletePromotion)
+	//app.Post("/db/promotion/delete/:id",handler.DeletePromotion)	
+	app.Post("/db/game/all",handler.GetGameList)
+	app.Post("/db/game/byid",handler.GetGameById)
+	app.Post("/db/game/status",handler.GetGameStatus)
+	app.Post("/db/game/create",handler.CreateGame)
+	app.Post("/db/game/update",handler.UpdateGame)
+>>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 
 	app.Post("/db/create", handler.CreateDatabase)
 	app.Post("/db/login", handler.RootLogin)

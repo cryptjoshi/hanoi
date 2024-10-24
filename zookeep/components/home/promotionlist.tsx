@@ -1,11 +1,15 @@
 'use client'
 import { useEffect,useState } from 'react'
 import { useTranslation } from '@/app/i18n/client';
+<<<<<<< HEAD
 import { GetPromotion, UpdateUser } from '@/actions';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+=======
+import { GetPromotion } from '@/actions';
+>>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
  
@@ -27,7 +31,6 @@ const { toast } = useToast();
     const fetchPromotion = async (prefix:string) => {
     const promotion = await GetPromotion(prefix);
         if(promotion.Status){
-         //   console.log('promotion',promotion.Data)
           setPromotion(promotion.Data);
         }
     }
@@ -48,7 +51,7 @@ const { toast } = useToast();
        <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">
            <div>
-             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.name}</h4>
+             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.title}</h4>
              <p className="text-green-400 text-xs sm:text-sm">{item.description}</p>
            </div>
            <div className="text-right">

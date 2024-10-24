@@ -1317,7 +1317,16 @@ func GetGameStatus(c *fiber.Ctx) error {
 		ProductCode string `json:"productCode"`
 		Status      string `json:"status"`
 	}
+	type Status struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
 
+	// Define the main struct that includes the status
+	type Product struct {
+		ProductCode string `json:"productCode"`
+		Status      Status `json:"status"`
+	}
 	body := new(gameData)
 	if err := c.BodyParser(body); err != nil {
 		response := fiber.Map{
@@ -1350,7 +1359,13 @@ func GetGameStatus(c *fiber.Ctx) error {
 	})
 
 	cachedStatus, err := rdb.Get(ctx, "game_status").Result()
+	var products []Product
+	var tempProducts []struct {
+		ProductCode string `json:"productCode"`
+		Status      string `json:"status"` // Keep status as string for initial parsing
+	}
 	if err == nil {
+<<<<<<< HEAD
 		// If cached data is found, return it
 		type Status struct {
 			ID   string `json:"id"`
@@ -1368,6 +1383,10 @@ func GetGameStatus(c *fiber.Ctx) error {
 			Status      string `json:"status"` // Keep status as string for initial parsing
 		}
 
+=======
+		 
+		 
+>>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 		// Unmarshal the main JSON
 		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
@@ -1384,12 +1403,22 @@ func GetGameStatus(c *fiber.Ctx) error {
 				Status:      status,
 			})
 		}
+<<<<<<< HEAD
 
 		// Print the result
 		// for _, product := range products {
 		// 	fmt.Printf("Product Code: %s, Status: %+v\n", product.ProductCode, product.Status)
 		// }
 
+=======
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลสำเร็จ",
+			"Status":  true,
+			"Data":    products,
+		}
+		return c.JSON(response)
+		
+>>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 	}
 
 	// If no cached data, query the database
@@ -1415,10 +1444,25 @@ func GetGameStatus(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Error caching game status")
 	}
 
+	if err := json.Unmarshal([]byte(statusJSON), &tempProducts); err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	// Step 2: Iterate through the temporary products and unmarshal the status
+	for _, item := range tempProducts {
+		var status Status
+		if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
+			log.Fatalf("Error unmarshalling status JSON: %v", err)
+		}
+		products = append(products, Product{
+			ProductCode: item.ProductCode,
+			Status:      status,
+		})
+	}
 	response := fiber.Map{
 		"Message": "ดึงข้อมูลสำเร็จ",
 		"Status":  true,
-		"Data":    gameStatus,
+		"Data":    products,
 	}
 	return c.JSON(response)
 }

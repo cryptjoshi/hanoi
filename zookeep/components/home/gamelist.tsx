@@ -4,12 +4,14 @@ import { useTranslation } from '@/app/i18n/client';
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
   const { gameStatus, fetchGameStatus } = useGameStore()
-  const {t} = useTranslation(lng,'translation',undefined);
+const {t} = useTranslation(lng,'translation',undefined);
 
   useEffect(() => {
-    
     fetchGameStatus(prefix)
+<<<<<<< HEAD
     //console.log('fetchGameStatus',gameStatus)
+=======
+>>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
   }, [prefix, fetchGameStatus])
 
   if (!gameStatus) {

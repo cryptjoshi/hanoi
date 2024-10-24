@@ -104,7 +104,6 @@ const useAuthStore = create<AuthStore>()(
       },
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       setCustomerCurrency: (customerCurrency: string | null) => set({ customerCurrency }),
-      setPrefix: (prefix: string | null) => set({ prefix }),
       init: () => {
         const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency,setPrefix } = get();
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';

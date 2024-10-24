@@ -677,7 +677,13 @@ func GetBalanceSum(c *fiber.Ctx) error {
 }
 
 func UpdateUser(c *fiber.Ctx) error {
-	body := new(Body)
+
+	type UpdateBody struct {
+		ID   string       `json:"id"`
+		Body models.Users `json:"data"`
+	}
+
+	body := new(UpdateBody)
 	if err := c.BodyParser(body); err != nil {
 		response := fiber.Map{
 			"status":  false,
@@ -685,7 +691,8 @@ func UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	prefix := c.Locals("Prefix")
+	//prefix := c.Locals("Prefix")
+
 	db, _err := handler.GetDBFromContext(c)
 	if _err != nil {
 		response := fiber.Map{

@@ -24,16 +24,11 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
 
   const [currency, setCurrency] = React.useState('USD');
 
-<<<<<<< HEAD
   const {prefix,Logout,setPrefix} = useAuthStore();
   const handleSignOut = () => {
     Logout();
     router.push(`/${lng}/login`);
   };
-=======
-  const {prefix} = useAuthStore();
-
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
   React.useEffect(() => {
     const fetchBalance = async () => {
       setLoading(true);
@@ -49,6 +44,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
           setBalance(user.Data.balance);
           setUser(user.Data);
           setCurrency(userLoginStatus.state.customerCurrency);
+          setPrefix(user.Data.prefix)
         } else {
           // Redirect to login page if token is null
         router.push(`/${lng}/login`);

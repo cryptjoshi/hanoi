@@ -5,16 +5,17 @@ import { GetPromotion, UpdateUser } from '@/actions';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
+import {useAuthStore} from '@/store/auth'
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
  
 const {t} = useTranslation(lng,'translation',undefined);
 const [promotion, setPromotion] = useState(null);
 const { toast } = useToast();
+const {accessToken} = useAuthStore()
   const handleAccept =  (id:number) => {
-    console.log('id',id)
-     UpdateUser(prefix,{pro_status:id})
+    
+     UpdateUser(accessToken,prefix,{pro_status:id})
     toast({
       title: t('common.success'),
       description: t('common.promotionAccept'),

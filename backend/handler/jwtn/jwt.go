@@ -263,6 +263,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
 	
 	claims := &Claims{}
 	tokenString := c.Get("Authorization")[7:]
+	fmt.Printf("token : %s",tokenString)
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })

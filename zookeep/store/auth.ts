@@ -9,12 +9,14 @@ export interface AuthStore {
     accessTokenData: string | null;
     refreshToken: string | null;
     customerCurrency: string | null;
+    prefix:string;
     Signin: (body: User) => Promise<boolean>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
     setAccessToken: (accessToken: string | null) => void;
     setRefreshToken: (refreshToken: string | null) => void;
     setCustomerCurrency: (customerCurrency: string | null) => void;
+    setPrefix:(prefix:string | null) => void;
     init: () => void;
     clearTokens: () => void;
     lng: string;
@@ -66,6 +68,7 @@ const useAuthStore = create<AuthStore>()(
             set({
               isLoggedIn: true,
               accessToken: data?.Token,
+              prefix:body.prefix
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
@@ -102,15 +105,17 @@ const useAuthStore = create<AuthStore>()(
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       setCustomerCurrency: (customerCurrency: string | null) => set({ customerCurrency }),
       init: () => {
-        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency } = get();
+        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency,setPrefix } = get();
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';
         const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
         const lng = getCookie('lng') || 'en'; // Get language from cookie or use default
+        const prefix = localStorage.getItem('prefix');
         setIsLoggedIn(isloggedIn);
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
         setLng(lng);
+        setPrefix(prefix);
       },
       clearTokens: () => {
         set({

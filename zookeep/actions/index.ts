@@ -295,3 +295,4 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
 export async function navigate(path:string) {
   redirect(path)
 }
+

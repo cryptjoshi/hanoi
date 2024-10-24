@@ -696,6 +696,52 @@ func GetBalanceSum(c *fiber.Ctx) error {
 }
 
 
+func UpdateUser(c *fiber.Ctx) error {
+	
+	type UpdateBody struct {
+		ID string `json:"id"`
+		Body models.Users `json:"data"`
+	}
+	
+	body := new(UpdateBody)
+	if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"status":  false,
+			"message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//prefix := c.Locals("Prefix")
+
+	db, _err := handler.GetDBFromContext(c)
+	if _err != nil {
+		response := fiber.Map{
+			"status":  false,
+			"message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+
+	var users []models.Users
+	err := db.Find(&users, body.ID).Error
+	if err != nil {
+		response := fiber.Map{
+			"status":  false,
+			"message": "ไม่พบรหัสผู้ใช้งาน!!",
+		}
+		return c.JSON(response)
+	}
+
+	user := users[0]
+	db.Model(&user).Updates(body.Body)
+	response := fiber.Map{
+		"status":  true,
+		"message": "สำเร็จ",
+	}
+	return c.JSON(response)
+
+}
+
 
 // type Body struct {
 	

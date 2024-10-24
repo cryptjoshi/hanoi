@@ -685,7 +685,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	body := new(UpdateBody)
 	if err := c.BodyParser(body); err != nil {
-		
+
 		response := fiber.Map{
 			"status":  false,
 			"message": err.Error(),
@@ -704,8 +704,8 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	var users models.Users
-	fmt.Printf("Body: %s",body)
-	err := db.Debug().Where("username=?",username).Find(&users).Error
+	fmt.Printf("Body: %s", body)
+	err := db.Debug().Where("username=?", username).Find(&users).Error
 	if err != nil {
 		response := fiber.Map{
 			"status":  false,
@@ -714,14 +714,14 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	user := users
-	updates := map[string]interface{}{
-		"Token": "",
-	}
+	// user := users
+	// updates := map[string]interface{}{
+	// 	"Token": "",
+	// }
 
 	// อัปเดตข้อมูลยูสเซอร์
-	repository.UpdateFieldsUserString(db, user.username, updates)
-	///db.Debug().Model(&user).Updates(body.Body)
+	//repository.UpdateFieldsUserString(db, user.username, updates)
+	db.Debug().Model(models.Users{}).Where("username=?", username).Updates(body.Body)
 	response := fiber.Map{
 		"status":  true,
 		"message": "สำเร็จ",

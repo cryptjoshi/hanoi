@@ -839,7 +839,7 @@ func GetPromotion(c *fiber.Ctx) error {
 	}
 	promotions := []models.Promotion{}
 
-	err = db.Debug().Where("status=1 and enddate>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
+	err = db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
 
 	// fmt.Println(promotions)
 	if err != nil {
@@ -1365,28 +1365,8 @@ func GetGameStatus(c *fiber.Ctx) error {
 		Status      string `json:"status"` // Keep status as string for initial parsing
 	}
 	if err == nil {
-<<<<<<< HEAD
-		// If cached data is found, return it
-		type Status struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		}
-
-		// Define the main struct that includes the status
-		type Product struct {
-			ProductCode string `json:"productCode"`
-			Status      Status `json:"status"`
-		}
-		var products []Product
-		var tempProducts []struct {
-			ProductCode string `json:"productCode"`
-			Status      string `json:"status"` // Keep status as string for initial parsing
-		}
-
-=======
+		
 		 
-		 
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 		// Unmarshal the main JSON
 		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
@@ -1403,14 +1383,6 @@ func GetGameStatus(c *fiber.Ctx) error {
 				Status:      status,
 			})
 		}
-<<<<<<< HEAD
-
-		// Print the result
-		// for _, product := range products {
-		// 	fmt.Printf("Product Code: %s, Status: %+v\n", product.ProductCode, product.Status)
-		// }
-
-=======
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลสำเร็จ",
 			"Status":  true,
@@ -1418,7 +1390,6 @@ func GetGameStatus(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 		
->>>>>>> 6c7dfb82ae96a678b769c3016b6e256e832fc090
 	}
 
 	// If no cached data, query the database

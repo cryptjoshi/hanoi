@@ -16,7 +16,7 @@ export interface AuthStore {
     setAccessToken: (accessToken: string | null) => void;
     setRefreshToken: (refreshToken: string | null) => void;
     setCustomerCurrency: (customerCurrency: string | null) => void;
-    setPrefix:(prefix:string | null) => void;
+    setPrefix:(prefix:string | undefined) => void;
     init: () => void;
     clearTokens: () => void;
     lng: string;
@@ -48,6 +48,7 @@ const useAuthStore = create<AuthStore>()(
       accessTokenData: null,
       refreshToken: null,
       customerCurrency: "THB",
+      prefix:"",
       Signin: async (body: User) => {
        // const router = useRouter()
         try {
@@ -104,6 +105,7 @@ const useAuthStore = create<AuthStore>()(
       },
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       setCustomerCurrency: (customerCurrency: string | null) => set({ customerCurrency }),
+      setPrefix:(prefix:string | undefined) => set({prefix}),
       init: () => {
         const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency,setPrefix } = get();
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';

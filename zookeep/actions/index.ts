@@ -303,7 +303,7 @@ export const UpdateUser = async (prefix:string,token:string,body:any) =>{
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' +  token
       },
-      body: JSON.stringify({"prefix":prefix,"body":body})
+      body: JSON.stringify({"prefix":prefix,"Body":body})
     })
     return response.json()
 }

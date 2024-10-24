@@ -84,6 +84,7 @@ export default function WalletInterface({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{user?.pro_status}</p>
         </div>
       </div>
       <div className="flex space-x-2 sm:space-x-4 mt-4">

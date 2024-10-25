@@ -675,17 +675,14 @@ func GetBalanceSum(c *fiber.Ctx) error {
 		}}
 	return c.JSON(response)
 }
+type UpdateBody struct {
+	ID   string         `json:"id"`
+	Body map[string]interface{} `json:"data"`
+}
 
 func UpdateUser(c *fiber.Ctx) error {
-
-	type UpdateBody struct {
-		ID   string       `json:"id"`
-		Body models.Users `json:"data"`
-	}
-
-	body := new(UpdateBody)
+	body := make(map[string]interface{})
 	if err := c.BodyParser(body); err != nil {
-
 		response := fiber.Map{
 			"status":  false,
 			"message": err.Error(),
@@ -693,7 +690,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	username := c.Locals("username")
-	//fmt.Printf("USERNAME:%s",c.Locals("username"))
+	
 	db, _err := handler.GetDBFromContext(c)
 	if _err != nil {
 		response := fiber.Map{
@@ -704,7 +701,6 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	var users models.Users
-	fmt.Printf("Body: %s", body)
 	err := db.Debug().Where("username=?", username).Find(&users).Error
 	if err != nil {
 		response := fiber.Map{
@@ -714,18 +710,12 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	//user := users
-	//updates := map[string]interface{}{
-	//	"Token": "",
-	//}
-
-	db.Debug().Model(models.Users{}).Where("username=?", username).Updates(body.Body)
+	db.Debug().Model(models.Users{}).Where("username=?", username).Updates(body)
 	response := fiber.Map{
 		"status":  true,
 		"message": "สำเร็จ",
 	}
 	return c.JSON(response)
-
 }
 
 // type Body struct {

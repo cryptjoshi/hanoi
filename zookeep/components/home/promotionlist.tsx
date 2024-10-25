@@ -16,7 +16,7 @@ const { toast } = useToast();
 const {accessToken} = useAuthStore()
   const handleAccept =  (id:number) => {
     if(accessToken){
-     UpdateUser(prefix,accessToken,{pro_status:id})
+     UpdateUser(accessToken,{"prefix":prefix,"pro_status":id})
     toast({
       title: t('common.success'),
       description: t('common.promotionAccept'),

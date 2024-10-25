@@ -9,7 +9,6 @@ import clsx from 'clsx';
 import { dir } from 'i18next'
 import { languages } from '@/app/i18n/settings'
 import LanguageSwitcher from "@/components/LanguageSwitcher"
-import { LanguageProvider } from '@/app/contexts/LanguageContext'
 import Providers from '@/app/providers'
 export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }))

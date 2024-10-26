@@ -21,7 +21,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const [loading, setLoading] = React.useState(true);
   const [balance, setBalance] = React.useState(0);
   const [user, setUser] = React.useState(null);
-
+  const [promotions, setPromotions] = React.useState([]);
   const [currency, setCurrency] = React.useState('USD');
 
   const {prefix,Logout,setPrefix} = useAuthStore();
@@ -29,6 +29,11 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     Logout();
     router.push(`/${lng}/login`);
   };
+  const [selectedPromotion, setSelectedPromotion] = React.useState(null);
+
+  // เพิ่ม state สำหรับ filteredPromotions
+  const [filteredPromotions, setFilteredPromotions] = React.useState([]);
+  const { t } = useTranslation(lng,'home',undefined);
   React.useEffect(() => {
     const fetchBalance = async () => {
       setLoading(true);
@@ -45,6 +50,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           setUser(user.Data);
           setCurrency(userLoginStatus.state.customerCurrency);
           setPrefix(user.Data.prefix);
+           
         } else {
           // Redirect to login page if token is null
         router.push(`/${lng}/login`);
@@ -67,9 +73,31 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
    
   }, [lng, router]);
 
-
-
-  const { t } = useTranslation(lng,'home',undefined);
+  React.useEffect(() => {
+    const fetchPromotion = async (prefix: string) => {
+      const promotion = await GetPromotion(prefix);
+      if (promotion.Status) {
+        // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
+        const filtered = promotion.Data.filter(promo => promo.ID.toString() !== user?.pro_status?.toString());
+        setPromotions(promotion.Data);
+        
+        // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
+        if (filtered.length === 0) {
+          setFilteredPromotions([{
+            ID: 'default',
+            name: t('defaultPromotion'),
+            description: t('noAvailablePromotions'),
+            image: '/path/to/default/image.jpg',
+            disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
+            // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
+          }]);
+        } else {
+          setFilteredPromotions(filtered);
+        }
+      }
+    }
+    fetchPromotion(prefix);
+  }, [prefix, user?.pro_status, t])
 
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
@@ -84,6 +112,16 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
+          <div className="mt-2">
+            <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+             
+              {selectedPromotion
+                ? selectedPromotion.name // Display selected promotion name if available
+                : promotions.find(promo => promo.ID.toString() == user?.pro_status.toString())?.name || t('noPromotion')  // Changed ID to id and added fallback text
+              }   
+            </p>
+          </div>
         </div>
       </div>
       <div className="flex space-x-2 sm:space-x-4 mt-4">
@@ -96,7 +134,12 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
  
       <GameList prefix={prefix} lng={lng} />
  
-      <PromotionList prefix={prefix} lng={lng} />
+      <PromotionList 
+        prefix={prefix} 
+        lng={lng} 
+        promotions={filteredPromotions} 
+        onSelectPromotion={setSelectedPromotion} 
+      />
 
     
      <div className="p-4 sm:p-6">

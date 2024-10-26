@@ -8,40 +8,61 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import useAuthStore from '@/store/auth'
 
-const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
+interface Promotion {
+  ID: string;
+  name: string;
+  description: string;
+  image: string;
+  disableAccept?: boolean;
+}
+
+interface PromotionListProps {
+  prefix: string;
+  lng: string;
+  promotions: Promotion[];
+  onSelectPromotion: (promotion: Promotion) => void;
+}
+
+const GameList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListProps) => {
   const router = useRouter();
-const {t} = useTranslation(lng,'translation',undefined);
-const [promotion, setPromotion] = useState(null);
-const { toast } = useToast();
-const {accessToken} = useAuthStore()
-  const handleAccept =  (id:number) => {
-    if(accessToken){
-     UpdateUser(accessToken,{"prefix":prefix,"pro_status":id})
+  const { t } = useTranslation(lng, 'translation', undefined);
+  const { toast } = useToast();
+  const { accessToken } = useAuthStore()
+
+  const handleAccept =  (item: Promotion) => {
+  const acceptPromotion = async () => {
+ 
+    if(accessToken && prefix!=""){
+    const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
+    if(res.Status){
     toast({
       title: t('common.success'),
       description: t('common.promotionAccept'),
+      variant: "default",
     })
+    onSelectPromotion(item);
   } else {
     toast({
       title: t('common.unsuccess'),
-      description: t('common.unsuccess'),
+      description: res.Message,
+      variant: "destructive",
     })
-    router.push(`/${lng}/login`);
+   // router.push(`/${lng}/login`);
   }
-  }
+} else {
+  toast({
+    title: t('common.unsuccess'),
+    description: t('common.loginFirst'),
+    variant: "destructive",
+  })
+  router.push(`/${lng}/login`);
+}
+}
+  acceptPromotion()
+}
 
 
-  useEffect(() => {
-    const fetchPromotion = async (prefix:string) => {
-    const promotion = await GetPromotion(prefix);
-        if(promotion.Status){
-          setPromotion(promotion.Data);
-        }
-    }
-    fetchPromotion(prefix);
-  }, [prefix])
-
-  if (!promotion) {
+  if (!promotions || promotions.length === 0) {
     return <div>{t(`games.title`)}</div>
   }
 
@@ -51,11 +72,11 @@ const {accessToken} = useAuthStore()
    <div className="p-4 sm:p-6">
        <h3 className="font-bold text-sm sm:text-base mb-2">{t('latestEvents')}</h3>
 
-       {promotion && promotion.map((item, index) => (
+       {promotions.map((item, index) => (
        <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">
            <div>
-             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.title}</h4>
+             <h4 className="font-bold text-yellow-400 text-sm sm:text-base">{item.name}</h4>
              <p className="text-green-400 text-xs sm:text-sm">{item.description}</p>
            </div>
            <div className="text-right">
@@ -66,7 +87,12 @@ const {accessToken} = useAuthStore()
          <p className="text-xs sm:text-sm">{item.description}</p>
          </CardContent>
        <CardFooter>
-        <Button className="bg-yellow-400 text-black hover:bg-yellow-500" onClick={() => handleAccept(item)}>{t('common.accept')}</Button>
+        <Button 
+          onClick={() => onSelectPromotion(item)}
+          disabled={item.disableAccept}
+        >
+          {t('accept')}
+        </Button>
        </CardFooter>
        </Card>
        ))}

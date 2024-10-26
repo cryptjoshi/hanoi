@@ -297,13 +297,14 @@ export async function navigate(path:string) {
 }
 
 export const UpdateUser = async (token:string,body:any) =>{
+ 
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' +  token
       },
-      body: JSON.stringify({"Body":body})
+      body: JSON.stringify(body)
     })
     return response.json()
 }

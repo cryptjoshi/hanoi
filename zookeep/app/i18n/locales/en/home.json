@@ -18,6 +18,9 @@
     "viewMore":"View More",
     "7DROI":"7D ROI",
     "lastgameplay":"Last Game play",
-    "accept":"Accept"
-     
+    "accept":"Accept",
+    "promotionStatus":"Promotion Status",
+    "noPromotion":"No Promotion",
+    "defaultPromotion":"Default Promotion",
+    "noAvailablePromotions":"No Available Promotions"
 }

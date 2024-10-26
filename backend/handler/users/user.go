@@ -36,7 +36,7 @@ import (
 )
 
 type ErrorResponse struct {
-	Status  bool   `json:"status"`
+	Status  bool   `json:"Status"`
 	Message string `json:"message"`
 }
 
@@ -45,7 +45,7 @@ type Body struct {
 	Username string `json:"username"`
 	//TransactionAmount decimal.Decimal `json:"transactionamount"`
 	Password  string `json:"password"`
-	Status    string `json:"status"`
+	Status    string `json:"Status"`
 	Startdate string `json:"startdate"`
 	Stopdate  string `json:"stopdate"`
 	Prefix    string `json:"prefix`
@@ -326,6 +326,7 @@ func GetUser(c *fiber.Ctx) error {
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
+			"pro_status": users.ProStatus,
 		}}
 	return c.JSON(response)
 }
@@ -502,7 +503,7 @@ func GetUserTransaction(c *fiber.Ctx) error {
 			"createdAt":       transaction.CreatedAt,
 			"transfer_amount": amountFloat,
 			"credit":          amountFloat,
-			"status":          transaction.Status,
+			"Status":          transaction.Status,
 			//	"channel": transaction.Channel,
 			"statement_type": transactionType,
 			"expire_date":    transaction.CreatedAt,
@@ -621,7 +622,7 @@ func GetUserStatement(c *fiber.Ctx) error {
 			"createdAt":       transaction.CreatedAt,
 			"transfer_amount": amountFloat,
 			"credit":          amountFloat,
-			"status":          transaction.Status,
+			"Status":          transaction.Status,
 			"channel":         transaction.Channel,
 			"statement_type":  transactionType,
 			"expire_date":     transaction.CreatedAt,
@@ -677,53 +678,68 @@ func GetBalanceSum(c *fiber.Ctx) error {
 }
 type UpdateBody struct {
 	ID   string         `json:"id"`
-	Body map[string]interface{} `json:"data"`
+	Body map[string]interface{} `json:"body"`
 }
+// ... existing code ...
 
 func UpdateUser(c *fiber.Ctx) error {
+	// Parse the request body into a map
 	body := make(map[string]interface{})
-	if err := c.BodyParser(body); err != nil {
+	if err := c.BodyParser(&body); err != nil {
 		response := fiber.Map{
-			"status":  false,
-			"message": err.Error(),
+			"Status":  false,
+			"Message": err.Error(),
 		}
 		return c.JSON(response)
 	}
-	username := c.Locals("username")
+
+	// Get the username from the context
+	username := c.Locals("username").(string)
 	
 	db, _err := handler.GetDBFromContext(c)
 	if _err != nil {
 		response := fiber.Map{
-			"status":  false,
-			"message": "โทเคนไม่ถูกต้อง!!",
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
 		}
 		return c.JSON(response)
 	}
 
-	var users models.Users
-	err := db.Debug().Where("username=?", username).Find(&users).Error
+	var user models.Users
+	err := db.Where("username = ?", username).First(&user).Error
 	if err != nil {
 		response := fiber.Map{
-			"status":  false,
-			"message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
 		}
 		return c.JSON(response)
 	}
 
-	db.Debug().Model(models.Users{}).Where("username=?", username).Updates(body)
+	// Update the user with the provided fields
+	fmt.Printf("Body: %s",body)
+	if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
+		}
+		return c.JSON(response)
+	}
+
 	response := fiber.Map{
-		"status":  true,
-		"message": "สำเร็จ",
+		"Status":  true,
+		"Message": "อัปเดตข้อมูลสำเร็จ!",
 	}
 	return c.JSON(response)
 }
+
+// ... rest of the code ...
 
 // type Body struct {
 
 // 	//UserID           int             `json:"userid"`
 //     //TransactionAmount decimal.Decimal `json:"transactionamount"`
 // 	Username           string             `json:"username"`
-// 	Status           string             `json:"status"`
+// 	Status           string             `json:"Status"`
 // 	Startdate        string 			`json:"startdate"`
 // 	Stopdate        string 		  	`json:"stopdate"`
 // 	Prefix           string           	`json:"prefix`
@@ -747,7 +763,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 // type Response struct {
 //     Message string      `json:"message"`
-//     Status  bool        `json:"status"`
+//     Status  bool        `json:"Status"`
 //     Data    interface{} `json:"data"` // ใช้ interface{} เพื่อรองรับข้อมูลหลายประเภทใน field data
 // }
 
@@ -840,7 +856,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 			   "backnumber": users.Banknumber,
 // 			   "bankname": users.Bankname,
 // 			   "balance": users.Balance,
-// 			   "status": users.Status,
+// 			   "Status": users.Status,
 
 // 			},
 // 		}
@@ -869,7 +885,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 // 			fmt.Println("ไม่พบข้อมูล")
 // 			return c.Status(200).JSON(fiber.Map{
-// 				"status": true,
+// 				"Status": true,
 // 				"data": fiber.Map{
 // 					"id": &users.ID,
 // 					"token": &users.Token,
@@ -877,7 +893,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 					"withdraw": fiber.Map{
 // 						"uid":"",
 // 						"transactionamount":0,
-// 						"status":"verified",
+// 						"Status":"verified",
 // 					},
 // 				}})
 
@@ -885,7 +901,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 		fmt.Printf("ข้อมูลที่พบ: %+v\n", bankstatement)
 
 // 		return c.Status(200).JSON(fiber.Map{
-// 			"status": true,
+// 			"Status": true,
 // 			"data": fiber.Map{
 // 				"id": &users.ID,
 // 				"token": &users.Token,
@@ -893,7 +909,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 				"withdraw": fiber.Map{
 // 					"uid":&bankstatement.Uid,
 // 					"transactionamount": &bankstatement.Transactionamount,
-// 					"status":&bankstatement.Status,
+// 					"Status":&bankstatement.Status,
 // 				},
 // 			}})
 // 	}
@@ -1012,7 +1028,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 				   "createdAt": transaction.CreatedAt,
 // 				   "transfer_amount": amountFloat,
 // 				   "credit":  amountFloat,
-// 				   "status":           transaction.Status,
+// 				   "Status":           transaction.Status,
 // 				   "channel": transaction.Channel,
 // 				   "statement_type": transactionType,
 // 				   "expire_date": transaction.CreatedAt,
@@ -1078,7 +1094,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 				   "WINLOSS": transaction.Transactionamount,
 // 				   "TURNOVER": transaction.BetAmount,
 // 				   "credit":  amountFloat,
-// 				   "status":           transaction.Status,
+// 				   "Status":           transaction.Status,
 // 				   "GameRoundID": transaction.Uid,
 // 				   "GameProvide": transaction.Channel,
 // 				   "statement_type": transactionType,
@@ -1087,7 +1103,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 		   }
 
 // 		   return c.Status(200).JSON(fiber.Map{
-// 			"status": true,
+// 			"Status": true,
 // 			"data": result,
 // 		})
 
@@ -1106,7 +1122,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 	db.Debug().Select(" *,CASE WHEN Walletid in (Select distinct walletid from BankStatement Where channel='1stpay') THEN 1 ELSE 0 END As ProStatus ").Find(&users)
 
 // 	return c.Status(200).JSON(fiber.Map{
-// 		"status": true,
+// 		"Status": true,
 // 		"data": fiber.Map{
 // 			"data":users,
 // 		}})
@@ -1178,13 +1194,13 @@ func UpdateUser(c *fiber.Ctx) error {
 // 				   "AfterBalance": balanceFloat,
 // 				   "TURNOVER":betFloat,
 // 		 		   "channel": transaction.Channel,
-// 				   "status":transaction.Status,
+// 				   "Status":transaction.Status,
 
 // 		 	   }
 // 		    }
 
 // 		   return c.Status(200).JSON(fiber.Map{
-// 			"status": true,
+// 			"Status": true,
 // 			"data": result,
 // 		})
 
@@ -1230,7 +1246,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 		}
 
 // 		   return c.Status(200).JSON(fiber.Map{
-// 			"status": true,
+// 			"Status": true,
 // 			"data": statements,
 // 		})
 
@@ -1263,7 +1279,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 // 		// ส่งข้อมูล JSON
 // 		return c.Status(200).JSON(fiber.Map{
-// 			"status": true,
+// 			"Status": true,
 // 			"data": summaries,
 // 		})
 
@@ -1285,14 +1301,14 @@ func UpdateUser(c *fiber.Ctx) error {
 // 	_err := repository.UpdateUserFields(db, users.ID, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 // 	if _err != nil {
 // 		return c.Status(200).JSON(fiber.Map{
-// 			"status": false,
-// 			"message":  _err,
+// 			"Status": false,
+// 			"Message":  _err,
 // 		})
 // 	}
 
 // 	return c.Status(200).JSON(fiber.Map{
-// 		"status": true,
-// 		"message": "สำเร็จ!",
+// 		"Status": true,
+// 		"Message": "สำเร็จ!",
 // 	 })
 // }
 // func GetFirstUsers(c *fiber.Ctx) error {
@@ -1415,7 +1431,7 @@ func UpdateUser(c *fiber.Ctx) error {
 // 		// 		//    "transfer_amount": amountFloat,
 // 		// 		//    "balance": balanceFloat,
 // 		// 		//    "credit":  amountFloat,
-// 		// 		//    "status":           transaction.Status,
+// 		// 		//    "Status":           transaction.Status,
 // 		// 		//    "channel": transaction.Channel,
 // 		// 		//    "statement_type": transactionType,
 // 		// 		//    "expire_date": transaction.CreatedAt,
@@ -1423,8 +1439,8 @@ func UpdateUser(c *fiber.Ctx) error {
 // 		//    }
 // 			// if firststate==nil {
 // 			// 	return c.Status(200).JSON(fiber.Map{
-// 			// 		"status": true,
-// 			// 		"message": "สำเร็จ!",
+// 			// 		"Status": true,
+// 			// 		"Message": "สำเร็จ!",
 // 			// 		"data": fiber.Map{
 // 			// 			"Counter": statements.Counter,
 // 			// 			"Active": make([]FirstGetResponse, 0),
@@ -1434,8 +1450,8 @@ func UpdateUser(c *fiber.Ctx) error {
 // 			// } else {
 
 // 				return c.Status(200).JSON(fiber.Map{
-// 					"status": true,
-// 					"message": "สำเร็จ!",
+// 					"Status": true,
+// 					"Message": "สำเร็จ!",
 // 					"data": fiber.Map{
 // 						"Counter": statements.Counter,
 // 						"Active": firstDeposits,

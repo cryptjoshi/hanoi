@@ -596,7 +596,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
 
         <div className="space-y-4">
           {gameTypes?.Data?.map((item: any) => {
-            const status = JSON.parse(item.status);
+            const status = item.status;
             
             const isIncluded = form.watch('includegames')?.split(',').includes(status.id.toString());
 

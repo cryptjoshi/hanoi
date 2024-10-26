@@ -18,5 +18,9 @@
     "viewMore":"ดูเพิ่มเติม",
     "7DROI":"7D ROI",
     "lastgameplay":"เกมส์ที่เล่นล่าสุด",
-    "accept":"ยอมรับ"
+    "accept":"ยอมรับ",
+    "promotionStatus":"สถานะโปรโมชั่น",
+    "noPromotion":"ไม่มีโปรโมชั่น",
+    "defaultPromotion":"โปรโมชั่นค่าเริ่มต้น",
+    "noAvailablePromotions":"ไม่มีโปรโมชั่นที่มีอยู่"
 }

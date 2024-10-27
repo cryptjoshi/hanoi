@@ -59,7 +59,7 @@ import { ResponsiveDialog } from '../responsive-dialog'
 import DeletePromotionDialog from './DeletePromotionDialog'
 import { format, parse } from 'date-fns';
 
-interface Promotion {
+export interface Promotion {
   id: string
   ID: string
   name: string
@@ -68,6 +68,7 @@ interface Promotion {
   usageLimit: string
   specificTime: string
   paymentMethod: string
+  minDept:number
   minSpend: number
   maxSpend: number
   termsAndConditions: string
@@ -206,6 +207,10 @@ export default function PromotionListDataTable({
       header: t('promotion.name'),
       cell: info => info.getValue(),
     }),
+    columnHelper.accessor('minDept', {
+      header: t('promotion.minDept'),
+      cell: info => `${info.getValue()}`,
+    }),
     columnHelper.accessor('percentDiscount', {
       header: t('promotion.percentDiscount'),
       cell: info => `${info.getValue()}%`,
@@ -233,7 +238,7 @@ export default function PromotionListDataTable({
         return value.split(',').map(id => {
           const game: any = Object.values(gameTypes.Data).find((g: any) => {
             try {
-              const status = JSON.parse(g.status);
+              const status = g.status;
               return status.id.toString() === id.trim();
             } catch (e) {
               console.error('Error parsing game status:', e);
@@ -242,7 +247,7 @@ export default function PromotionListDataTable({
           });
           if (game) {
             try {
-              const status = JSON.parse(game.status);
+              const status = game.status;
               return t(`games.${status.name}`);
             } catch (e) {
               console.error('Error parsing game status:', e);
@@ -261,7 +266,7 @@ export default function PromotionListDataTable({
         return value.split(',').map(id => {
           const game: any = Object.values(gameTypes.Data).find((g: any) => {
             try {
-              const status = JSON.parse(g.status);
+              const status = g.status;
               return status.id.toString() === id.trim();
             } catch (e) {
               console.error('Error parsing game status:', e);
@@ -270,7 +275,7 @@ export default function PromotionListDataTable({
           });
           if (game) {
             try {
-              const status = JSON.parse(game.status);
+              const status = game.status;
               return t(`games.${status.name}`);
             } catch (e) {
               console.error('Error parsing game status:', e);

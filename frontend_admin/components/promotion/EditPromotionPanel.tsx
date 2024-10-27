@@ -1,4 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +17,7 @@ import { useTranslation } from '@/app/i18n/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
+import TestPromotion, {TransactionForm} from "./TestPromotion" 
 import { toast } from "@/hooks/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -38,26 +49,26 @@ interface SpecificTime {
   minute?: string;
 }
 // Update the Promotion interface
-interface Promotion {
-  id: string;
-  ID: string;
-  name: string;
-  description: string;
-  percentDiscount: number;
-  startDate: string;
-  endDate: string;
-  maxDiscount: number;
-  usageLimit: number;
-  specificTime: string;
-  paymentMethod: string;
-  minSpend: number;
-  maxSpend: number;
-  termsAndConditions: string;
-  example: string;
-  status: string;
-  includegames: string;
-  excludegames: string;
-}
+// interface Promotion {
+//   id: string;
+//   ID: string;
+//   name: string;
+//   description: string;
+//   percentDiscount: number;
+//   startDate: string;
+//   endDate: string;
+//   maxDiscount: number;
+//   usageLimit: number;
+//   specificTime: string;
+//   paymentMethod: string;
+//   minSpend: number;
+//   maxSpend: number;
+//   termsAndConditions: string;
+//   example: string;
+//   status: string;
+//   includegames: string;
+//   excludegames: string;
+// }
 
 // Update the form schema
 const formSchema = z.object({
@@ -72,6 +83,7 @@ const formSchema = z.object({
   }),
   maxDiscount: z.coerce.number(),
   usageLimit: z.coerce.number(),
+  minDept:z.coerce.number(),
   minSpend: z.coerce.number(),
   maxSpend: z.coerce.number(),
   termsAndConditions: z.string().optional(),
@@ -138,6 +150,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             percentDiscount: Number(data.Data.percentDiscount),
             maxDiscount: Number(data.Data.maxDiscount),
             usageLimit: Number(data.Data.usageLimit),
+            minDept: Number(data.Data.minDept),
             minSpend: Number(data.Data.minSpend),
             maxSpend: Number(data.Data.maxSpend),
             example: data.Data.example,
@@ -195,6 +208,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       endDate: values.endDate ? format(parse(values.endDate, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '',
       percentDiscount: values.percentDiscount.toString(),
       maxDiscount: values.maxDiscount.toString(),
+      minDept: values.minDept.toString(),
       minSpend: values.minSpend.toString(),
       maxSpend: values.maxSpend.toString(),
     };
@@ -236,6 +250,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
     }
   };
 
+
+
   return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -271,6 +287,19 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                 <FormLabel>{t('promotion.description')}</FormLabel>
                 <FormControl>
                   <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="minDept"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.minDept')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="text" onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -645,12 +674,35 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               }
             }}>{t('promotion.save')}</Button>
             <Button type="button" variant="outline" onClick={onCancel}>{t('promotion.cancel')}</Button>
+            <Dialog>
+            <DialogTrigger asChild>
+              <Button type='button' variant="outline">{t('promotion.testing')}</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{t('promotion.testing')}</DialogTitle>
+                <DialogDescription>
+                   <TestPromotion lng={lng} promotion={form} />
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+        </DialogContent>
+      </Dialog>
+            
           </div>
       </Tabs>
     </div>
     
     </form>
+          
     </Form>
+
   );
 };
 

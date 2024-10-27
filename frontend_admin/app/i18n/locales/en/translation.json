@@ -55,8 +55,13 @@
         "usageLimit": "Receive Limit",
         "specificTime": "Specific Time",
         "paymentMethod": "Payment Method",
+        "minDept":"Min Deposit",
         "minSpend": "Min Turnover",
         "maxSpend": "Max Withdrawal",
+        "amount":"Amount",
+        "balance":"Balance",
+        "deposit":"Deposit",
+        "withdrawal":"Withdrawal",
         "example": "Example",
         "termsAndConditions": "Terms and Conditions",
         "title": "Promotion",
@@ -145,9 +150,8 @@
         "selectDay": "Select Day",
         "selectWeek": "Select Week",
         "selectMonth": "Select Month",
-        "selectYear": "Select Year"
-        
-        
+        "selectYear": "Select Year",
+        "testing":"Test Promotion"
     },
     "games": {
         "title": "Game",

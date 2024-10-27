@@ -707,27 +707,27 @@ func CreateDB(db *gorm.DB, dbName string) error {
 }
 
 // promotion
-
+type ProBody struct  {
+	Name               string              `json:"name"`
+	Description        string              `json:"description"`
+	PercentDiscount    decimal.NullDecimal `json:"percentDiscount"`
+	StartDate          string              `json:"startDate"`
+	EndDate            string              `json:"endDate"`
+	MaxDiscount        decimal.NullDecimal `json:"maxDiscount"`
+	UsageLimit         int                 `json:"usageLimit"`
+	SpecificTime       string              `json:"specificTime"`
+	PaymentMethod      string              `json:"paymentMethod"`
+	MinDept            decimal.NullDecimal `json:"minDept"`
+	MinSpend           decimal.NullDecimal `json:"minSpend"`
+	MaxSpend           decimal.NullDecimal `json:"maxSpend"`
+	TermsAndConditions string              `json:"termsAndConditions"`
+	Status             int                 `json:"status"`
+	Includegames       string              `json:"includegames"`
+	Excludegames       string              `json:"excludegames"`
+}
 type promotiondata struct {
 	Prefix string `json:"prefix"`
-	Body   struct {
-		Name               string              `json:"name"`
-		Description        string              `json:"description"`
-		PercentDiscount    decimal.NullDecimal `json:"percentDiscount"`
-		StartDate          string              `json:"startDate"`
-		EndDate            string              `json:"endDate"`
-		MaxDiscount        decimal.NullDecimal `json:"maxDiscount"`
-		UsageLimit         int                 `json:"usageLimit"`
-		SpecificTime       string              `json:"specificTime"`
-		PaymentMethod      string              `json:"paymentMethod"`
-		MinSpend           decimal.NullDecimal `json:"minSpend"`
-		MaxSpend           decimal.NullDecimal `json:"maxSpend"`
-		TermsAndConditions string              `json:"termsAndConditions"`
-		Status             int                 `json:"status"`
-		Includegames       string              `json:"includegames"`
-		Excludegames       string              `json:"excludegames"`
-	} `json:"body"`
-
+	Body   ProBody `json:"body"`
 	PromotionId int `json:"promotionId"`
 }
 
@@ -782,6 +782,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		UsageLimit:         data.Body.UsageLimit,
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
+		MinDept:            data.Body.MinDept.Decimal,
 		MinSpend:           data.Body.MinSpend.Decimal,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
@@ -923,6 +924,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		UsageLimit:         data.Body.UsageLimit,
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
+		MinDept:            data.Body.MinDept.Decimal,
 		MinSpend:           data.Body.MinSpend.Decimal,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,

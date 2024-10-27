@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { Avatar} from "@/components/ui/avatar";
 import { Card } from '@/components/ui/card';
 import { Bell, Search, Wallet, MessageCircle } from 'lucide-react';
@@ -16,6 +16,7 @@ import GameList from './gamelist';
 import PromotionList from './promotionlist';
 
 
+
 export default function HomePage({lng}:{lng:string}): JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
@@ -25,10 +26,10 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const [currency, setCurrency] = React.useState('USD');
 
   const {prefix,Logout,setPrefix} = useAuthStore();
-  const handleSignOut = () => {
-    Logout();
-    router.push(`/${lng}/login`);
-  };
+  // const handleSignOut = () => {
+  //   Logout();
+  //   router.push(`/${lng}/login`);
+  // };
   const [selectedPromotion, setSelectedPromotion] = React.useState(null);
 
   // เพิ่ม state สำหรับ filteredPromotions
@@ -66,10 +67,11 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         router.push(`/${lng}/login`);
         return;
       }
-      setLoading(false);
+     
     };
 
     fetchBalance();
+    setLoading(false);
    
   }, [lng, router]);
 
@@ -78,7 +80,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       const promotion = await GetPromotion(prefix);
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-        const filtered = promotion.Data.filter(promo => promo.ID.toString() !== user?.pro_status?.toString());
+        const filtered = promotion.Data.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
         setPromotions(promotion.Data);
         
         // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
@@ -125,12 +127,11 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         </div>
       </div>
       <div className="flex space-x-2 sm:space-x-4 mt-4">
-          <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3">{t('deposit')}</Button>
-          <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline">{t('withdraw')}</Button>
-         </div>
+      <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3" onClick={() => router.push(`/${lng}/transaction`)}>{t('deposit')}</Button>
+      <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline" onClick={() => router.push(`/${lng}/transaction`)}>{t('withdraw')}</Button>         </div>
      </div>
     
- 
+            { `lang:${lng}` }
  
       <GameList prefix={prefix} lng={lng} />
  
@@ -160,9 +161,9 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
          ))}
        </div>
      </div>
-
+    {/* <Footer lng={lng} /> */}
    
-     <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
+     {/* <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
       
         {['Home', 'Deposit', 'Withdraw', 'History', 'sign_out'].map((item, index) => (
           <Button 
@@ -174,7 +175,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
             <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
           </Button>
         ))}
-      </div>
+      </div> */}
    </div>
   );
 };

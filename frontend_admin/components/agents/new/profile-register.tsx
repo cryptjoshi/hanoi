@@ -81,7 +81,7 @@ interface ModeSelection {
   production: boolean;
 }
 
-export function ProfileRegister() {
+export function ProfileRegister({lng}:{lng:string}) {
   const [isDbNameSameAsPrefix, setIsDbNameSameAsPrefix] = useState(true)
   const [modeSelection, setModeSelection] = useState<ModeSelection>({
     development: true,
@@ -144,7 +144,7 @@ export function ProfileRegister() {
           </pre>
         ),
       });
-      router.push("/dashboard/agents");
+      router.push(`/${lng}/dashboard/agents/${data.prefix}`);
     } catch (error) {
       toast({
         title: "การสร้างยูสเซอร์ลบล้มเหลว",

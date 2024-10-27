@@ -56,8 +56,13 @@
         "usageLimit": "จำนวนการใช้งาน",
         "specificTime": "เฉพาะเวลา",
         "paymentMethod": "ชำระเงิน",
+        "minDept":"ฝากขั้นต่ำ",
         "minSpend": "ยอดเงินขั้นต่ำ",
         "maxSpend": "ยอดเงินสูงสุด",
+        "amount":"จำนวน",
+        "balance":"ยอดเงิน",
+        "deposit":"รายการฝาก",
+        "withdrawal":"รายการถอน",
         "example": "ตัวอย่าง",
         "termsAndConditions": "เงื่อนไขการถอนยอดโบนัส",
         "title": "โปรโมชัน",
@@ -145,7 +150,8 @@
         "selectDay": "เลือกวัน",
         "selectWeek": "เลือกสัปดาห์",
         "selectMonth": "เลือกเดือน",
-        "selectYear": "เลือกปี"
+        "selectYear": "เลือกปี",
+        "testing":"ทดสอบโปรโมชั่น"
     },
     "games": {
         "title": "เกม",

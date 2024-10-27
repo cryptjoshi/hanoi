@@ -29,6 +29,7 @@ type Promotion struct {
 	UsageLimit int `json:"usageLimit"`
 	SpecificTime string `gorm:"size:255;not null;" json:"specificTime"`
 	PaymentMethod string `gorm:"size:255;not null;" json:"paymentMethod"`
+	MinDept decimal.Decimal `gorm:"type:numeric" json:"minDept"`
 	MinSpend decimal.Decimal `gorm:"type:numeric" json:"minSpend"`
 	MaxSpend decimal.Decimal `gorm:"type:numeric" json:"maxSpend"`
 	TermsAndConditions string `gorm:"size:255;not null;" json:"termsAndConditions"`

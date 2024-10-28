@@ -14,6 +14,7 @@ import (
 	// "github.com/valyala/fasthttp"
 	// _ "github.com/go-sql-driver/mysql"
 	"hanoi/models"
+	"gorm.io/gorm"
 	//"hanoi/database"
 	//"hanoi/handler/jwtn"
 	"hanoi/handler"
@@ -24,7 +25,8 @@ import (
 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"hanoi/repository"
-    //"log"
+	"encoding/json"
+    "log"
 	// "net"
 	// "net/http"
 	// "os"
@@ -42,7 +44,7 @@ type BankBody struct {
     Status           string             `json:"status"`
 	Startdate        string 			`json:"startdate"`
 	Stopdate        string 		  	`json:"stopdate"`
-	Prefix           string           	`json:"prefix`
+	Prefix           string           	`json:"prefix"`
 	Channel        string 		  	`json:"channel"`
 
 }
@@ -135,11 +137,56 @@ func UpdateStatement(c *fiber.Ctx) error {
 
 }
 
+func checkPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) {
+	var Times struct {
+		Type       string `json:"type"`
+		Hours      string `json:"hours"`
+		Minute     string `json:"minute"`
+		DaysOfWeek string `json:"daysofweek"`
+	}
+
+	var promotion models.Promotion
+	if err := db.Where("id = ?", users.ProStatus).Find(&promotion).Error; err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal([]byte(promotion.SpecificTime), &Times); err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	response := map[string]interface{}{}
+
+
+	fmt.Println(Times.Type)
+	if Times.Type == "first" {
+		response["Formular"] = promotion.Example
+	}
+	return response, nil
+}
+
+
+
+	// fmt.Println(promotion)
+	// fmt.Println(&users)
+
+	// response := []interface{
+	// 	MaxDiscount: promotion.MaxDiscount,
+	// 	Unit: promotion.Unit,
+	// 	Turnamount: promotion.Turnamount,
+	// 	Widthdrawmax: promotion.Widthdrawmax
+	// 	Includegames: promotion.Includegames,
+	// 	Excludegames: promotino.Excludegames
+	// }
+
+	// return response
+
+
 func AddStatement(c *fiber.Ctx) error {
 
 	// user := c.Locals("user").(*jtoken.Token)
 	// 	claims := user.Claims.(jtoken.MapClaims)
 	var users models.Users
+	//var promotion *models.Promotion // Change to pointer type
 	// 	prefix := claims["Prefix"].(string)
 	// 	if prefix == "" {
 	// 		prefix,_ = jwt.GetPrefix(claims["Username"].(string))
@@ -152,6 +199,21 @@ func AddStatement(c *fiber.Ctx) error {
 	// }
 
 	db,_ := handler.GetDBFromContext(c)
+	
+	id := c.Locals("ID").(int)
+	// if id == nil {
+	// 	return c.Status(400).JSON(fiber.Map{
+	// 		"status": false,
+	// 		"message": "WalletID is missing",
+	// 	})
+	// }
+	//fmt.Printf("WalletID: %v ", id)
+
+	// promotion, err := checkPro(db, &users) // Pass db directly
+	// if err != nil {
+	// 	fmt.Printf(" %s ",err)
+	// }
+	// fmt.Println(promotion)
 
 	BankStatement := new(models.BankStatement)
 
@@ -164,7 +226,7 @@ func AddStatement(c *fiber.Ctx) error {
 	//db, _ := database.ConnectToDB(BankStatement.Prefix)
 	 
 	 
-    if err_ := db.Where("walletid = ? ", BankStatement.Userid).First(&users).Error; err_ != nil {
+    if err_ := db.Where("walletid = ? ", id).First(&users).Error; err_ != nil {
 		return c.JSON(fiber.Map{
 			"status": false,
 			"message": err_,
@@ -172,8 +234,17 @@ func AddStatement(c *fiber.Ctx) error {
 				"id": -1,
 			}})
     }
+
+	promotion, err := checkPro(db, &users) // Pass db directly
+	if err != nil {
+		fmt.Printf(" %s ",err)
+	}
+	fmt.Printf(" %s ",promotion)
+
 	// fmt.Println(BankStatement.Walletid)
-	//BankStatement.Userid = users.Walletid
+	
+	BankStatement.Userid = id
+	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
 	BankStatement.Balance = users.Balance.Add(BankStatement.Transactionamount)
@@ -312,3 +383,4 @@ func StartWallet(){
 
 }
  
+

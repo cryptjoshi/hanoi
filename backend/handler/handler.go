@@ -714,6 +714,7 @@ type ProBody struct  {
 	StartDate          string              `json:"startDate"`
 	EndDate            string              `json:"endDate"`
 	MaxDiscount        decimal.NullDecimal `json:"maxDiscount"`
+	Unit            string                 `json:"unit"`
 	UsageLimit         int                 `json:"usageLimit"`
 	SpecificTime       string              `json:"specificTime"`
 	PaymentMethod      string              `json:"paymentMethod"`
@@ -724,6 +725,7 @@ type ProBody struct  {
 	Status             int                 `json:"status"`
 	Includegames       string              `json:"includegames"`
 	Excludegames       string              `json:"excludegames"`
+	Example            string              `json:"example"`
 }
 type promotiondata struct {
 	Prefix string `json:"prefix"`
@@ -779,6 +781,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		StartDate:          data.Body.StartDate,
 		EndDate:            data.Body.EndDate,
 		MaxDiscount:        data.Body.MaxDiscount.Decimal,
+		Unit:               data.Body.Unit,
 		UsageLimit:         data.Body.UsageLimit,
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
@@ -789,6 +792,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Status:             data.Body.Status,
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
+		Example:            data.Body.Example,
 	}
 
 	err = db.Create(&promotion).Error
@@ -921,6 +925,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		StartDate:          data.Body.StartDate,
 		EndDate:            data.Body.EndDate,
 		MaxDiscount:        data.Body.MaxDiscount.Decimal,
+		Unit:				data.Body.Unit,
 		UsageLimit:         data.Body.UsageLimit,
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
@@ -931,6 +936,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Status:             data.Body.Status,
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
+		Example:            data.Body.Example,
 	}
 
 	var prefixs = struct {
@@ -1432,6 +1438,7 @@ func GetGameStatus(c *fiber.Ctx) error {
 			Status:      status,
 		})
 	}
+	
 	response := fiber.Map{
 		"Message": "ดึงข้อมูลสำเร็จ",
 		"Status":  true,

@@ -270,15 +270,26 @@ func JwtMiddleware(c *fiber.Ctx) error {
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         
-		//fmt.Println("claims",claims.Walletid)
+		//fmt.Println("claims",claims.Prefix) 
 		//fmt.Printf("claims : %s",claims)
 		c.Locals("Walletid", claims.Walletid)
         c.Locals("ID", claims.ID)
         c.Locals("username", claims.Username)
-       // c.Locals("PartnersKey",claims.PartnersKey)
-        c.Locals("role", claims.Role)
+		c.Locals("role", claims.Role)
         c.Locals("prefix", claims.Prefix)
-	 	c.Locals("db", db)
+		c.Locals("db", db)
+		var users models.Users
+		if err_ := db.Debug().Select("id as ID,role,prefix").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
+			fmt.Println("ID:",users.ID)
+			c.Locals("ID",users.ID)
+			c.Locals("Walletid", users.ID)
+			c.Locals("role", users.Role)
+			c.Locals("prefix", users.Prefix)
+		}
+		 
+       // c.Locals("PartnersKey",claims.PartnersKey)
+   
+	 	
         return c.Next()
     } else {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "โทเคน ผิดผลาด!"})

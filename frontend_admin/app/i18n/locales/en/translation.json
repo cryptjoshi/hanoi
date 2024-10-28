@@ -151,7 +151,11 @@
         "selectWeek": "Select Week",
         "selectMonth": "Select Month",
         "selectYear": "Select Year",
-        "testing":"Test Promotion"
+        "testing":"Test Promotion",
+        "selectunit":"Select Unit",
+        "unit":"Unit",
+        "percent":"Percent",
+        "nonepercent":"Normal"
     },
     "games": {
         "title": "Game",
@@ -349,6 +353,7 @@
         "daily": "Daily",
         "monthly": "Monthly",
         "yearly": "Yearly",
+        "first": "First Time",
         "once": "Once",
         "selectHour": "Select Hour",
         "selectMinute": "Select Minute",

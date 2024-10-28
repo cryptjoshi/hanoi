@@ -48,6 +48,9 @@ interface SpecificTime {
   hour?: string;
   minute?: string;
 }
+interface Formular {
+  amount: number;
+}
 // Update the Promotion interface
 // interface Promotion {
 //   id: string;
@@ -75,6 +78,7 @@ const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string(),
   percentDiscount: z.coerce.number(),
+  unit: z.string(),
   startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
     message: "Invalid date format"
   }),
@@ -125,6 +129,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
     queryFn: async () => await GetGameStatus(prefix),
   });
   
+
   // Update the schema with translated messages
   const updatedFormSchema = formSchema.extend({
     startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
@@ -148,6 +153,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
           const formattedData = {
             ...data.Data,
             percentDiscount: Number(data.Data.percentDiscount),
+            unit: data.Data.unit,
             maxDiscount: Number(data.Data.maxDiscount),
             usageLimit: Number(data.Data.usageLimit),
             minDept: Number(data.Data.minDept),
@@ -211,6 +217,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       minDept: values.minDept.toString(),
       minSpend: values.minSpend.toString(),
       maxSpend: values.maxSpend.toString(),
+      example: values.example.toString(),
     };
 
     if (promotionId) {
@@ -310,12 +317,53 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             name="percentDiscount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('promotion.percentDiscount')} %</FormLabel>
+                <FormLabel>{t('promotion.percentDiscount')}</FormLabel>
                 <FormControl>
                   <Input {...field} type="number" onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.unit')}</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    <Select
+                      onValueChange={(value) => {
+                        // Get the current percentDiscount value
+                        const percentDiscountValue = form.getValues('percentDiscount');
+                       
+                        // Update the example field based on the selected value
+                        if (value !== 'percent') {
+                           form.setValue('example', `deposit+((${percentDiscountValue}/100)*100)`); // Update example in form
+                        } else {
+                          form.setValue('example', `(1+(${percentDiscountValue}/100))*deposit`); // Update example in form
+                        }
+                        field.onChange(value); // Update the field value with the selected value
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('promotion.selectunit')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="percent">{t('promotion.percent')}</SelectItem>
+                        <SelectItem value="nonepercent">{t('promotion.nonepercent')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+ 
+                  </div>
+          
+            </FormControl>
+            <FormMessage />
+          </FormItem>
             )}
           />
           <FormField
@@ -454,6 +502,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="first">{t('common.first')}</SelectItem>
                         <SelectItem value="once">{t('common.once')}</SelectItem>
                         <SelectItem value="weekly">{t('common.weekly')}</SelectItem>
                         <SelectItem value="monthly">{t('common.monthly')}</SelectItem>
@@ -596,15 +645,17 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
           onClick={() => {
             const allGameIds = gameTypes?.Data?.map((item: any) => {
               try {
-                return JSON.parse(item.status).id.toString();
+                return item.status.id.toString();
               } catch {
                 return null;
               }
             }).filter(Boolean) || [];
+           
             const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
             const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
             
-            if (currentIncludeGames.length === allGameIds.length) {
+            // Check if all games are currently included
+            if (currentIncludeGames.length === allGameIds.length && allGameIds.length > 0) {
               // If all games are currently included, exclude all
               form.setValue('includegames', '');
               form.setValue('excludegames', allGameIds.join(','));
@@ -630,8 +681,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             const isIncluded = form.watch('includegames')?.split(',').includes(status.id.toString());
 
             function handleGameTypeToggle(id: string): void {
-              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean);
-              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean);
+              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
+              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
 
               if (isIncluded) {
                 form.setValue('includegames', currentIncludeGames.filter(gameId => gameId !== id).join(','));
@@ -707,3 +758,4 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
 };
 
 export default EditPromotionPanel;
+

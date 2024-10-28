@@ -151,7 +151,11 @@
         "selectWeek": "เลือกสัปดาห์",
         "selectMonth": "เลือกเดือน",
         "selectYear": "เลือกปี",
-        "testing":"ทดสอบโปรโมชั่น"
+        "testing":"ทดสอบโปรโมชั่น",
+        "selectunit":"เลือกหน่วย",
+        "unit":"หน่วย",
+        "percent":"เปอร์เซ็นต์",
+        "nonepercent":"ปกติ"
     },
     "games": {
         "title": "เกม",
@@ -348,6 +352,7 @@
         "daily": "ทุกวัน",
         "monthly": "ทุกเดือน",
         "yearly": "ทุกปี",
+        "first": "ฝากครั้งแรก",
         "once": "ครั้งเดียว",
         "selectHour": "เลือกชม.",
         "selectMinute": "เลือกนาที",

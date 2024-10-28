@@ -19,7 +19,7 @@ RUN pnpm install
 
 COPY . .
 
-EXPOSE 4001
+EXPOSE 5001
 
 # Use yarn to run the development server
 CMD ["yarn", "run", "dev"]
@@ -64,6 +64,6 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 USER nextjs
 
-EXPOSE 4000
+EXPOSE 5001
 
 CMD ["yarn", "start"]

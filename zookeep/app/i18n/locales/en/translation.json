@@ -317,6 +317,16 @@
         "withdraw": "Withdraw",
         "history": "History"
     },
+    "bankstatement": {
+        "history": "History",
+        "historyDescription": "History description",
+        "transactionDate": "Transaction Date",
+        "bankName": "Bank Name",
+        "beforeBalance": "Before Balance",
+        "transactionAmount": "Transaction Amount",
+        "proAmount": "Pro Amount",
+        "balance": "Balance"
+    },
     "common": {
         "mon": "Mon",
         "tue": "Tue",

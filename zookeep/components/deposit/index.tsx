@@ -98,7 +98,7 @@ function TransactionForm({lng}:TransProps) {
              if(accessToken){
 
                 const response = await AddStatement(accessToken,formattedValues)
-             console.log(response)
+             //console.log(response)
                 if(response.Status){
 
                     toast({
@@ -115,6 +115,7 @@ function TransactionForm({lng}:TransProps) {
         
             }
             catch (error:any){
+               // console.log(error)
             toast({
                 title: t('form.error'),
                 description: error.Message,

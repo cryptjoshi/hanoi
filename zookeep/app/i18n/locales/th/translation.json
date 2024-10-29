@@ -314,6 +314,16 @@
         "withdraw": "ถอน",
         "history": "ประวัติ"
     },
+    "bankstatement": {
+        "history": "ประวัติ",
+        "historyDescription": "รายละเอียดประวัติ",
+        "transactionDate": "วันที่ทำรายการ",
+        "bankName": "ชื่อธนาคาร",
+        "beforeBalance": "ยอดเงินก่อนทำรายการ",
+        "transactionAmount": "จำนวนเงินทำรายการ",
+        "proAmount": "ยอดเงินสินเชื่อ",
+        "balance": "ยอดเงินสุทธิ"
+    },
     "common": {
         "mon": "จันทร์",
         "tue": "อังคาร",

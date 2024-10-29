@@ -124,6 +124,7 @@ func SetupRoutes(app fiber.Router) {
 	// wallet
 	// app.Post("/wallet/withdraw",wallet.WithDraw)
 	// app.Post("/wallet/deposit",wallet.AddStatement)
+	app.Post("/statement/all",jwt.JwtMiddleware,wallet.GetStatement)
 	app.Post("/statement/update", wallet.UpdateStatement)
 	app.Post("/statement/add",jwt.JwtMiddleware, wallet.AddStatement)
 	// app.Post("/transaction/add",handler.AddTransactions)

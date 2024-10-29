@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"hanoi/database"
 	"hanoi/repository"
+
 	"io/ioutil"
 	"log"
 	"net"
@@ -1607,7 +1608,46 @@ func GetMemberById(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+type Times struct {
+		
+	Type       string `json:"type"`
+	Hours      string `json:"hours"`
+	Minute     string `json:"minute"`
+	DaysOfWeek string `json:"daysofweek"`
+}
 
+var ProItem struct {
+	UsageLimit int `json:"usagelimit"`
+	ProType  Times `json:"protype"`
+	Example string `json:"example"`
+	Name string `json:"name"`
+}
+func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
+	var promotion models.Promotion
+	if err := db.Where("id = ?", procode).Find(&promotion).Error; err != nil {
+		return nil, err
+	}
+	if promotion.SpecificTime != "" {
+			if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
+			//log.Fatalf("Error unmarshalling JSON: %v", err)
+			return nil, err
+			}
+		} else {
+			return nil, nil
+		}
+		response := make(map[string]interface{}) 
+	 
+			response["Type"] = ProItem.ProType.Type
+			response["count"] = ProItem.UsageLimit
+			response["Formular"] = promotion.Example
+		response["Name"] = promotion.Name
+		if ProItem.ProType.Type == "week" {
+			response["Week"] = ProItem.ProType.DaysOfWeek
+		}
+	 
+		return response, nil
+	
+}
 func UpdateMember(c *fiber.Ctx) error {
 
 	body := new(MemberBody)
@@ -1644,7 +1684,35 @@ func UpdateMember(c *fiber.Ctx) error {
 	member.Status = body.Body.Status
 	member.Bankname = body.Body.Bankname
 	member.Banknumber = body.Body.Banknumber
-	member.ProStatus = body.Body.ProStatus
+
+	pro_setting, err := GetProdetail(db, body.Body.ProStatus)
+ 
+	if pro_setting != nil {
+		if pro_setting["Type"] == "first" {
+			if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+				member.ProStatus = body.Body.ProStatus
+			} else {
+				member.ProStatus = ""
+				response := fiber.Map{
+					"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+					"Status":  false,
+					"Data":    "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+				}
+				return c.JSON(response)
+			}
+		} else {
+			if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
+				member.ProStatus = body.Body.ProStatus
+			} else if member.ProStatus != "" {
+				response := fiber.Map{
+					"Message": "คุณใช้งานโปรโมชั่นอยู่",
+					"Status":  false,
+					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+				}
+				return c.JSON(response)
+			}
+		}
+	}
 
 	err = db.Debug().Model(&member).Where("id = ?", body.ID).Updates(body.Body).Error
 	if err != nil {

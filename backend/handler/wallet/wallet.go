@@ -27,7 +27,7 @@ import (
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"hanoi/repository"
 	"encoding/json"
-    "log"
+    //"log"
 	// "net"
 	// "net/http"
 	// "os"
@@ -68,11 +68,27 @@ func evaluateExpression(expression string) (decimal.Decimal, error) {
 }
  
 
-// func GetStatement(c *fiber.Ctx) error {
-// 	var statement []models.BankStatement
-// 	db.Find(&statement)
-// 	return c.Status(200).JSON(statement)
-// }
+func GetStatement(c *fiber.Ctx) error {
+	BankStatement := new(models.BankStatement)
+
+	if err := c.BodyParser(BankStatement); err != nil {
+		fmt.Println(err)
+		return c.Status(200).SendString(err.Error())
+	}
+
+	 
+	db,_ := handler.GetDBFromContext(c)
+
+	var bankstatement []models.BankStatement
+    if err_ := db.Debug().Where("userid = ? ",c.Locals("ID")).Find(&bankstatement).Error; err_ != nil {
+		return c.Status(200).SendString(err_.Error())
+    }
+
+	return c.Status(200).JSON(fiber.Map{
+		"Status": true,
+		"Data": bankstatement,
+	})
+}
 
 func UpdateStatement(c *fiber.Ctx) error {
 
@@ -152,38 +168,69 @@ func UpdateStatement(c *fiber.Ctx) error {
  
 
 }
-
-func checkPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) {
-	type Times struct {
+type Times struct {
 		
-		Type       string `json:"type"`
-		Hours      string `json:"hours"`
-		Minute     string `json:"minute"`
-		DaysOfWeek string `json:"daysofweek"`
-	}
+	Type       string `json:"type"`
+	Hours      string `json:"hours"`
+	Minute     string `json:"minute"`
+	DaysOfWeek string `json:"daysofweek"`
+}
 
-	var ProItem struct {
-		UsageLimit int `json:"usagelimit"`
-		ProType  Times `json:"protype"`
-		Example string `json:"example"`
-		Name string `json:"name"`
+var ProItem struct {
+	UsageLimit int `json:"usagelimit"`
+	ProType  Times `json:"protype"`
+	Example string `json:"example"`
+	Name string `json:"name"`
+}
+func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
+	var promotion models.Promotion
+	if err := db.Where("id = ?", procode).Find(&promotion).Error; err != nil {
+		return nil, err
 	}
+	if promotion.SpecificTime != "" {
+			if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
+			//log.Fatalf("Error unmarshalling JSON: %v", err)
+			return nil, err
+			}
+		} else {
+			return nil, nil
+		}
+		response := make(map[string]interface{}) 
+	 
+			response["Type"] = ProItem.ProType.Type
+			response["count"] = ProItem.UsageLimit
+			response["Formular"] = promotion.Example
+		response["Name"] = promotion.Name
+		if ProItem.ProType.Type == "week" {
+			response["Week"] = ProItem.ProType.DaysOfWeek
+		}
+	 
+		return response, nil
+	
+}
+
+func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) {
+	
 
 	var promotion models.Promotion
 	if err := db.Where("id = ?", users.ProStatus).Find(&promotion).Error; err != nil {
 		return nil, err
 	}
 	
-//	fmt.Printf("checkpro: %s ",promotion)
-
+ 
+	if promotion.SpecificTime != "" {
 	if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
 		//log.Fatalf("Error unmarshalling JSON: %v", err)
 		return nil, err
 	}
-
+	} else {
+		return nil, nil
+	}
 	// if err_ := json.Unmarshal([]byte(promotion.Example),&ProItem.Example); err_ != nil {
 	// 	log.Fatal("Error_ unmarshalling JSON: %v",err_)
 	// }
+
+
 
 	response := make(map[string]interface{}) // Changed to use make for clarity
 
@@ -290,9 +337,15 @@ func AddStatement(c *fiber.Ctx) error {
 			}})
     }
 
-	pro_setting, err := checkPro(db, &users) 
+	pro_setting, err := CheckPro(db, &users) 
 	if err != nil {
-		fmt.Printf(" %s ", err)
+		
+		return c.JSON(fiber.Map{
+			"status": false,
+			"message":  err.Error(),
+			"data": fiber.Map{
+				"id": -1,
+			}})
 	}
 
 	BankStatement.Userid = id
@@ -310,7 +363,7 @@ func AddStatement(c *fiber.Ctx) error {
 		Formular, ok := pro_setting["Formular"].(string)
 		
 		if !ok {
-			return c.JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"status": false,
 				"message": "Promotion example is not a valid string",
 				"data": fiber.Map{
@@ -330,7 +383,7 @@ func AddStatement(c *fiber.Ctx) error {
 		balanceIncrease, err := evaluateExpression(Formular) // Implement this function to evaluate the expression
 		if err != nil {
 			fmt.Println(err)
-			return c.JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"Status": false,
 				"Message": "Error evaluating expression",
 				"Data": fiber.Map{
@@ -357,7 +410,7 @@ func AddStatement(c *fiber.Ctx) error {
 			// Add other necessary fields for the promotion log
 		}
 		if err := db.Create(&promotionLog).Error; err != nil {
-			return c.JSON(fiber.Map{
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"Status": false,
 				"Message": "Failed to log promotion",
 				"Data": fiber.Map{
@@ -373,7 +426,7 @@ func AddStatement(c *fiber.Ctx) error {
 	result := db.Create(&BankStatement); 
 	
 	if result.Error != nil {
-		return c.JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"Status": false,
 			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 			"Data": fiber.Map{ 
@@ -389,7 +442,12 @@ func AddStatement(c *fiber.Ctx) error {
 		_err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 	 
 		if _err != nil {
-			fmt.Println("Error:", _err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Status": false,
+				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
 		} else {
 			//fmt.Println("User fields updated successfully")
 		}

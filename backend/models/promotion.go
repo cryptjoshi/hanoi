@@ -26,6 +26,7 @@ type Promotion struct {
 	Name string `gorm:"size:255;not null;" json:"name"`
 	PercentDiscount decimal.Decimal `gorm:"type:numeric" json:"percentDiscount"`
 	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"maxDiscount"`
+	Unit string  `gorm:"size:50;not null;" json:"unit"`
 	UsageLimit int `json:"usageLimit"`
 	SpecificTime string `gorm:"size:255;not null;" json:"specificTime"`
 	PaymentMethod string `gorm:"size:255;not null;" json:"paymentMethod"`
@@ -40,3 +41,6 @@ type Promotion struct {
 	Example string `gorm:"size:255;not null;" json:"example"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
+
+
+ 

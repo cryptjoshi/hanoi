@@ -8,12 +8,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	// "strconv"
 	"github.com/shopspring/decimal"
+	"github.com/Knetic/govaluate"
 	// "github.com/streadway/amqp"
 	// "github.com/tdewolff/minify/v2"
 	// "github.com/tdewolff/minify/v2/js"
 	// "github.com/valyala/fasthttp"
 	// _ "github.com/go-sql-driver/mysql"
 	"hanoi/models"
+	"gorm.io/gorm"
 	//"hanoi/database"
 	//"hanoi/handler/jwtn"
 	"hanoi/handler"
@@ -24,13 +26,14 @@ import (
 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"hanoi/repository"
-    //"log"
+	"encoding/json"
+    "log"
 	// "net"
 	// "net/http"
 	// "os"
 	// "strconv"
 	//"time"
-	//"strings"
+	"strings"
 	"fmt"
 	//"errors"
 )
@@ -42,12 +45,27 @@ type BankBody struct {
     Status           string             `json:"status"`
 	Startdate        string 			`json:"startdate"`
 	Stopdate        string 		  	`json:"stopdate"`
-	Prefix           string           	`json:"prefix`
+	Prefix           string           	`json:"prefix"`
 	Channel        string 		  	`json:"channel"`
 
 }
 
+func evaluateExpression(expression string) (decimal.Decimal, error) {
+    // Create a new evaluator
+    expr, err := govaluate.NewEvaluableExpression(expression)
+    if err != nil {
+        return decimal.Zero, err
+    }
 
+    // Evaluate the expression
+    result, err := expr.Evaluate(nil) // Pass any necessary parameters
+    if err != nil {
+        return decimal.Zero, err
+    }
+
+    // Convert the result to decimal.Decimal
+    return decimal.NewFromFloat(result.(float64)), nil
+}
  
 
 // func GetStatement(c *fiber.Ctx) error {
@@ -135,11 +153,95 @@ func UpdateStatement(c *fiber.Ctx) error {
 
 }
 
+func checkPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) {
+	type Times struct {
+		
+		Type       string `json:"type"`
+		Hours      string `json:"hours"`
+		Minute     string `json:"minute"`
+		DaysOfWeek string `json:"daysofweek"`
+	}
+
+	var ProItem struct {
+		UsageLimit int `json:"usagelimit"`
+		ProType  Times `json:"protype"`
+		Example string `json:"example"`
+		Name string `json:"name"`
+	}
+
+	var promotion models.Promotion
+	if err := db.Where("id = ?", users.ProStatus).Find(&promotion).Error; err != nil {
+		return nil, err
+	}
+	
+//	fmt.Printf("checkpro: %s ",promotion)
+
+	if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
+		//log.Fatalf("Error unmarshalling JSON: %v", err)
+		return nil, err
+	}
+
+	// if err_ := json.Unmarshal([]byte(promotion.Example),&ProItem.Example); err_ != nil {
+	// 	log.Fatal("Error_ unmarshalling JSON: %v",err_)
+	// }
+
+	response := make(map[string]interface{}) // Changed to use make for clarity
+
+	//fmt.Println(ProItem.ProType)
+	var promotionlog models.PromotionLog
+	// Use a single case statement to handle the different types
+	
+	var RowsAffected int64
+	//db.Debug().Model(&settings).Select("id").Scan(&settings).Count(&RowsAffected)
+    db.Debug().Model(&promotionlog).Where("promotioncode = ?", users.ProStatus).Scan(&promotionlog).Count(&RowsAffected)
+
+	// Check if promotionlog is not empty or has row affected = 1
+	if RowsAffected == int64(ProItem.UsageLimit) { // Assuming ID is the primary key
+		return nil, nil
+	}  
+		
+	
+
+	
+
+	switch ProItem.ProType.Type {
+	case "first", "once","week":
+		response["count"] = ProItem.UsageLimit
+		response["Formular"] = promotion.Example
+		response["Name"] = promotion.Name
+		if ProItem.ProType.Type == "week" {
+			response["Week"] = ProItem.ProType.DaysOfWeek
+		}
+	}
+
+	//fmt.Printf(" %s ",response)
+
+	return response, nil
+}
+
+	
+
+	// fmt.Println(promotion)
+	// fmt.Println(&users)
+
+	// response := []interface{
+	// 	MaxDiscount: promotion.MaxDiscount,
+	// 	Unit: promotion.Unit,
+	// 	Turnamount: promotion.Turnamount,
+	// 	Widthdrawmax: promotion.Widthdrawmax
+	// 	Includegames: promotion.Includegames,
+	// 	Excludegames: promotino.Excludegames
+	// }
+
+	// return response
+
+
 func AddStatement(c *fiber.Ctx) error {
 
 	// user := c.Locals("user").(*jtoken.Token)
 	// 	claims := user.Claims.(jtoken.MapClaims)
 	var users models.Users
+	//var promotion *models.Promotion // Change to pointer type
 	// 	prefix := claims["Prefix"].(string)
 	// 	if prefix == "" {
 	// 		prefix,_ = jwt.GetPrefix(claims["Username"].(string))
@@ -152,6 +254,21 @@ func AddStatement(c *fiber.Ctx) error {
 	// }
 
 	db,_ := handler.GetDBFromContext(c)
+	
+	id := c.Locals("ID").(int)
+	// if id == nil {
+	// 	return c.Status(400).JSON(fiber.Map{
+	// 		"status": false,
+	// 		"message": "WalletID is missing",
+	// 	})
+	// }
+	//fmt.Printf("WalletID: %v ", id)
+
+	// promotion, err := checkPro(db, &users) // Pass db directly
+	// if err != nil {
+	// 	fmt.Printf(" %s ",err)
+	// }
+	// fmt.Println(promotion)
 
 	BankStatement := new(models.BankStatement)
 
@@ -164,7 +281,7 @@ func AddStatement(c *fiber.Ctx) error {
 	//db, _ := database.ConnectToDB(BankStatement.Prefix)
 	 
 	 
-    if err_ := db.Where("walletid = ? ", BankStatement.Userid).First(&users).Error; err_ != nil {
+    if err_ := db.Where("walletid = ? ", id).First(&users).Error; err_ != nil {
 		return c.JSON(fiber.Map{
 			"status": false,
 			"message": err_,
@@ -172,11 +289,84 @@ func AddStatement(c *fiber.Ctx) error {
 				"id": -1,
 			}})
     }
-	// fmt.Println(BankStatement.Walletid)
-	//BankStatement.Userid = users.Walletid
+
+	pro_setting, err := checkPro(db, &users) 
+	if err != nil {
+		fmt.Printf(" %s ", err)
+	}
+
+	BankStatement.Userid = id
+	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
-	BankStatement.Balance = users.Balance.Add(BankStatement.Transactionamount)
+
+	if pro_setting != nil {
+		fmt.Printf(" Promotion used: %v", pro_setting)
+
+		// New code to log to promotionlog
+		fmt.Printf("Prosetting: %v ",pro_setting)
+
+		// Ensure pro_setting["Example"] is not nil before type assertion
+		Formular, ok := pro_setting["Formular"].(string)
+		
+		if !ok {
+			return c.JSON(fiber.Map{
+				"status": false,
+				"message": "Promotion example is not a valid string",
+				"data": fiber.Map{
+					"id": -1,
+				}})
+		}
+		//BankStatement.Proamount = BankStatement.Transactionamount
+		// Calculate the new balance using the example from pro_setting
+		deposit := BankStatement.Transactionamount
+		fmt.Printf(" %v ", deposit)
+		fmt.Printf(" %v ", Formular)
+
+		// Replace 'deposit' in the example with the actual value
+		Formular = strings.Replace(Formular, "deposit", deposit.String(), 1) // Convert deposit to string if necessary
+		fmt.Printf(" %v ",Formular)
+		// Evaluate the expression (you may need to implement a function to evaluate the string expression)
+		balanceIncrease, err := evaluateExpression(Formular) // Implement this function to evaluate the expression
+		if err != nil {
+			fmt.Println(err)
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message": "Error evaluating expression",
+				"Data": fiber.Map{
+					"id": -1,
+				}})
+		}
+		fmt.Printf("balanceIncrease: %v ",balanceIncrease)
+		BankStatement.Proamount = balanceIncrease.Sub(deposit)
+		// Update BankStatement.Balance
+		BankStatement.Balance = users.Balance.Add(balanceIncrease)
+		promotionLog := models.PromotionLog{
+
+			UserID: BankStatement.Userid,
+			WalletID: BankStatement.Userid,
+			Promotionname: pro_setting["Name"].(string),
+			Beforebalance: BankStatement.Beforebalance,
+			//BetAmount: BankStatement.BetAmount,
+			Promotioncode: users.ProStatus,
+			Transactionamount: deposit,
+			Promoamount: balanceIncrease,
+			Proamount: balanceIncrease.Sub(deposit),
+			Balance: BankStatement.Balance,
+			Example: Formular,
+			// Add other necessary fields for the promotion log
+		}
+		if err := db.Create(&promotionLog).Error; err != nil {
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message": "Failed to log promotion",
+				"Data": fiber.Map{
+					"id": -1,
+				}})
+		}
+	} else {
+		BankStatement.Balance = users.Balance.Add(BankStatement.Transactionamount)
+	}
 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
 	//user.Username = user.Prefix + user.Username
@@ -184,9 +374,9 @@ func AddStatement(c *fiber.Ctx) error {
 	
 	if result.Error != nil {
 		return c.JSON(fiber.Map{
-			"status": false,
-			"message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-			"data": fiber.Map{ 
+			"Status": false,
+			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			"Data": fiber.Map{ 
 				"id": -1,
 			}})
 	} else {
@@ -197,7 +387,7 @@ func AddStatement(c *fiber.Ctx) error {
 	
 		//db, _ = database.ConnectToDB(BankStatement.Prefix)
 		_err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-		fmt.Println(_err)
+	 
 		if _err != nil {
 			fmt.Println("Error:", _err)
 		} else {
@@ -208,8 +398,8 @@ func AddStatement(c *fiber.Ctx) error {
  
 	 
 	 return c.Status(200).JSON(fiber.Map{
-		"status": true,
-		"data": fiber.Map{ 
+		"Status": true,
+		"Data": fiber.Map{ 
 			"id": BankStatement.ID,
 			"beforebalance":BankStatement.Beforebalance,
 			"balance": BankStatement.Balance,
@@ -299,16 +489,13 @@ func GetBankStatement(c *fiber.Ctx) error {
 	   }
 	
 	   return c.Status(200).JSON(fiber.Map{
-		"status": true,
-		"data": result,
+		"Status": true,
+		"Data": result,
 	})
 	 
 }
 
 
-func StartWallet(){
 
-	
-
-}
  
+

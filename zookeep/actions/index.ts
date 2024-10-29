@@ -308,3 +308,15 @@ export const UpdateUser = async (token:string,body:any) =>{
     })
     return response.json()
 }
+
+export const AddStatement = async (token:string,body:any)=>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/statement/add", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify(body)
+    })
+    return response.json()
+}

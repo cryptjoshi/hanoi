@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import  type { JSX } from 'react';
 import { useTranslation } from '@/app/i18n/client';
-import { GetUserInfo,GetPromotion } from '@/actions';
+import { GetUserInfo,GetPromotion, UpdateUser } from '@/actions';
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
 import GameList from './gamelist';
-import PromotionList from './promotionlist';
+import {Promotion,PromotionList} from './promotionlist';
+import { useToast } from '@/hooks/use-toast';
 
 
 
@@ -30,11 +31,49 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   //   Logout();
   //   router.push(`/${lng}/login`);
   // };
-  const [selectedPromotion, setSelectedPromotion] = React.useState(null);
+  const [selectedPromotion, setSelectedPromotion] = React.useState<Promotion | null>(null);
 
   // เพิ่ม state สำหรับ filteredPromotions
   const [filteredPromotions, setFilteredPromotions] = React.useState([]);
   const { t } = useTranslation(lng,'home',undefined);
+
+  const { toast } = useToast();
+  const { accessToken } = useAuthStore()
+  const accpetedPromotion = (promotion:Promotion) =>{
+
+    const accepted = async (promotion:Promotion) => {
+ 
+      if(accessToken && prefix!=""){
+      const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":promotion.ID})
+      if(res.Status){
+      toast({
+        title: t('common.success'),
+        description: t('common.promotionAccept'),
+        variant: "default",
+      })
+      //onSelectPromotion(item);
+      setSelectedPromotion(promotion)
+    } else {
+      toast({
+        title: t('common.unsuccess'),
+        description: res.Message,
+        variant: "destructive",
+      })
+     // router.push(`/${lng}/login`);
+    }
+  } else {
+    toast({
+      title: t('common.unsuccess'),
+      description: t('common.loginFirst'),
+      variant: "destructive",
+    })
+    router.push(`/${lng}/login`);
+  }
+  }
+  accepted(promotion)
+ // acceptPromotion()
+  }
+
   React.useEffect(() => {
     const fetchBalance = async () => {
       setLoading(true);
@@ -131,7 +170,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline" onClick={() => router.push(`/${lng}/transaction`)}>{t('withdraw')}</Button>         </div>
      </div>
     
-            { `lang:${lng}` }
+ 
  
       <GameList prefix={prefix} lng={lng} />
  
@@ -139,7 +178,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         prefix={prefix} 
         lng={lng} 
         promotions={filteredPromotions} 
-        onSelectPromotion={setSelectedPromotion} 
+        onSelectPromotion={accpetedPromotion} 
       />
 
     

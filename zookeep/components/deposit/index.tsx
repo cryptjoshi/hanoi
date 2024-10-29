@@ -83,7 +83,7 @@ function TransactionForm({lng}:TransProps) {
         //       })
         //       return; // Stop the submission
         //     }
-       
+       try {
        
             const formattedValues = {
             ...values,
@@ -93,11 +93,12 @@ function TransactionForm({lng}:TransProps) {
             status: "101"
              };
     
-             console.log(formattedValues)
+            
+
              if(accessToken){
 
                 const response = await AddStatement(accessToken,formattedValues)
- 
+             console.log(response)
                 if(response.Status){
 
                     toast({
@@ -106,13 +107,20 @@ function TransactionForm({lng}:TransProps) {
                         variant: "default",
                       })
         
-            
+                      router.push(`/${lng}/home`)
                 }     
             } else {
                 router.push(`/${lng}/login`)
              }
         
-        
+            }
+            catch (error:any){
+            toast({
+                title: t('form.error'),
+                description: error.Message,
+                variant: "destructive",
+              })
+            }
     };
     
     return (

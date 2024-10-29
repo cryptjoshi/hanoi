@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { useTranslation } from '@/app/i18n'
 
-export default async function Home({ params: { lng } }) {
-    const { t } = await useTranslation(lng)
+export default async function Home({ params: { lng } }: { params: { lng: string } }) {
+   // const { t } = await useTranslation(lng,'translation',{keyPrefix:'common'})
     return (
         <></>
             );

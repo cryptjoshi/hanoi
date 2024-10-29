@@ -41,10 +41,9 @@ export default function TestPromotion({lng,promotion}:TransProps) {
 
     const {t} =   useTranslation(lng, 'translation', undefined)
     const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-     //   e.preventDefault();
-        values.balance = values.amount
         console.log(`Transaction Type: ${transactionType}, Amount: ${values.amount}`);
-       // setAmount('');
+        // Set the balance value
+        //form.setValue('balance', values.amount);
     };
  //   console.log(promotion.getValues("minDept"))
     const mindeposit = parseInt(promotion.getValues("minDept"))
@@ -55,9 +54,18 @@ export default function TestPromotion({lng,promotion}:TransProps) {
     })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {} as z.infer<typeof formSchema>
+        defaultValues: {
+            amount: 0,
+            balance: 0
+        }as z.infer<typeof formSchema>
       })
+      const amount = form.watch("amount");
 
+      React.useEffect(() => {
+          const percentDiscount = promotion.getValues("percentDiscount");
+          const calculatedBalance = (amount * percentDiscount / 100) + amount;
+          form.setValue("balance", calculatedBalance);
+      }, [amount, promotion, form]);
      // console.log(promotion)
     return (
       
@@ -101,9 +109,9 @@ export default function TestPromotion({lng,promotion}:TransProps) {
                  
                 </div>
                 
-                <Button type="button" className="w-full" onClick={form.handleSubmit(handleSubmit)} >
+                {/* <Button type="button" className="w-full" onClick={form.handleSubmit(handleSubmit)} >
                     {transactionType === 'deposit' ? t('promotion.deposit') : t('promotion.withdrawal')}
-                </Button>
+                </Button> */}
             </form>
             </Form>
         </div>

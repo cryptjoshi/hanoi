@@ -41,3 +41,6 @@ type Promotion struct {
 	Example string `gorm:"size:255;not null;" json:"example"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
+
+
+ 

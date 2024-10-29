@@ -79,7 +79,9 @@ func Login(c *fiber.Ctx) error {
 	// fmt.Printf("%s",loginRequest)
 
 	db, err := database.ConnectToDB(loginRequest.Prefix)
-
+	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
+	db.Migrator().CreateTable(&models.PromotionLog{})
+	
 	if err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error; err != nil {
 		response := fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",

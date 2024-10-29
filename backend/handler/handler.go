@@ -701,7 +701,7 @@ func CreateDB(db *gorm.DB, dbName string) error {
 	if err := db.Exec(createDBQuery).Error; err != nil {
 		return fmt.Errorf("Failed to create database: %v", err)
 	}
-
+	
 	fmt.Printf("Database %s created successfully\n", dbName)
 	return nil
 }

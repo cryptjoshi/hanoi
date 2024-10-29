@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Makinde1034/Golang-seed-phrase v0.0.0-20240209083315-adf3aa5b09fc // indirect
 	github.com/PuerkitoBio/purell v1.2.1 // indirect

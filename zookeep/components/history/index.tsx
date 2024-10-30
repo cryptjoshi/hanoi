@@ -50,7 +50,7 @@ export function History({lng}:{lng:string}) {
       </CardHeader>
       <CardContent className="grid gap-1">
         {history.map((item:any) => (
-        <div className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
+        <div key={item.ID} className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
           <BellIcon className="mt-px h-5 w-5" />
           <div className="space-y-1">
             <p className="text-sm font-medium leading-none">{t('bankstatement.transactionDate')}: {item.CreatedAt}</p>

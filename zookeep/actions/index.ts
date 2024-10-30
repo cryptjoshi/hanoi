@@ -105,6 +105,7 @@ return response.json()
 }
 
 export const GetUserInfo = async (token:string) =>{
+  try {
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/info", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -113,6 +114,10 @@ export const GetUserInfo = async (token:string) =>{
       },
   })
   return response.json()
+}catch(error){
+  console.log(error)
+  return error
+}
 }
 
 export const AddMember = async (prefix:string,body:any) =>{
@@ -238,6 +243,23 @@ export const GetPromotionById = async (dbname:string,id:any) =>{
 })
 return response.json()
 }
+export const GetPromotionByUser = async (dbname:string,token:string) =>{
+  try{
+   const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/all", { method: 'POST',
+     headers: {   
+       'Accept': 'application/json',
+       'Content-Type': 'application/json',
+       'Authorization': 'Bearer ' +  token
+       },
+       body: JSON.stringify({"prefix":dbname.toLowerCase()})
+ })
+ return response.json()
+ }catch(error){
+ 
+   console.log(error)
+   return error
+ }
+ } 
 export const GetPromotion = async (dbname:string) =>{
  try{
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/all", { method: 'POST',
@@ -296,7 +318,18 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
 export async function navigate(path:string) {
   redirect(path)
 }
-
+export const UpdateUserPromotion = async (token:string,body:any) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/users/update/pro", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify(body)
+    })
+    return response.json()
+}
 export const UpdateUser = async (token:string,body:any) =>{
  
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/update", { method: 'POST',

@@ -110,6 +110,7 @@ function TransactionForm({lng,slug}:TransProps) {
         
                       router.push(`/${lng}/home`)
                 }  else {
+                    
                     toast({
                         title: t("promotion.edit.error"),
                         description: response.Message,
@@ -123,7 +124,7 @@ function TransactionForm({lng,slug}:TransProps) {
         
             }
             catch (error:any){
-               // console.log(error)
+               console.log(error)
             toast({
                 title: t('form.error'),
                 description: error.Message,

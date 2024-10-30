@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 
 type User = {
     username: string;
+    fullname:string;
     password: string;
     prefix:string;
 }
@@ -331,4 +332,18 @@ export const GetHistory = async (token:string,prefix:string) =>{
       body: JSON.stringify({"prefix":prefix})
 })
 return response.json()
+}
+ 
+
+export const RegisterUser = async (prefix:string,body:User)=>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/users/register", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body:JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"role":"user","prefix":prefix})
+ 
+    })
+    return response.json()
 }

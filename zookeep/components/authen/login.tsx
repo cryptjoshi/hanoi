@@ -8,12 +8,13 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { Separator } from "@/components/ui/separator"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
-import { Button } from "react-day-picker";
+//import { Button } from "react-day-picker";
 import { LucideEyeOff,LucideEye, EyeOffIcon, EyeIcon } from "lucide-react";
 import { useState } from "react"
 import { useTranslation } from '@/app/i18n/client'
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {Button} from "@/components/ui/button"
 
 // Define the schema
 const loginSchema = z.object({
@@ -127,15 +128,15 @@ export default function Login({lng}:{lng:string}) {
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
             <div className="mt-6">
-              <button type="submit" className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
+              <Button type="submit" className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 {t('login.login')}
-              </button>
+              </Button>
             </div>
             <Separator className="my-4" />
             <div className="mt-3">
-            <button onClick={redirect} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
+            <Button type="button" onClick={redirect} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 {t('login.register')}
-              </button>
+              </Button>
             </div>
         </div>
       </div>

@@ -722,14 +722,65 @@ func UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
+ 
+
+	// Update the user with the provided fields
+	fmt.Printf("Body: %s",body)
+	if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	response := fiber.Map{
+		"Status":  true,
+		"Message": "อัปเดตข้อมูลสำเร็จ!",
+	}
+	return c.JSON(response)
+}
+
+func UpdateUserPro(c *fiber.Ctx) error {
+	// Parse the request body into a map
+	body := make(map[string]interface{})
+	if err := c.BodyParser(&body); err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	// Get the username from the context
+	username := c.Locals("username").(string)
+	
+	db, _err := handler.GetDBFromContext(c)
+	if _err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+
+	var user models.Users
+	err := db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+		}
+		return c.JSON(response)
+	}
 
 
-	pro_setting, err := handler.GetProdetail(db, body.Body.ProStatus)
+	pro_setting, err := handler.GetProdetail(db, user.ProStatus)
  
 	if pro_setting != nil {
 		 
 		if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
-			member.MaxTurnover = minTurnover
+			user.MaxTurnover = minTurnover
 		} else {
 			// Handle the case where the assertion fails
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -738,10 +789,10 @@ func UpdateUser(c *fiber.Ctx) error {
 			})
 		}
 		if pro_setting["Type"] == "first" {
-			if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
-				member.ProStatus = body.Body.ProStatus
+			if user.Deposit.IsZero() && user.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+				user.ProStatus = "2"
 			} else {
-				member.ProStatus = ""
+				user.ProStatus = ""
 				response := fiber.Map{
 					"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
 					"Status":  false,
@@ -750,9 +801,9 @@ func UpdateUser(c *fiber.Ctx) error {
 				return c.JSON(response)
 			}
 		} else {
-			if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
-				member.ProStatus = body.Body.ProStatus
-			} else if member.ProStatus != "" {
+			if user.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
+				user.ProStatus = "2"
+			} else if user.ProStatus != "" {
 				response := fiber.Map{
 					"Message": "คุณใช้งานโปรโมชั่นอยู่",
 					"Status":  false,
@@ -781,7 +832,6 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 // ... rest of the code ...
 
 // type Body struct {

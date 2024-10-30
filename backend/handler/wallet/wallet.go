@@ -381,9 +381,9 @@ func AddStatement(c *fiber.Ctx) error {
 		minDept := pro_setting["minDept"].(decimal.Decimal)
 		if deposit.LessThan(minDept) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"status": false,
-				"message": "ยอดเงินฝากน้อยกว่ายอดฝากขั้นต่ำของโปรโมชั่น",
-				"data": fiber.Map{
+				"Status": false,
+				"Message": "ยอดเงินฝากน้อยกว่ายอดฝากขั้นต่ำของโปรโมชั่น",
+				"Data": fiber.Map{
 					"id": -1,
 				}})
 		}

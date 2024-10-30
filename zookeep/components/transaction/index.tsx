@@ -16,6 +16,7 @@ import useAuthStore from '@/store/auth';
 
 interface TransProps {
     lng:string
+    slug:string
 }
 
 // interface Statement {
@@ -44,7 +45,7 @@ const formSchema = z.object({
 
  
 
-function TransactionForm({lng}:TransProps) {
+function TransactionForm({lng,slug}:TransProps) {
     //const [amount, setAmount] = useState('');
     const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
 
@@ -103,12 +104,19 @@ function TransactionForm({lng}:TransProps) {
 
                     toast({
                         title: t("promotion.edit.success"),
-                        description: t("promotion.edit.success_description"),
+                        description: response.Message,
                         variant: "default",
                       })
         
                       router.push(`/${lng}/home`)
-                }     
+                }  else {
+                    toast({
+                        title: t("promotion.edit.error"),
+                        description: response.Message,
+                        variant: "destructive",
+                      })
+        
+                }   
             } else {
                 router.push(`/${lng}/login`)
              }
@@ -128,13 +136,13 @@ function TransactionForm({lng}:TransProps) {
         <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4 max-w-md mx-auto">
       
-            <h2 className="text-xl font-bold mb-4">{transactionType === 'deposit' ? t('deposit') : t('withdraw')}</h2>
+            <h2 className="text-xl font-bold mb-4">{t(`${slug}`)}</h2>
             <FormField
                     control={form.control}
                     name="transactionamount"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>{transactionType === 'deposit'?t('deposit'):t('withdraw')}</FormLabel>
+                        <FormLabel>{t(`${slug}`)}</FormLabel>
                         <FormControl>
                         <Input {...field} />
                         </FormControl>
@@ -185,7 +193,7 @@ function TransactionForm({lng}:TransProps) {
                   variant: "destructive",
                 })
               }
-            }}> {transactionType === 'deposit' ? 'ฝากเงิน' : 'ถอนเงิน'}</Button>
+            }}>{t(`${slug}`)}</Button>
              
             </form>
             </Form>

@@ -166,8 +166,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         </div>
       </div>
       <div className="flex space-x-2 sm:space-x-4 mt-4">
-      <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3" onClick={() => router.push(`/${lng}/transaction`)}>{t('deposit')}</Button>
-      <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline" onClick={() => router.push(`/${lng}/transaction`)}>{t('withdraw')}</Button>         </div>
+      <Button className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 text-sm sm:text-base py-2 sm:py-3" onClick={() => router.push(`/${lng}/transaction/deposit`)}>{t('deposit')}</Button>
+      <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline" onClick={() => router.push(`/${lng}/transaction/withdraw`)}>{t('withdraw')}</Button>         </div>
      </div>
     
  

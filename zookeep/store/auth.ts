@@ -75,12 +75,12 @@ const useAuthStore = create<AuthStore>()(
             document.cookie = "isLoggedIn=true; path=/";
             //router.redirect("/");
             //location.replace("/dashboard"); // หากต้องการ redirect ควรพิจารณาให้แน่ใจว่าใช้งานใน context ที่ถูกต้อง
-            return true
+            return data
           } else {
             set({ isLoggedIn: false, accessToken: null });
             localStorage.setItem('isLoggedIn', JSON.stringify(false));
             document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-            return false
+            return data
           }
         // return false
         } catch (error) {

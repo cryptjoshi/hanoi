@@ -15,6 +15,7 @@ import { useTranslation } from '@/app/i18n/client'
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {Button} from "@/components/ui/button"
+import ResponseCache from "next/dist/server/response-cache";
 
 // Define the schema
 const loginSchema = z.object({
@@ -48,23 +49,23 @@ export default function Login({lng}:{lng:string}) {
     setIsSubmitting(true);
     try {
       data.prefix = data.prefix || "ckd"
-      const response = await Signin(data);  
+      const response:any = await Signin(data);  
     
      
-     if (response) {
+     if (response.Status) {
   
       router.push(`/${lng}/home`);
     } else {
   
       toast({
         variant: "destructive",
-        title: t('login.error'),
-        description: t('login.error_message'),
-        action: <ToastAction altText={t('login.error')}>{t('login.error')}</ToastAction>,
+        title: t('error'),
+        description: response.Message || t('login.error_message'),
+        // action: <ToastAction altText={t('login.error')}>{t('login.error')}</ToastAction>,
       })
     }
     } catch (error) {
-      console.error("Login error:", error);
+     // console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: t('login.error'),

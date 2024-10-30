@@ -81,8 +81,10 @@ func Login(c *fiber.Ctx) error {
 	db, err := database.ConnectToDB(loginRequest.Prefix)
 	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
 	db.Migrator().CreateTable(&models.PromotionLog{})
-	
-	if err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error; err != nil {
+	db.AutoMigrate(&models.Users{})
+	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
+	fmt.Printf(" %s ",err) 
+	if err != nil {
 		response := fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
 			"Status":  false,
@@ -720,6 +722,48 @@ func UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
+
+
+	pro_setting, err := handler.GetProdetail(db, body.Body.ProStatus)
+ 
+	if pro_setting != nil {
+		 
+		if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
+			member.MaxTurnover = minTurnover
+		} else {
+			// Handle the case where the assertion fails
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Message": "Invalid type for MinTurnover",
+				"Status":  false,
+			})
+		}
+		if pro_setting["Type"] == "first" {
+			if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+				member.ProStatus = body.Body.ProStatus
+			} else {
+				member.ProStatus = ""
+				response := fiber.Map{
+					"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+					"Status":  false,
+					"Data":    "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+				}
+				return c.JSON(response)
+			}
+		} else {
+			if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
+				member.ProStatus = body.Body.ProStatus
+			} else if member.ProStatus != "" {
+				response := fiber.Map{
+					"Message": "คุณใช้งานโปรโมชั่นอยู่",
+					"Status":  false,
+					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+				}
+				return c.JSON(response)
+			}
+		}
+	}
+
+
 
 	// Update the user with the provided fields
 	fmt.Printf("Body: %s",body)

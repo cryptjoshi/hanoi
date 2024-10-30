@@ -2,6 +2,7 @@
 //import { Signin } from "@/actions"
 import React from 'react'
 import { Input } from "@/components/ui/input"
+import {Button} from "@/components/ui/button"
 //import useAuthStore from "@/store/auth" 
 import { useForm, SubmitHandler } from "react-hook-form"
 //import { Login } from '@/components/authen/login';
@@ -10,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 // import { ExclamationTriangleIcon } from "@radix-ui/react-icons"
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 //import { Toaster } from "@/components/ui/toaster"
+import {RegisterUser} from "@/actions"
 import { useToast } from "@/hooks/use-toast"
 import { ToastAction } from "@/components/ui/toast"
 type User = {
@@ -17,70 +19,71 @@ type User = {
   password:string
   repassword:string
   fullname:string
+  prefix:string
   
 }
 
  
 
 
- const Regist = async (body:User) =>{
+//  const Register = async (body:User) =>{
 
   
-    // const state = useAuthStore()
-    try {
-    const response = await  fetch("http://167.71.100.123:3003/api/v1/users/register", { method: 'POST',
-          headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          //'Authorization': 'Bearer ' +  token
-          },
-          body: JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"prefix":"psc"})
-        })
+//     // const state = useAuthStore()
+//     try {
+//     const response = await  fetch("http://167.71.100.123:3003/api/v1/users/register", { method: 'POST',
+//           headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           //'Authorization': 'Bearer ' +  token
+//           },
+//           body: JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"prefix":"psc"})
+//         })
     
-       // if(!response.ok)
-      // return {"status":false}
+//        // if(!response.ok)
+//       // return {"status":false}
 
-        return response.json()
-    }
-    catch(err:unknown) {
+//         return response.json()
+//     }
+//     catch(err:unknown) {
 
-        return err
-    }
-        // .then((response) => {
-        //     return new Promise((resolve) => response.json()
-        //       .then((json) => resolve({
-        //         status: response.status,
-        //         ok: response.ok,
-        //         json,
-        //       })));
-        //   }).catch((json) => resolve({json});
+//         return err
+//     }
+//         // .then((response) => {
+//         //     return new Promise((resolve) => response.json()
+//         //       .then((json) => resolve({
+//         //         status: response.status,
+//         //         ok: response.ok,
+//         //         json,
+//         //       })));
+//         //   }).catch((json) => resolve({json});
       
           
-        //   .then(({ status, json, ok }) => {
+//         //   .then(({ status, json, ok }) => {
             
-        //     const message = json.message;
-        //     let color = 'black';
-        //     switch (status) {
-        //       case 400:
-        //         color = 'red';
-        //         break;
-        //       case 201:
-        //       case 200:
-        //         color = 'grey';
-        //         break;
-        //       case 500:
-        //       default:
-        //         handleUnexpected({ status, json, ok });
-        //     }
-        //   })
+//         //     const message = json.message;
+//         //     let color = 'black';
+//         //     switch (status) {
+//         //       case 400:
+//         //         color = 'red';
+//         //         break;
+//         //       case 201:
+//         //       case 200:
+//         //         color = 'grey';
+//         //         break;
+//         //       case 500:
+//         //       default:
+//         //         handleUnexpected({ status, json, ok });
+//         //     }
+//         //   })
         
        
         
        
-}
+// }
 
 
-export default function RegisterComponent() {
+export default function RegisterComponent({lng}:{lng:string}) {
  
  //const [iserror,setError] = React.useState(false)
  //const state = useAuthStore()
@@ -91,10 +94,15 @@ export default function RegisterComponent() {
     handleSubmit
   } = useForm<User>()
 
+  const redirect = ()=>{
+    location.replace(`/${lng}/register`)
+}
+
   //const {login} = useAuthStore()
-  const onSubmit: SubmitHandler<User> = (data:User) => {
-   Regist(data).then((response) =>{
-  console.log(response)
+  const onSubmit: SubmitHandler<User> = (body:User) => {
+
+   RegisterUser("ckd",body).then((response) =>{
+ 
     if(!response.Status){
         toast({
             variant: "destructive",
@@ -108,7 +116,7 @@ export default function RegisterComponent() {
             title: "สำเร็จ",
             description: response.message,
           })
-        location.replace("/")
+       location.replace(`/${lng}/`)
     }
  
     
@@ -157,7 +165,7 @@ export default function RegisterComponent() {
               </label>
               <Input
                 type="text"
-                id="username"
+                id="fullname"
                 className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
                 placeholder=""
                 required
@@ -195,15 +203,15 @@ export default function RegisterComponent() {
               </button>
             </div>
             <Separator className="my-4" />
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <button onClick={()=>{location.replace("/login")}} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 Login
               </button>
-            </div>
+            </div> */}
             <div className="mt-3">
-            <button onClick={()=>reset()} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
+            <Button type="button" onClick={redirect} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 Cancel
-              </button>
+              </Button>
             </div>
         </div>
       </div>

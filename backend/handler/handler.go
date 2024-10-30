@@ -1636,11 +1636,12 @@ func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 			return nil, nil
 		}
 		response := make(map[string]interface{}) 
-	 
+		fmt.Printf(" %s ",promotion)
 			response["Type"] = ProItem.ProType.Type
 			response["count"] = ProItem.UsageLimit
+			response["MinTurnover"] = promotion.MinSpend
 			response["Formular"] = promotion.Example
-		response["Name"] = promotion.Name
+		    response["Name"] = promotion.Name
 		if ProItem.ProType.Type == "week" {
 			response["Week"] = ProItem.ProType.DaysOfWeek
 		}
@@ -1684,37 +1685,48 @@ func UpdateMember(c *fiber.Ctx) error {
 	member.Status = body.Body.Status
 	member.Bankname = body.Body.Bankname
 	member.Banknumber = body.Body.Banknumber
+	
 
-	pro_setting, err := GetProdetail(db, body.Body.ProStatus)
+	// pro_setting, err := GetProdetail(db, body.Body.ProStatus)
  
-	if pro_setting != nil {
-		if pro_setting["Type"] == "first" {
-			if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
-				member.ProStatus = body.Body.ProStatus
-			} else {
-				member.ProStatus = ""
-				response := fiber.Map{
-					"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
-					"Status":  false,
-					"Data":    "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
-				}
-				return c.JSON(response)
-			}
-		} else {
-			if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
-				member.ProStatus = body.Body.ProStatus
-			} else if member.ProStatus != "" {
-				response := fiber.Map{
-					"Message": "คุณใช้งานโปรโมชั่นอยู่",
-					"Status":  false,
-					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
-				}
-				return c.JSON(response)
-			}
-		}
-	}
+	// if pro_setting != nil {
+		 
+	// 	if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
+	// 		member.MaxTurnover = minTurnover
+	// 	} else {
+	// 		// Handle the case where the assertion fails
+	// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 			"Message": "Invalid type for MinTurnover",
+	// 			"Status":  false,
+	// 		})
+	// 	}
+	// 	if pro_setting["Type"] == "first" {
+	// 		if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+	// 			member.ProStatus = body.Body.ProStatus
+	// 		} else {
+	// 			member.ProStatus = ""
+	// 			response := fiber.Map{
+	// 				"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+	// 				"Status":  false,
+	// 				"Data":    "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
+	// 			}
+	// 			return c.JSON(response)
+	// 		}
+	// 	} else {
+	// 		if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
+	// 			member.ProStatus = body.Body.ProStatus
+	// 		} else if member.ProStatus != "" {
+	// 			response := fiber.Map{
+	// 				"Message": "คุณใช้งานโปรโมชั่นอยู่",
+	// 				"Status":  false,
+	// 				"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+	// 			}
+	// 			return c.JSON(response)
+	// 		}
+	// 	}
+	//}
 
-	err = db.Debug().Model(&member).Where("id = ?", body.ID).Updates(body.Body).Error
+	err = db.Debug().Model(&member).Where("id = ?", body.ID).Updates(member).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "อัพเดตข้อมูลผิดพลาด",

@@ -240,7 +240,7 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 	
 	var RowsAffected int64
 	//db.Debug().Model(&settings).Select("id").Scan(&settings).Count(&RowsAffected)
-    db.Debug().Model(&promotionlog).Where("promotioncode = ?", users.ProStatus).Scan(&promotionlog).Count(&RowsAffected)
+    db.Debug().Model(&promotionlog).Where("promotioncode = ? and (userid=? or walletid=?)", users.ProStatus,users.ID,users.ID).Scan(&promotionlog).Count(&RowsAffected)
 
 	// Check if promotionlog is not empty or has row affected = 1
 	if RowsAffected == int64(ProItem.UsageLimit) { // Assuming ID is the primary key
@@ -352,9 +352,9 @@ func AddStatement(c *fiber.Ctx) error {
 	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
-
-	if pro_setting != nil {
-		fmt.Printf(" Promotion used: %v", pro_setting)
+	
+	if pro_setting == nil {
+		
 
 		// New code to log to promotionlog
 		fmt.Printf("Prosetting: %v ",pro_setting)
@@ -418,6 +418,7 @@ func AddStatement(c *fiber.Ctx) error {
 				}})
 		}
 	} else {
+		fmt.Printf(" Promotion used: %v", pro_setting)
 		BankStatement.Balance = users.Balance.Add(BankStatement.Transactionamount)
 	}
 	BankStatement.Bankname = users.Bankname

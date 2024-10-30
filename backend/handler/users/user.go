@@ -222,7 +222,7 @@ func Register(c *fiber.Ctx) error {
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(200).SendString(err.Error())
 	}
-
+	fmt.Printf(" %s ",user.Username)
 	db, conn := database.ConnectToDB(user.Prefix)
 	if conn != nil {
 		response := ErrorResponse{
@@ -235,7 +235,9 @@ func Register(c *fiber.Ctx) error {
 
 	seedPhrase := handler.GenerateSeedPhrase(6)
 	fmt.Println("SeedPhase  %s\n", seedPhrase)
+
 	result := db.Create(&user)
+
 	if result.Error != nil {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
@@ -248,9 +250,10 @@ func Register(c *fiber.Ctx) error {
 		updates := map[string]interface{}{
 			"Walletid":      user.ID,
 			"Preferredname": user.Username,
-			"Username":      user.Prefix + user.Username + currency,
+			"Username":      strings.ToUpper(user.Prefix) + user.Username + currency,
+			"Actived": nil,
 		}
-		if err := db.Model(&user).Updates(updates).Error; err != nil {
+		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
 			response := ErrorResponse{
 				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 				Status:  false,
@@ -265,6 +268,7 @@ func Register(c *fiber.Ctx) error {
 			"Data": fiber.Map{
 				"id":       user.ID,
 				"walletid": user.ID,
+				"Username": user.Username,
 			},
 		}
 		return c.Status(fiber.StatusOK).JSON(response)

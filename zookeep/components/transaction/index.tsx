@@ -5,11 +5,12 @@ import { Input } from '../ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
 import { useTranslation } from '@/app/i18n/client';
+import { formatNumber } from '@/lib/utils';
 //import Footer from '../footer';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddStatement } from '@/actions';
+import { AddStatement, GetUserInfo } from '@/actions';
 import useAuthStore from '@/store/auth';
  import { useRouter } from 'next/navigation';
  import { useToast } from "@/hooks/use-toast"
@@ -48,7 +49,10 @@ const formSchema = z.object({
 function TransactionForm({lng,slug}:TransProps) {
     //const [amount, setAmount] = useState('');
     const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
-
+    const [loading, setLoading] = React.useState(true);
+    const [balance, setBalance] = React.useState(0);
+    const [user, setUser] = React.useState(null);
+    const [currency, setCurrency] = React.useState('USD');
     const {t} = useTranslation(lng,"home",undefined)
     const { toast } = useToast()
     const form = useForm<z.infer<typeof formSchema>>({
@@ -57,15 +61,61 @@ function TransactionForm({lng,slug}:TransProps) {
             transactionType:"deposit"
         } as z.infer<typeof formSchema>
       })
-      const router = useRouter()
+    const router = useRouter()
     const {accessToken} = useAuthStore()
   //  console.log(accessToken)
    // console.log(lng)
     //if(!accessToken)
     //    router.push(`${lng}/login`)
   
+    React.useEffect(() => {
+        const fetchBalance = async () => {
+    
+          try {
+          setLoading(true);
+          const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+        
+          
+    
+          if (userLoginStatus.state) {
+                    if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
+            const user = await GetUserInfo(userLoginStatus.state.accessToken);
+         
+            if(user.Status){
+              setBalance(user.Data.balance);
+              setUser(user.Data);
+              setCurrency(userLoginStatus.state.customerCurrency);
+            //  setPrefix(user.Data.prefix);
+               
+            } else {
+              // Redirect to login page if token is null
+            router.push(`/${lng}/login`);
+            return;
+            }
+           
+         
+          } else {
+            router.push(`/${lng}/login`);
+            return;
+            }
+          } else {
+            router.push(`/${lng}/login`);
+            return;
+          }
+          } catch (error) {
+           // router.push(`/${lng}/login`);
+           console.log(error)
+          }
+         
+        };
+    
+    
+        fetchBalance();
+        setLoading(false);
+       
+      }, [lng, router]);
    
-      const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    const handleSubmit = async (values: z.infer<typeof formSchema>) => {
         //e.preventDefault();
         //console.log(values)
         // const result = await form.trigger();
@@ -90,6 +140,8 @@ function TransactionForm({lng,slug}:TransProps) {
             ...values,
            // walletid:"",
            // uid:"",
+            transactionType:slug,
+            transactionamount:slug==="deposit"?values.transactionamount:values.transactionamount*(-1),
             channel:"1stpay",
             status: "101"
              };
@@ -133,11 +185,16 @@ function TransactionForm({lng,slug}:TransProps) {
             }
     };
     
-    return (
+     return loading ? <div>Loading...</div> : (
         <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4 max-w-md mx-auto">
       
             <h2 className="text-xl font-bold mb-4">{t(`${slug}`)}</h2>
+            <div>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
+            <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
+            </div>
             <FormField
                     control={form.control}
                     name="transactionamount"

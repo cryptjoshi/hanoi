@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function HomePage({lng}:{lng:string}): JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [balance, setBalance] = React.useState(0);
   const [user, setUser] = React.useState(null);
   const [promotions, setPromotions] = React.useState([]);
@@ -123,11 +124,14 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
 
   React.useEffect(() => {
     const fetchPromotion = async (prefix: string) => {
+      setIsLoading(true);
       const promotion = await GetPromotion(prefix);
+   
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
         
         const filtered = promotion.Data.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
+       
         setPromotions(promotion.Data);
         
         // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
@@ -142,7 +146,17 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           }]);
         } else {
          
+            if(user?.pro_status=="" || user?.pro_status==null || user?.pro_status=="0")
             setFilteredPromotions(filtered);
+            else
+            setFilteredPromotions([{
+              ID: 'default',
+              name: t('defaultPromotion'),
+              description: t('noAvailablePromotions'),
+              image: '/path/to/default/image.jpg',
+              disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
+              // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
+            }]);
         
         }
       } else {
@@ -151,6 +165,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       }
     }
     fetchPromotion(prefix);
+    setIsLoading(false);
   }, [prefix, user?.pro_status, t])
 
   return loading ? <div>Loading...</div> : (
@@ -172,7 +187,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
              
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                : promotions.find(promo => promo.ID.toString() == user?.pro_status.toString())?.name || t('noPromotion')  // Changed ID to id and added fallback text
+                :  promotions.find(promo => promo.ID.toString() == user?.pro_status.toString())?.name || t('noPromotion')  // Changed ID to id and added fallback text
               }   
             </p>
           </div>
@@ -187,12 +202,14 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
  
       <GameList prefix={prefix} lng={lng} />
  
+      {isLoading ? <div>Loading...</div> : (
       <PromotionList 
         prefix={prefix} 
         lng={lng} 
         promotions={filteredPromotions} 
         onSelectPromotion={accpetedPromotion} 
       />
+      )}
 
     
      <div className="p-4 sm:p-6">

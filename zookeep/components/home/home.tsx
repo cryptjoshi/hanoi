@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import  type { JSX } from 'react';
 import { useTranslation } from '@/app/i18n/client';
-import { GetUserInfo,GetPromotion, UpdateUser } from '@/actions';
+import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion } from '@/actions';
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
@@ -44,7 +44,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     const accepted = async (promotion:Promotion) => {
  
       if(accessToken && prefix!=""){
-      const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":promotion.ID})
+      const res = await UpdateUserPromotion(accessToken,{"prefix":prefix,"pro_status":promotion.ID})
       if(res.Status){
       toast({
         title: t('common.success'),
@@ -76,6 +76,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
 
   React.useEffect(() => {
     const fetchBalance = async () => {
+
+      try {
       setLoading(true);
       const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
     
@@ -106,8 +108,13 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         router.push(`/${lng}/login`);
         return;
       }
+      } catch (error) {
+       // router.push(`/${lng}/login`);
+       console.log(error)
+      }
      
     };
+
 
     fetchBalance();
     setLoading(false);
@@ -119,11 +126,12 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       const promotion = await GetPromotion(prefix);
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
+        
         const filtered = promotion.Data.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
         setPromotions(promotion.Data);
         
         // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
-        if (filtered.length === 0) {
+        if (filtered.length === 0 ) {
           setFilteredPromotions([{
             ID: 'default',
             name: t('defaultPromotion'),
@@ -133,8 +141,13 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
             // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
           }]);
         } else {
-          setFilteredPromotions(filtered);
+         
+            setFilteredPromotions(filtered);
+        
         }
+      } else {
+        router.push(`/${lng}/login`);
+        return;
       }
     }
     fetchPromotion(prefix);
@@ -157,7 +170,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
              
-              {selectedPromotion
+              {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
                 : promotions.find(promo => promo.ID.toString() == user?.pro_status.toString())?.name || t('noPromotion')  // Changed ID to id and added fallback text
               }   

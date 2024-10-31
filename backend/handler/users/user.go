@@ -81,9 +81,9 @@ func Login(c *fiber.Ctx) error {
 	db, err := database.ConnectToDB(loginRequest.Prefix)
 	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
 	db.Migrator().CreateTable(&models.PromotionLog{})
-	db.AutoMigrate(&models.Users{})
+	db.AutoMigrate(&models.Users{},&models.Promotion{})
 	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
-	fmt.Printf(" %s ",err) 
+	 
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
@@ -253,6 +253,7 @@ func Register(c *fiber.Ctx) error {
 			"Walletid":      user.ID,
 			"Preferredname": user.Username,
 			"Username":      strings.ToUpper(user.Prefix) + user.Username + currency,
+			"Currency":      currency,
 			"Actived": nil,
 		}
 		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
@@ -722,48 +723,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-
-
-	pro_setting, err := handler.GetProdetail(db, body.Body.ProStatus)
  
-	if pro_setting != nil {
-		 
-		if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
-			member.MaxTurnover = minTurnover
-		} else {
-			// Handle the case where the assertion fails
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"Message": "Invalid type for MinTurnover",
-				"Status":  false,
-			})
-		}
-		if pro_setting["Type"] == "first" {
-			if member.Deposit.IsZero() && member.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
-				member.ProStatus = body.Body.ProStatus
-			} else {
-				member.ProStatus = ""
-				response := fiber.Map{
-					"Message": "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
-					"Status":  false,
-					"Data":    "คุณต้องทำรายการฝากเงินก่อนเท่านั้น",
-				}
-				return c.JSON(response)
-			}
-		} else {
-			if member.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
-				member.ProStatus = body.Body.ProStatus
-			} else if member.ProStatus != "" {
-				response := fiber.Map{
-					"Message": "คุณใช้งานโปรโมชั่นอยู่",
-					"Status":  false,
-					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
-				}
-				return c.JSON(response)
-			}
-		}
-	}
-
-
 
 	// Update the user with the provided fields
 	fmt.Printf("Body: %s",body)
@@ -782,6 +742,190 @@ func UpdateUser(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func UpdateUserPro(c *fiber.Ctx) error {
+	// Parse the request body into a map
+	body := make(map[string]interface{})
+	if err := c.BodyParser(&body); err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	// Get the username from the context
+	username := c.Locals("username").(string)
+	
+	db, _err := handler.GetDBFromContext(c)
+	if _err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+
+	var user models.Users
+	err := db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+		}
+		return c.JSON(response)
+	}
+
+	old_promo := user.ProStatus
+
+	// Update the user with the provided fields
+	//fmt.Printf("Body: %s",body)
+
+
+
+	 
+// Assuming body is defined as a map[string]interface{}
+	proStatusValue, exists := body["pro_status"]
+	if !exists {
+		return c.JSON(fiber.Map{
+			"Status":  false,
+			"Message": "pro_status not found",
+		})
+	}
+	proStatus := fmt.Sprintf("%v", proStatusValue)
+// Check the type of proStatusValue
+// switch v := proStatusValue.(type) {
+// case string:
+//     // pro_status is a string, proceed with your logic
+//     fmt.Printf("Pro Status: %s\n", v)
+// case float64:
+//     // If it's a float64, you can convert it to string if needed
+//     proStatus := fmt.Sprintf("%v", v)
+//     fmt.Printf("Pro Status v (converted): %s\n", proStatus)
+// case int:
+//     // If it's an int, you can convert it to string if needed
+//     proStatus := fmt.Sprintf("%d", v)
+//     fmt.Printf("Pro Status d (converted): %s\n", proStatus)
+// default:
+//     // Handle unexpected types
+//     return c.JSON(fiber.Map{
+//         "Status":  false,
+//         "Message": "Invalid type for pro_status",
+//     })
+// }
+
+// Continue with your logic using proStatus
+	// Now you can use proStatus safely
+//	fmt.Printf("Pro Status: %s\n", proStatus)
+	 
+
+	pro_setting, err := handler.GetProdetail(db,proStatus)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("ProDetail: %s",pro_setting)
+
+	if pro_setting != nil {
+		 
+		updates := map[string]interface{}{
+			"MinTurnover": 0,
+			"ProStatus": proStatus,
+		}
+	
+		if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
+			 
+			 
+				updates = map[string]interface{}{
+					"MinTurnover": minTurnover,
+					"ProStatus": proStatus,
+				}
+	
+
+		} else {
+			// Handle the case where the assertion fails
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Message": "Invalid type for MinTurnover",
+				"Status":  false,
+			})
+		}
+		if pro_setting["Type"] == "first" {
+
+			if user.Balance.IsZero() && user.Deposit.IsZero() && user.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+				//user.ProStatus = "2"
+				fmt.Println("pro is actived")
+				repository.UpdateFieldsUserString(db, username, updates)
+				
+			} else {
+				//user.ProStatus = ""
+				updates["ProStatus"] = old_promo
+				
+				repository.UpdateFieldsUserString(db, username, updates)
+				if user.Balance.IsZero() == false {
+				 
+					response := fiber.Map{
+						"Message": "ยอดคงเหลือมากกว่าศูนย์!",
+						"Status":  false,
+						"Data":    "ยอดคงเหลือมากกว่าศูนย์!",
+					}
+					return c.JSON(response)
+				} else {
+				response := fiber.Map{
+					"Message": "คุณใช้งานโปรโมชั่นอยู่",
+					"Status":  false,
+					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+				}
+				return c.JSON(response)
+				}
+				
+			}
+		} else {
+			if user.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
+				//user.ProStatus = old_promo
+			} else if user.ProStatus != "" {
+				updates["ProStatus"] = old_promo
+				repository.UpdateFieldsUserString(db, username, updates)
+				response := fiber.Map{
+					"Message": "คุณใช้งานโปรโมชั่นอยู่",
+					"Status":  false,
+					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+				}
+				return c.JSON(response)
+			}
+		}
+		
+	
+
+	// // อัปเดตข้อมูลยูสเซอร์
+	
+	}
+
+	// if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	// Update the user with the provided fields
+	
+
+	response := fiber.Map{
+		"Status":  true,
+		"Message": "อัปเดตข้อมูลสำเร็จ!",
+	}
+	return c.JSON(response)
+
+	// if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+
+}
 // ... rest of the code ...
 
 // type Body struct {

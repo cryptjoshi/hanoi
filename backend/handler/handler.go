@@ -794,6 +794,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
+		Firstdeposit:       data.Body.Firstdeposit,
 	}
 
 	err = db.Create(&promotion).Error
@@ -813,7 +814,68 @@ func CreatePromotion(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-func GetPromotion(c *fiber.Ctx) error {
+func GetPromotionByUser(c *fiber.Ctx) error {
+	body := new(Dbstruct)
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	//fmt.Printf("prefixs: %s",prefixs)
+	db, _err := GetDBFromContext(c)
+	if _err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+	//db, err := database.ConnectToDB(prefixs.development)
+	// if err != nil {
+
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	//database.CheckAndCreateTable(db, models.Promotion{})
+	//err = db.AutoMigrate(&models.Promotion{})
+	//if err != nil {
+	//	fmt.Println("err:", err)
+	
+	promotions := []models.Promotion{}
+
+	err := db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
+
+	// fmt.Println(promotions)
+	if err != nil {
+
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+
+	return c.JSON(fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data":    promotions,
+	})
+
+	//	return c.JSON(promotions)
+}
+
+func GetAllPromotion(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -839,13 +901,13 @@ func GetPromotion(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	//database.CheckAndCreateTable(db, models.Promotion{})
-	err = db.AutoMigrate(&models.Promotion{})
-	if err != nil {
-		fmt.Println("err:", err)
-	}
+	// err = db.AutoMigrate(&models.Promotion{})
+	// if err != nil {
+	// 	fmt.Println("err:", err)
+	// }
 	promotions := []models.Promotion{}
 
-	err = db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
+	err = db.Debug().Find(&promotions).Error
 
 	// fmt.Println(promotions)
 	if err != nil {

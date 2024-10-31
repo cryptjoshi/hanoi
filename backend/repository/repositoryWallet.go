@@ -23,12 +23,12 @@ func UpdateFieldsUserString(db *gorm.DB,username string, updates map[string]inte
     // ดึงข้อมูลของยูสเซอร์ที่ต้องการแก้ไขจากฐานข้อมูล
     var user models.Users
 
-    if err := db.Where("username=?",username).First(&user).Error; err != nil {
+    if err := db.Debug().Where("username=?",username).First(&user).Error; err != nil {
         return errors.New("มีข้อผิดพลาด")
     }
 
     // ทำการอัปเดตเฉพาะฟิลด์ที่ต้องการ
-    if err := db.Model(&user).Updates(updates).Error; err != nil {
+    if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
         return errors.New("มีข้อผิดพลาด")
     }
     return nil

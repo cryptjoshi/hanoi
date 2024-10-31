@@ -31,6 +31,7 @@ type Users struct {
 	Lose             decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:lose;default:0"`
 	Turnover         decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:turnover;default:0"`
 	MinTurnover      decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:minturnover;default:0"`
+	Currency         string    `gorm:"type:varchar(50)";gorm:"column:currency"`
 	ProID            string    `gorm:"type:varchar(50)";gorm:"column:pro_id"`
 	PartnersKey      string    `gorm:"type:varchar(50)";gorm:"column:partners_key"`
 	ProStatus        string    `gorm:"type:varchar(50)";gorm:"column:pro_status;default:none"`

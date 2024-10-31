@@ -794,6 +794,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
+		Firstdeposit:       data.Body.Firstdeposit,
 	}
 
 	err = db.Create(&promotion).Error

@@ -81,7 +81,7 @@ func Login(c *fiber.Ctx) error {
 	db, err := database.ConnectToDB(loginRequest.Prefix)
 	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
 	db.Migrator().CreateTable(&models.PromotionLog{})
-	db.AutoMigrate(&models.Users{})
+	db.AutoMigrate(&models.Users{},&models.Promotion{})
 	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
 	 
 	if err != nil {
@@ -253,6 +253,7 @@ func Register(c *fiber.Ctx) error {
 			"Walletid":      user.ID,
 			"Preferredname": user.Username,
 			"Username":      strings.ToUpper(user.Prefix) + user.Username + currency,
+			"Currency":      currency,
 			"Actived": nil,
 		}
 		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {

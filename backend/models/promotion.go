@@ -12,6 +12,7 @@ type Promotion struct {
 	Promotioncode   string `gorm:"size:255;not null;" binding:"required" json:"promotioncode"`
 	Promotionname   string `gorm:"size:255;not null;" binding:"required" json:"promotionname"`
 	Active        int  `json:"active"`
+	Firstdeposit   int  `gorm:"column:firstdeposit;default:0" json:"firstdeposit"`
 	Freecredit      string  `gorm:"size:255;not null;" json:"freecredit"`
 	Freecreditmax   string   `gorm:"size:255;not null;" json:"freecreditmax"`
 	Maxtime    decimal.Decimal   `gorm:"type:numeric"  json:"maxtime"`

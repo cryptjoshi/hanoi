@@ -275,11 +275,11 @@ func checkActived(db *gorm.DB,user *models.Users) error {
 
 	var bankstatement []models.BankStatement
 	var RowsAffected int64
-	 db.Debug().Where("userid=? or walletid=?").Order("id ASC").Scan(&bankstatement).Count(&RowsAffected)
-
+	 db.Debug().Model(&bankstatement).Where("userid=? or walletid=?",user.ID,user.ID).Order("id ASC").Scan(&bankstatement).Count(&RowsAffected)
+	
 	if RowsAffected >= 1 {
 		updates := map[string]interface{}{
-			"Activated": time.Now(),
+			"Actived": time.Now(),
 			"Deposit": bankstatement[0].Transactionamount,
 				}
 	
@@ -354,105 +354,156 @@ func AddStatement(c *fiber.Ctx) error {
 	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
-	
-	if pro_setting != nil &&  users.Balance.IsZero() {
+	deposit := BankStatement.Transactionamount
+
+	fmt.Printf("deposit: %v ",deposit)
+	fmt.Printf("Prosetting: %v ",pro_setting)
+	if pro_setting != nil {
+		if users.Balance.IsZero() && deposit.GreaterThan(decimal.Zero) {
 		
 
 		// New code to log to promotionlog
 		//fmt.Printf("Prosetting: %v ",pro_setting)
 
 		// Ensure pro_setting["Example"] is not nil before type assertion
-		Formular, ok := pro_setting["Formular"].(string)
-		
-		if !ok {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"status": false,
-				"message": "Promotion example is not a valid string",
-				"data": fiber.Map{
-					"id": -1,
-				}})
-		}
-		//BankStatement.Proamount = BankStatement.Transactionamount
-		// Calculate the new balance using the example from pro_setting
+
+		fmt.Printf("deposit > 0 : %v ",deposit.GreaterThan(decimal.Zero))
 
 	 
 
-		deposit := BankStatement.Transactionamount
-		minDept := pro_setting["minDept"].(decimal.Decimal)
-		if deposit.LessThan(minDept) {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"Status": false,
-				"Message": "ยอดเงินฝากน้อยกว่ายอดฝากขั้นต่ำของโปรโมชั่น",
-				"Data": fiber.Map{
-					"id": -1,
-				}})
-		}
-		//fmt.Printf(" %v ", deposit)
-		//fmt.Printf(" %v ", Formular)
-
-		// Replace 'deposit' in the example with the actual value
-		Formular = strings.Replace(Formular, "deposit", deposit.String(), 1) // Convert deposit to string if necessary
-		//fmt.Printf(" %v ",Formular)
-		// Evaluate the expression (you may need to implement a function to evaluate the string expression)
-		balanceIncrease, err := evaluateExpression(Formular) // Implement this function to evaluate the expression
-		if err != nil {
-			fmt.Println(err)
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"Status": false,
-				"Message": "การตั้งค่าสูตรไม่ถูกต้อง!",
-				"Data": fiber.Map{
-					"id": -1,
-				}})
-		}
-		//fmt.Printf("balanceIncrease: %v ",balanceIncrease)
-		BankStatement.Proamount = balanceIncrease.Sub(deposit)
-		// Update BankStatement.Balance
-		BankStatement.Balance = users.Balance.Add(balanceIncrease)
-		promotionLog := models.PromotionLog{
-
-			UserID: BankStatement.Userid,
-			WalletID: BankStatement.Userid,
-			Promotionname: pro_setting["Name"].(string),
-			Beforebalance: BankStatement.Beforebalance,
-			//BetAmount: BankStatement.BetAmount,
-			Promotioncode: users.ProStatus,
-			Transactionamount: deposit,
-			Promoamount: balanceIncrease,
-			Proamount: balanceIncrease.Sub(deposit),
-			Balance: BankStatement.Balance,
-			Example: Formular,
-			// Add other necessary fields for the promotion log
-		}
-		if err := db.Create(&promotionLog).Error; err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"Status": false,
-				"Message": "Failed to log promotion",
-				"Data": fiber.Map{
-					"id": -1,
-				}})
-		}
-	} else {
-	
-		if users.Balance.IsZero() {
-		BankStatement.Balance = users.Balance.Add(BankStatement.Transactionamount)
-		} else {
-			fmt.Printf(" Promotion used: %v", pro_setting)
-			fmt.Printf(" Balance is Zero:" ,users.Balance.IsZero())
-			response := fiber.Map{
-				"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
-				"Status":  false,
-				"Data": fiber.Map{ 
-					"id": -1,
-				}}
-				return c.JSON(response)
+			Formular, ok := pro_setting["Formular"].(string)
+			
+			if !ok {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"status": false,
+					"message": "Promotion example is not a valid string",
+					"data": fiber.Map{
+						"id": -1,
+					}})
 			}
+			//BankStatement.Proamount = BankStatement.Transactionamount
+			// Calculate the new balance using the example from pro_setting
+
+		
+
+			
+			minDept := pro_setting["minDept"].(decimal.Decimal)
+			if deposit.LessThan(minDept) {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"Status": false,
+					"Message": "ยอดเงินฝากน้อยกว่ายอดฝากขั้นต่ำของโปรโมชั่น",
+					"Data": fiber.Map{
+						"id": -1,
+					}})
+			}
+			//fmt.Printf(" %v ", deposit)
+			//fmt.Printf(" %v ", Formular)
+
+			// Replace 'deposit' in the example with the actual value
+			Formular = strings.Replace(Formular, "deposit", deposit.String(), 1) // Convert deposit to string if necessary
+			//fmt.Printf(" %v ",Formular)
+			// Evaluate the expression (you may need to implement a function to evaluate the string expression)
+			balanceIncrease, err := evaluateExpression(Formular) // Implement this function to evaluate the expression
+			if err != nil {
+				fmt.Println(err)
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"Status": false,
+					"Message": "การตั้งค่าสูตรไม่ถูกต้อง!",
+					"Data": fiber.Map{
+						"id": -1,
+					}})
+			}
+			//fmt.Printf("balanceIncrease: %v ",balanceIncrease)
+			BankStatement.Proamount = balanceIncrease.Sub(deposit)
+			// Update BankStatement.Balance
+			BankStatement.Balance = users.Balance.Add(balanceIncrease)
+
+			promotionLog := models.PromotionLog{
+
+				UserID: BankStatement.Userid,
+				WalletID: BankStatement.Userid,
+				Promotionname: pro_setting["Name"].(string),
+				Beforebalance: BankStatement.Beforebalance,
+				//BetAmount: BankStatement.BetAmount,
+				Promotioncode: users.ProStatus,
+				Transactionamount: deposit,
+				Promoamount: balanceIncrease,
+				Proamount: balanceIncrease.Sub(deposit),
+				Balance: BankStatement.Balance,
+				Example: Formular,
+				// Add other necessary fields for the promotion log
+			}
+			if err := db.Create(&promotionLog).Error; err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"Status": false,
+					"Message": "Failed to log promotion",
+					"Data": fiber.Map{
+						"id": -1,
+					}})
+			}
+	 
+		 
+	
+			if users.Balance.IsZero() == false {
+				
+				response := fiber.Map{
+					"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
+					"Status":  false,
+					"Data": fiber.Map{ 
+						"id": -1,
+					}}
+					return c.JSON(response)
+				}
 			
 			 
+		} else if deposit.IsZero() {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "ยอดเงินฝากไม่ถูกต้อง!",
+			"Data": fiber.Map{
+				"id": -1,
+			}})
+		} else if deposit.LessThan(decimal.Zero) {
+		 
+			fmt.Printf("pro_setting: %v ",pro_setting)
+			minTurnover := users.MinTurnover
+			fmt.Printf("minTurnover: %v ",minTurnover)
+		  if users.Turnover.GreaterThan(minTurnover) || users.Turnover.Equal(minTurnover) {
+			BankStatement.Balance = users.Balance.Add(deposit)
+			// clear turnover
+			
+		  } else {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Status": false,
+				"Message": fmt.Sprintf("ยอดเทิร์นโอเวอร์น้อยกว่ายอดเทิร์นโอเวอร์ขั้นต่ำ %v %v !",minTurnover,users.Currency),
+				"Data": fiber.Map{
+					"id": -1,
+				}})
+		  }
+		 
+		} else {
+			if users.Balance.IsZero() == false {
+				
+				response := fiber.Map{
+					"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
+					"Status":  false,
+					"Data": fiber.Map{ 
+						"id": -1,
+					}}
+					return c.JSON(response)
+				}
 		}
-	
+	} else {
+		BankStatement.Balance = users.Balance.Add(deposit)
+	}	
 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
 	//user.Username = user.Prefix + user.Username
+	if BankStatement.Balance.IsZero() &&  deposit.LessThan(decimal.Zero) {
+		users.Turnover = decimal.Zero
+		users.ProStatus = ""
+	}
+
 	result := db.Create(&BankStatement); 
 	
 	if result.Error != nil {
@@ -468,7 +519,9 @@ func AddStatement(c *fiber.Ctx) error {
 
 		updates := map[string]interface{}{
 			"Balance": BankStatement.Balance,
-				}
+			"Turnover": users.Turnover,
+			"ProStatus": users.ProStatus,
+			}
 	
 		//db, _ = database.ConnectToDB(BankStatement.Prefix)
 		_err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1

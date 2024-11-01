@@ -335,6 +335,8 @@ func GetUser(c *fiber.Ctx) error {
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
+			"turnover":   users.Turnover,
+			"minturnover": users.MinTurnover,
 			"pro_status": users.ProStatus,
 		}}
 	return c.JSON(response)

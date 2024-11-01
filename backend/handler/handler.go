@@ -411,17 +411,18 @@ func GenerateSeedPhrase(length int) string {
 
 func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
 	dbInterface := c.Locals("db")
+ 
 	if dbInterface == nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "No database connection found")
 	}
 
 	// แปลง interface{} ให้เป็น *gorm.DB
-	db, ok := dbInterface.(*gorm.DB)
-	if !ok {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Invalid database connection")
-	}
-
-	return db, nil
+	// db, ok := dbInterface.(*gorm.DB)
+	// if !ok {
+	// 	return nil, fiber.NewError(fiber.StatusInternalServerError, "Invalid database connection")
+	// }
+	return c.Locals("db").(*gorm.DB),nil
+	//return db, nil
 }
 func handleError(err error) {
 	log.Fatal(err)
@@ -815,12 +816,13 @@ func CreatePromotion(c *fiber.Ctx) error {
 }
 
 func GetPromotionByUser(c *fiber.Ctx) error {
-	body := new(Dbstruct)
-	if err := c.BodyParser(body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
 
 	// var prefixs = struct {
 	// 	development string
@@ -830,15 +832,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	// 	production:  body.Prefix + "_production",
 	// }
 	//fmt.Printf("prefixs: %s",prefixs)
-	db, _err := GetDBFromContext(c)
-	if _err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": "โทเคนไม่ถูกต้อง!!",
-		}
-		return c.JSON(response)
-	}
-	//db, err := database.ConnectToDB(prefixs.development)
+	// db, err := database.ConnectToDB(prefixs.development)
 	// if err != nil {
 
 	// 	response := fiber.Map{
@@ -847,32 +841,42 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	// 	}
 	// 	return c.JSON(response)
 	// }
-	//database.CheckAndCreateTable(db, models.Promotion{})
-	//err = db.AutoMigrate(&models.Promotion{})
-	//if err != nil {
-	//	fmt.Println("err:", err)
+
+	db, _err := GetDBFromContext(c)
+	 
+	if db == nil {
+		fmt.Println(_err)
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+ 
 	
-	promotions := []models.Promotion{}
+	var promotions = []models.Promotion{}
 
-	err := db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error
+	err := db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
 
-	// fmt.Println(promotions)
+     
 	if err != nil {
-
+		log.Fatal("Error is",err)
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
 			"Status":  false,
 		}
 		return c.JSON(response)
 	}
-
-	return c.JSON(fiber.Map{
-		"Message": "ดึงข้อมูลสำเร็จ",
-		"Status":  true,
-		"Data":    promotions,
-	})
-
-	//	return c.JSON(promotions)
+	response := fiber.Map{
+		"Status":true,
+		"Message":"",
+		"Data":fiber.Map{
+			"Promotions":promotions,
+			"Prostatus": c.Locals("prostatus"),
+		},
+	}
+	return c.JSON(response)
+ 
 }
 
 func GetAllPromotion(c *fiber.Ctx) error {
@@ -1329,6 +1333,66 @@ func GetGameById(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func GetGameByType(c *fiber.Ctx) error {
+	type gameType struct {
+		ID string `json:"id"`
+		//Prefix string `json:"prefix"`
+
+	}
+	body := new(gameType)
+	if err := c.BodyParser(body); err != nil {
+		
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+
+
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+
+	//db, err := database.ConnectToDB(prefixs.development)
+	db,err := GetDBFromContext(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	//database.CheckAndCreateTable(db, models.Games{})
+	// err = db.AutoMigrate(&models.Games{})
+	// if err != nil {
+	// 	fmt.Println("err:", err)
+	// }
+	//gametype,err := getGameStatusRedis()
+	 
+	// if err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
+	var games = []models.Games{}
+	
+
+	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+body.ID+"%").Scan(&games).Error
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data":    games,
+	}
+	return c.JSON(response)
+}
 func UpdateGame(c *fiber.Ctx) error {
 	body := new(gameData)
 	if err := c.BodyParser(body); err != nil {
@@ -1381,6 +1445,49 @@ func UpdateGame(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+type Status struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+type Product struct {
+	ProductCode string `json:"productCode"`
+	Status      Status `json:"status"`
+}
+func getGameStatusRedis() ([]Product,error) {
+
+	var rdb = redis.NewClient(&redis.Options{
+		Addr:     redis_master_host + ":" + redis_master_port,
+		Password: "", // redis_master_password,
+		DB:       0,  // Use database 0
+	})
+
+	cachedStatus, err := rdb.Get(ctx, "game_status").Result()
+	var products []Product
+	var tempProducts []struct {
+		ProductCode string `json:"productCode"`
+		Status      string `json:"status"` // Keep status as string for initial parsing
+	}
+	if err == nil {
+		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
+			log.Fatalf("Error unmarshalling JSON: %v", err)
+			return nil,err
+		}
+
+		// Step 2: Iterate through the temporary products and unmarshal the status
+		for _, item := range tempProducts {
+			var status Status
+			if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
+				log.Fatalf("Error unmarshalling status JSON: %v", err)
+				return nil,err
+			}
+			products = append(products, Product{
+				ProductCode: item.ProductCode,
+				Status:      status,
+			})
+		}
+	}
+	return products,nil
+}
 
 func GetGameStatus(c *fiber.Ctx) error {
 
@@ -1388,16 +1495,13 @@ func GetGameStatus(c *fiber.Ctx) error {
 		ProductCode string `json:"productCode"`
 		Status      string `json:"status"`
 	}
-	type Status struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	}
+	
 
 	// Define the main struct that includes the status
-	type Product struct {
-		ProductCode string `json:"productCode"`
-		Status      Status `json:"status"`
-	}
+	// type Product struct {
+	// 	ProductCode string `json:"productCode"`
+	// 	Status      Status `json:"status"`
+	// }
 	body := new(gameData)
 	if err := c.BodyParser(body); err != nil {
 		response := fiber.Map{
@@ -1429,40 +1533,48 @@ func GetGameStatus(c *fiber.Ctx) error {
 		DB:       0,  // Use database 0
 	})
 
-	cachedStatus, err := rdb.Get(ctx, "game_status").Result()
-	var products []Product
+	// cachedStatus, err := rdb.Get(ctx, "game_status").Result()
+	// var products []Product
 	var tempProducts []struct {
 		ProductCode string `json:"productCode"`
 		Status      string `json:"status"` // Keep status as string for initial parsing
 	}
-	if err == nil {
+	// if err == nil {
 		
 		 
-		// Unmarshal the main JSON
-		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
-			log.Fatalf("Error unmarshalling JSON: %v", err)
-		}
+	// 	// Unmarshal the main JSON
+	// 	if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
+	// 		log.Fatalf("Error unmarshalling JSON: %v", err)
+	// 	}
 
-		// Step 2: Iterate through the temporary products and unmarshal the status
-		for _, item := range tempProducts {
-			var status Status
-			if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
-				log.Fatalf("Error unmarshalling status JSON: %v", err)
-			}
-			products = append(products, Product{
-				ProductCode: item.ProductCode,
-				Status:      status,
-			})
-		}
-		response := fiber.Map{
+	// 	// Step 2: Iterate through the temporary products and unmarshal the status
+	// 	for _, item := range tempProducts {
+	// 		var status Status
+	// 		if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
+	// 			log.Fatalf("Error unmarshalling status JSON: %v", err)
+	// 		}
+	// 		products = append(products, Product{
+	// 			ProductCode: item.ProductCode,
+	// 			Status:      status,
+	// 		})
+	// 	}
+	// 	response := fiber.Map{
+	// 		"Message": "ดึงข้อมูลสำเร็จ",
+	// 		"Status":  true,
+	// 		"Data":    products,
+	// 	}
+	// 	return c.JSON(response)
+		
+	// }
+	gamstatus,_serr := getGameStatusRedis()
+	if _serr == nil {
+			response := fiber.Map{
 			"Message": "ดึงข้อมูลสำเร็จ",
 			"Status":  true,
-			"Data":    products,
+			"Data":    gamstatus,
 		}
 		return c.JSON(response)
-		
 	}
-
 	// If no cached data, query the database
 	gameStatus := []GameStatus{}
 	err = db.Debug().Table("Games").Select("DISTINCT status").Find(&gameStatus).Error
@@ -1474,7 +1586,7 @@ func GetGameStatus(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-
+	var products []Product
 	// Cache the result in Redis with a 1-day expiration
 	statusJSON, err := json.Marshal(gameStatus)
 	if err != nil {

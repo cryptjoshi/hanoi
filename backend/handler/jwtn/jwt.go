@@ -278,15 +278,28 @@ func JwtMiddleware(c *fiber.Ctx) error {
 		c.Locals("role", claims.Role)
         c.Locals("prefix", claims.Prefix)
 		c.Locals("db", db)
+		//dbInterface := c.Locals("db")
+		
 		var users models.Users
-		if err_ := db.Debug().Select("id as ID,role,prefix").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
-			fmt.Println("ID:",users.ID)
+		if err_ := db.Debug().Select("id as ID,role,prefix,pro_status,deposit,actived").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
+			//fmt.Println("ID:",users.ID)
 			c.Locals("ID",users.ID)
 			c.Locals("Walletid", users.ID)
 			c.Locals("role", users.Role)
 			c.Locals("prefix", users.Prefix)
+			c.Locals("deposit",users.Deposit)
+			c.Locals("actived",users.Actived)
+			c.Locals("prostatus",users.ProStatus)
 		}
-		 
+		db, ok := c.Locals("db").(*gorm.DB)
+		if db == nil {
+			fmt.Printf("db is null")
+		}
+		if ok {
+			c.Locals("db",db)
+			 
+		}
+	
        // c.Locals("PartnersKey",claims.PartnersKey)
    
 	 	

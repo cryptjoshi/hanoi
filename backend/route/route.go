@@ -75,7 +75,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/prefix",handler.GetDatabaseByPrefix)
 	
 	app.Post("/db/promotion/all",handler.GetAllPromotion)
-	app.Post("/db/promotion/user",handler.GetPromotionByUser)
+	app.Post("/db/promotion/byuser",jwt.JwtMiddleware,handler.GetPromotionByUser)
 	app.Post("/db/promotion/byid",handler.GetPromotionById)
 	app.Post("/db/promotion/create",handler.CreatePromotion)
 	app.Post("/db/promotion/update",handler.UpdatePromotion)
@@ -83,6 +83,7 @@ func SetupRoutes(app fiber.Router) {
 	//app.Post("/db/promotion/delete/:id",handler.DeletePromotion)	
 	app.Post("/db/game/all",handler.GetGameList)
 	app.Post("/db/game/byid",handler.GetGameById)
+	app.Post("/db/game/bytype",jwt.JwtMiddleware,handler.GetGameByType)
 	app.Post("/db/game/status",handler.GetGameStatus)
 	app.Post("/db/game/create",handler.CreateGame)
 	app.Post("/db/game/update",handler.UpdateGame)

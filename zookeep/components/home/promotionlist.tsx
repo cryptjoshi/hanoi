@@ -63,7 +63,7 @@ export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: Pr
     description: t('common.loginFirst'),
     variant: "destructive",
   })
-  router.push(`/${lng}/login`);
+ // router.push(`/${lng}/login`);
 }
 }
   acceptPromotion()
@@ -85,7 +85,7 @@ export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: Pr
       }}
       className="w-full max-w-xl"
     >
-      <CarouselContent>
+      <CarouselContent className={promotions.length === 1 ? "flex justify-center" : ""}>
        {promotions.map((item, index) => (
        <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">

@@ -167,7 +167,18 @@ export const GetGameStatus = async (prefix:string) =>{
 return response.json()
 }
 
-
+export const GetGameByType = async (token:string,id:string) =>{
+ 
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/bytype", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify({"id":id})
+})
+return response.json()
+}
 
 
 export const GetGameById = async (prefix:string,id:number) =>{
@@ -260,14 +271,15 @@ export const GetPromotionByUser = async (dbname:string,token:string) =>{
    return error
  }
  } 
-export const GetPromotion = async (dbname:string) =>{
+export const GetPromotion = async (token:string) =>{
  try{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/all", { method: 'POST',
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/byuser", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
       },
-      body: JSON.stringify({"prefix":dbname.toLowerCase()})
+      //body: JSON.stringify({"prefix":dbname.toLowerCase()})
 })
 return response.json()
 }catch(error){

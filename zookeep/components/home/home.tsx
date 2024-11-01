@@ -16,16 +16,22 @@ import GameList from './gamelist';
 import {Promotion,PromotionList} from './promotionlist';
 import { useToast } from '@/hooks/use-toast';
 
-
+type PromotionFilter = {
+  ID: string
+  name: string
+  description:string
+  image:string
+  disableAccept: boolean
+}
 
 export default function HomePage({lng}:{lng:string}): JSX.Element {
   const router = useRouter();
-  const [loading, setLoading] = React.useState(true);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [balance, setBalance] = React.useState(0);
-  const [user, setUser] = React.useState(null);
-  const [promotions, setPromotions] = React.useState([]);
-  const [currency, setCurrency] = React.useState('USD');
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [balance, setBalance] = React.useState<number>(0);
+  const [user, setUser] = React.useState<any>(null);
+  const [promotions, setPromotions] = React.useState<any[]>([]);
+  const [currency, setCurrency] = React.useState<string>('USD');
 
   const {prefix,Logout,setPrefix} = useAuthStore();
   // const handleSignOut = () => {
@@ -35,7 +41,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const [selectedPromotion, setSelectedPromotion] = React.useState<Promotion | null>(null);
 
   // เพิ่ม state สำหรับ filteredPromotions
-  const [filteredPromotions, setFilteredPromotions] = React.useState([]);
+  const [filteredPromotions, setFilteredPromotions] = React.useState<PromotionFilter[]>([]);
   const { t } = useTranslation(lng,'home',undefined);
 
   const { toast } = useToast();
@@ -86,7 +92,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
 
       if (userLoginStatus.state) {
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
-        const user = await GetUserInfo(userLoginStatus.state.accessToken);
+        const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
      
         if(user.Status){
           setBalance(user.Data.balance);
@@ -125,14 +131,15 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   React.useEffect(() => {
     const fetchPromotion = async (prefix: string) => {
       setIsLoading(true);
-      const promotion = await GetPromotion(prefix);
-   
+      if(accessToken){
+      const promotion = await GetPromotion(accessToken);
+      
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-        
-        const filtered = promotion.Data.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
+       // console.log(promotion.Data)
+        const filtered = promotion.Data.Promotions.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
        
-        setPromotions(promotion.Data);
+        setPromotions(promotion.Data.Promotions);
         
         // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
         if (filtered.length === 0 ) {
@@ -160,10 +167,19 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
         
         }
       } else {
-        router.push(`/${lng}/login`);
+        
+        //router.push(`/${lng}/login`)toast({
+      toast({title: t('unsuccess'),
+        description: promotion.Message,
+        variant: "destructive",
+      });
         return;
       }
+    } else {
+      router.push(`/${lng}/login`);
+      return;
     }
+  }
     fetchPromotion(prefix);
     setIsLoading(false);
   }, [prefix, user?.pro_status, t])
@@ -174,8 +190,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
        <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
-          <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(parseFloat(balance))}</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(parseFloat(balance))} {currency}</p>
+          <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
         </div>
         <div>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>

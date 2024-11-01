@@ -22,5 +22,7 @@
     "promotionStatus":"Promotion Status",
     "noPromotion":"No Promotion",
     "defaultPromotion":"Default Promotion",
-    "noAvailablePromotions":"No Available Promotions"
+    "noAvailablePromotions":"No Available Promotions",
+    "your_balance":"Your Balance",
+    "your_turnover":"Your Turnover"
 }

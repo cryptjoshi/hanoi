@@ -22,5 +22,7 @@
     "promotionStatus":"สถานะโปรโมชั่น",
     "noPromotion":"ไม่มีโปรโมชั่น",
     "defaultPromotion":"โปรโมชั่นค่าเริ่มต้น",
-    "noAvailablePromotions":"ไม่มีโปรโมชั่นที่มีอยู่"
+    "noAvailablePromotions":"ไม่มีโปรโมชั่นที่มีอยู่",
+    "your_balance":"ยอคงเหลือของคุณ",
+    "your_turnover":"ยอดเทิร์นโอเวอร์ของคุณ"
 }

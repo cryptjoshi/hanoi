@@ -193,10 +193,13 @@ function TransactionForm({lng,slug}:TransProps) {
       
             <h2 className="text-xl font-bold mb-4">{t(`${slug}`)}</h2>
             <div>
-            <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t('your_balance')}</p>
             <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
             { slug === "withdraw" && (
+              <div>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t('your_turnover')}</p>
                 <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(turnover || 0)}</h2>
+            </div>
             ) }
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
             </div>

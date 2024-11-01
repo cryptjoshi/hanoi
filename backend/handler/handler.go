@@ -1378,6 +1378,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	// }
 	var games = []models.Games{}
 	
+	
 
 	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+body.ID+"%").Scan(&games).Error
 

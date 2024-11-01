@@ -12,7 +12,7 @@ import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion } from '@/act
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
-import GameList from './gamelist';
+import GameList from './homegamelist';
 import {Promotion,PromotionList} from './promotionlist';
 import { useToast } from '@/hooks/use-toast';
 

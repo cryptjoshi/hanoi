@@ -51,11 +51,11 @@ export default function GameList({ id,lng }: { id:string,lng:string }) {
     return (
         <div className="grid grid-cols-4 gap-2 sm:gap-4 p-4 sm:p-6">
         {gamelist.map((item: any, index: any) => (
-           <Link key={index} href={`/${lng}/games/${item.id}`}>
+           <Link key={index} href={`/${lng}/games/${item.product}`}>
          <div  className="flex flex-col items-center">
            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary rounded-lg mb-1"></div>
           
-           <span className="text-[10px] sm:text-xs text-center" >{t(`games.${item.name}`)}</span>
+           <span className="text-[10px] sm:text-xs text-center" >{`${item.name|| item.productCode}`}</span>
           
          </div>
          </Link>

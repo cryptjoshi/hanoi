@@ -51,6 +51,7 @@ function TransactionForm({lng,slug}:TransProps) {
     const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
     const [loading, setLoading] = React.useState(true);
     const [balance, setBalance] = React.useState(0);
+    const [turnover,setTurnOver] =React.useState(0);
     const [user, setUser] = React.useState(null);
     const [currency, setCurrency] = React.useState('USD');
     const {t} = useTranslation(lng,"home",undefined)
@@ -85,6 +86,7 @@ function TransactionForm({lng,slug}:TransProps) {
               setBalance(user.Data.balance);
               setUser(user.Data);
               setCurrency(userLoginStatus.state.customerCurrency);
+              setTurnOver(user.Data.Turnover)
             //  setPrefix(user.Data.prefix);
                
             } else {
@@ -193,6 +195,9 @@ function TransactionForm({lng,slug}:TransProps) {
             <div>
             <p className="text-xs sm:text-sm text-muted-foreground">{t('balance')}</p>
             <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
+            { slug === "withdraw" && (
+                <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(turnover || 0)}</h2>
+            ) }
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
             </div>
             <FormField

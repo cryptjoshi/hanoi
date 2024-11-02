@@ -3,12 +3,13 @@ import useGameStore from '@/store/gameStore'
 import { useTranslation } from '@/app/i18n/client';
 import  { useRouter } from "next/navigation"
 import Link from 'next/link';
+import useAuthStore from '@/store/auth';
 
 
 const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
   const { gameStatus, fetchGameStatus } = useGameStore()
   const {t} = useTranslation(lng,'translation',undefined);
-
+  const {accessToken} = useAuthStore()
   const router = useRouter()
 
   const playgame = (ID:string) =>{
@@ -17,7 +18,11 @@ const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
 
 
   useEffect(() => {
-    fetchGameStatus(prefix)
+    if(accessToken){
+      fetchGameStatus(prefix,accessToken)
+    } else {
+       router.push(`/${lng}/login`)
+    }
     //console.log('fetchGameStatus',gameStatus)
   }, [prefix, fetchGameStatus])
 

@@ -155,12 +155,13 @@ export const GetGameList = async (prefix:string) =>{
   return response.json()
 }
 
-export const GetGameStatus = async (prefix:string) =>{
+export const GetGameStatus = async (prefix:string,token:string) =>{
  
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/status", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
       },
       body: JSON.stringify({"prefix":prefix})
 })

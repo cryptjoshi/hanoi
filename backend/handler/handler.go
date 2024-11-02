@@ -1360,6 +1360,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	//db, err := database.ConnectToDB(prefixs.development)
 	db,err := GetDBFromContext(c)
 	if err != nil {
+		fmt.Println("err:", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -1468,6 +1469,10 @@ func getGameStatusRedis() ([]Product,error) {
 		ProductCode string `json:"productCode"`
 		Status      string `json:"status"` // Keep status as string for initial parsing
 	}
+	 
+
+	fmt.Println("1474",cachedStatus)
+
 	if err == nil {
 		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
@@ -1486,6 +1491,7 @@ func getGameStatusRedis() ([]Product,error) {
 				Status:      status,
 			})
 		}
+		 
 	}
 	return products,nil
 }
@@ -1497,19 +1503,14 @@ func GetGameStatus(c *fiber.Ctx) error {
 		Status      string `json:"status"`
 	}
 	
-
-	// Define the main struct that includes the status
-	// type Product struct {
-	// 	ProductCode string `json:"productCode"`
-	// 	Status      Status `json:"status"`
-	// }
+ 
 	body := new(gameData)
 	if err := c.BodyParser(body); err != nil {
 		response := fiber.Map{
 			"Message": "รับข้อมูลผิดพลาด",
 			"Status":  false,
 		}
-		return c.JSON(response)
+		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
 	var prefixs = struct {
@@ -1534,41 +1535,21 @@ func GetGameStatus(c *fiber.Ctx) error {
 		DB:       0,  // Use database 0
 	})
 
-	// cachedStatus, err := rdb.Get(ctx, "game_status").Result()
-	// var products []Product
+	 
 	var tempProducts []struct {
 		ProductCode string `json:"productCode"`
 		Status      string `json:"status"` // Keep status as string for initial parsing
 	}
-	// if err == nil {
-		
-		 
-	// 	// Unmarshal the main JSON
-	// 	if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
-	// 		log.Fatalf("Error unmarshalling JSON: %v", err)
-	// 	}
 
-	// 	// Step 2: Iterate through the temporary products and unmarshal the status
-	// 	for _, item := range tempProducts {
-	// 		var status Status
-	// 		if err := json.Unmarshal([]byte(item.Status), &status); err != nil {
-	// 			log.Fatalf("Error unmarshalling status JSON: %v", err)
-	// 		}
-	// 		products = append(products, Product{
-	// 			ProductCode: item.ProductCode,
-	// 			Status:      status,
-	// 		})
-	// 	}
-	// 	response := fiber.Map{
-	// 		"Message": "ดึงข้อมูลสำเร็จ",
-	// 		"Status":  true,
-	// 		"Data":    products,
-	// 	}
-	// 	return c.JSON(response)
-		
-	// }
+	
+	 
 	gamstatus,_serr := getGameStatusRedis()
-	if _serr == nil {
+
+   // fmt.Println("1545",gamstatus)
+	 
+		
+	
+	if _serr == nil && gamstatus != nil {
 			response := fiber.Map{
 			"Message": "ดึงข้อมูลสำเร็จ",
 			"Status":  true,

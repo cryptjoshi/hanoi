@@ -5,7 +5,7 @@ import (
 	// "github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	//"github.com/golang-jwt/jwt/v4"
-	//"pkd/handler"
+	"pkd/handler"
 	//"pkd/middlewares"
 	"pkd/handler/ef" 
 	"pkd/handler/gc" 
@@ -34,7 +34,7 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/callback/Seamless/BuyOut",ef.BuyOut)
 	app.Post("/callback/Seamless/PushBet",ef.PushBet)
 	app.Post("/callback/Seamless/MobileLogin",ef.MobileLogin)
-	
+	   
 
 	// PGSOFT
 	app.Get("/callback/pgsoft",pg.Index)
@@ -93,7 +93,7 @@ func SetupRoutes(app *fiber.App) {
 	// //Transactions
 	// //app.Get("/api/transaction/all",handler.GetAllTransaction)
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
-	// //app.Post("/api/statement",handler.AddStatement)
+	app.Post("/api/v1/transaction/add",handler.AddTransactions)
 
 
 	// // dashboard

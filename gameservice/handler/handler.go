@@ -14,9 +14,11 @@ import (
 	"pkd/models"
 	//"github.com/golang-jwt/jwt"
 	jtoken "github.com/golang-jwt/jwt/v4"
+	"github.com/shopspring/decimal"
 	//"github.com/solrac97gr/basic-jwt-auth/config"
 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
+	"pkd/database"
 	"pkd/repository"
 	"log"
 	"net"
@@ -136,8 +138,18 @@ func get_channel() *amqp.Channel {
 // 	return resp, nil
 // }
 
+type EFResponse struct {
+	ErrorCode  int  `json:"errorcode"`
+    ErrorMessage string `json:"errormessage"`
+    Balance  decimal.Decimal `json:"balance"`
+    BeforeBalance decimal.Decimal `json:"beforebalance"`
+}
 
-
+type ResponseBalance struct {
+	BetAmount decimal.Decimal `json:"betamount"`
+	BeforeBalance decimal.Decimal `json:"beforebalance"`
+	Balance decimal.Decimal `json:"balance"`
+}
 func FastPost(url string, referrer string) (*fasthttp.Response, error) {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
@@ -487,4 +499,97 @@ func Logout(c *fiber.Ctx) error {
 	// }
 	 
 }
+
+func AddTransactions(c *fiber.Ctx) error {
+
+//func AddTransactions(c *fiber.Ctx,transactionsub models.TransactionSub,membername string) Response {
+
+	//fmt.Println("transactionsub:",transactionsub)
+
+	type TransactionRequest struct {
+		TransactionSub models.TransactionSub
+		MemberName string
+	}
+	transactionRequest := new(TransactionRequest)
+	if err := c.BodyParser(transactionRequest); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+			"Data": map[string]interface{}{
+				"id": -1,
+			},
+		})
+	}
+	transactionsub := models.TransactionSub{}
+
+	response := Response{
+		Status: false,
+		Message:"Success",
+		Data: ResponseBalance{
+			BetAmount: decimal.NewFromFloat(0),
+			BeforeBalance: decimal.NewFromFloat(0),
+			Balance: decimal.NewFromFloat(0),
+		},
+	}
+
+	var users models.Users
+    if err_ := database.Database.Where("username = ? ", transactionRequest.MemberName).First(&users).Error; err_ != nil {
+		response = Response{
+			Status: false,
+			Message: "ไม่พบข้อมูล",
+			Data:map[string]interface{}{
+				"id": -1,
+			},
+    	}
+	}
+
+    transactionsub.GameProvide = transactionRequest.GameProvide
+    transactionsub.MemberName = transactionRequest.MemberName
+	transactionsub.ProductID = transactionsub.ProductID
+	transactionsub.BetAmount = transactionsub.BetAmount
+	transactionsub.BeforeBalance = users.Balance
+	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
+	
+	result := database.Database.Create(&transactionsub); 
+	//fmt.Println(result)
+	if result.Error != nil {
+		response = Response{
+			Status: false,
+			Message:  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			Data: map[string]interface{}{ 
+				"id": -1,
+			}}
+	} else {
+
+		updates := map[string]interface{}{
+			"Balance": transactionsub.Balance,
+				}
+	
+		 
+		  repository.UpdateFieldsUserString(users.Username, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		//fmt.Println(_err)
+		// if _err != nil {
+		// 	fmt.Println("Error:", _err)
+		// } else {
+		// 	//fmt.Println("User fields updated successfully")
+		// }
+
+ 
+ 
+	 
+	  response = Response{
+		Status: true,
+		Message: "สำเร็จ",
+		Data: ResponseBalance{
+			BeforeBalance: transactionsub.BeforeBalance,
+			Balance:       transactionsub.Balance,
+		},
+		}
+		
+	}
+ 
+	return c.JSON(response)
+}
+
+
 

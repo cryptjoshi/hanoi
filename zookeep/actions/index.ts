@@ -106,6 +106,7 @@ return response.json()
 
 export const GetUserInfo = async (token:string) =>{
   try {
+  
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/info", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -232,9 +233,9 @@ export const AddPromotion = async (prefix:string,body:any) =>{
     return response.json()
   }
 
-    export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
+  export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
  
-   console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
+  // console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',
@@ -366,6 +367,19 @@ export const AddStatement = async (token:string,body:any)=>{
       body: JSON.stringify(body)
     })
     return response.json()
+}
+
+
+export const createTransaction = async (token:string,body:string) =>{
+  const response = await fetch("http://152.42.185.164:4007/api/v1/transaction/add", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify({"body":body})
+})
+return response.json()
 }
 
 export const GetHistory = async (token:string,prefix:string) =>{

@@ -1,12 +1,23 @@
 'use client'
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState,useMemo, memo } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
-
-export const ChartComponent = (props: any) => {
+import { GetUserInfo } from '@/actions/index';
+import { createTransaction } from '@/actions/index';
+import useAuthStore from '@/store/auth';
+import { useRouter } from 'next/navigation';
+interface ChartComponentProps {
+    countdown: number;
+    onUpdateCountdown: (newCountdown: number) => void;  // เพิ่ม setter function
+    onPriceUpdate?: (price: number) => void;  // Add this line
+    data?: any;
+    onCheckPrediction?: (startPrice: number, endPrice: number) => void;  // Add this line
+}
+export const ChartComponent = (props: ChartComponentProps) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<any>(null);
     const candlestickSeriesRef = useRef<any>(null);
     const isMounted = useRef<boolean>(false);
+    
     let currentCandle: any = null;
 
     const fetchBTCData = async () => {
@@ -21,6 +32,7 @@ export const ChartComponent = (props: any) => {
             time: Math.floor(item[0] / 1000),
         }));
     };
+    const [predictionStartPrice, setPredictionStartPrice] = useState<number | null>(null);
 
     const setupWebSocket = () => {
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
@@ -28,13 +40,58 @@ export const ChartComponent = (props: any) => {
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
             const price = parseFloat(message.p);
-
+            const timestamp = message.T;
+            const currentTime = Math.floor(timestamp / 1000);
             if (currentCandle) {
-                currentCandle.high = Math.max(currentCandle.high, price);
-                currentCandle.low = Math.min(currentCandle.low, price);
-                currentCandle.close = price;
-                candlestickSeriesRef.current.update(currentCandle);
+                // currentCandle.high = Math.max(currentCandle.high, price);
+                // currentCandle.low = Math.min(currentCandle.low, price);
+                // currentCandle.close = price;
+                // candlestickSeriesRef.current.update(currentCandle);
+
+                // const currentTime = Math.floor(timestamp / 1000);
+                // const cancelEndTime = currentCandle.time + 60;
+                // const remainingTime = cancelEndTime - currentTime;
+
+                // if(remainingTime >= 0 && remainingTime <= 60){
+                //     props.onUpdateCountdown( remainingTime); // ไม่ให้ค่าต่ำกว่า 1
+
+                // }
+                if (currentTime >= currentCandle.time + 60) {
+                    // สร้างแท่งเทียนใหม่
+                    const newCandle = {
+                        time: Math.floor(currentTime / 60) * 60,
+                        open: currentCandle.close,
+                        high: price,
+                        low: price,
+                        close: price
+                    };
+                    currentCandle = newCandle;
+                    candlestickSeriesRef.current.update(currentCandle);
+                    // รีเซ็ต countdown เป็น 60 วินาที
+                    props.onUpdateCountdown(60);
+                } else {
+                    // อัพเดตแท่งเทียนปัจจุบัน
+                    currentCandle.high = Math.max(currentCandle.high, price);
+                    currentCandle.low = Math.min(currentCandle.low, price);
+                    currentCandle.close = price;
+                    candlestickSeriesRef.current.update(currentCandle);
+
+                    // คำนวณเวลาที่เหลือ
+                    const remainingTime = Math.min(
+                        60,
+                        (currentCandle.time + 60) - currentTime
+                    );
+                    if (remainingTime >= 0) {
+                        props.onUpdateCountdown(remainingTime);
+                    }
+
+                    if (remainingTime === 0 && predictionStartPrice !== null) {
+                        props.onCheckPrediction?.(predictionStartPrice, price);
+                        setPredictionStartPrice(null);
+                    }
+                }
             }
+            props.onPriceUpdate?.(price);
         };
 
         return { socket };
@@ -123,25 +180,242 @@ export const ChartComponent = (props: any) => {
                     currentCandle = { ...newCandle };
                 }
             }, 60000);
-
+            const handleResize = () => {
+                if (chartContainerRef.current && chartRef.current) {
+                    chartRef.current.applyOptions({
+                        width: chartContainerRef.current.clientWidth,
+                        height: chartContainerRef.current.clientHeight
+                    });
+                }
+            };
+        
+            window.addEventListener('resize', handleResize);
+        
+ 
             return () => {
                 isMounted.current = false;
                 socket.close();
                 clearInterval(intervalId);
                 chartRef.current.remove();
+                window.removeEventListener('resize', handleResize);
             };
         }
     }, [props]);
-
-    return <div ref={chartContainerRef} style={{ position: 'relative', width: '100%', height: '300px' ,backgroundColor: '#1A1C24'}} />;
+    return (
+        <div className="relative w-full h-full"> {/* Removed fixed min-heights */}
+        {/* <div 
+            className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-black/50 px-4 sm:px-6 py-1 sm:py-2 rounded-lg"
+            style={{ backdropFilter: 'blur(4px)' }}
+        >
+            <span className="text-white font-bold text-base sm:text-xl">{props.countdown}s</span>
+        </div> */}
+        <div 
+            ref={chartContainerRef} 
+            style={{ 
+                position: 'relative', 
+                width: '100%', 
+                height: '100%',
+                backgroundColor: '#1A1C24',
+                zIndex: 0,
+            }} 
+            className="w-full h-full" // Changed from flex-1 to w-full h-full
+        />
+    </div>
+    );
+    // return <div ref={chartContainerRef} style={{ position: 'relative', width: '100%', height: '300px' ,backgroundColor: '#1A1C24'}} />;
 };
 
-export function Options(props: any) {
-    const initialData: any = [];
-    return (
-        <div className="flex flex-col h-[500px] max-h-screen bg-[#1A1C24]">
+export function Options({lng,data}:{lng:string,data:any}) {
+    const initialData = data;
+    const [isNewCandle, setIsNewCandle] = useState(false);
+    const [users, setUsers] = useState<any>(null);
+    const [balance, setBalance] = useState<number>(0);
+    const [countdown, setCountdown] = useState(60);
+    const [isPredictionDisabled, setIsPredictionDisabled] = useState(false);
+    const [betAmount, setBetAmount] = useState<number>(0);
+    const [isProcessingBet, setIsProcessingBet] = useState(false);
+    const [lastBetResult, setLastBetResult] = useState<'win' | 'lose' | null>(null);
+    const [selectedLeverage, setSelectedLeverage] = useState(1); // Default leverage
+    const [lastPrediction, setLastPrediction] = useState<'up' | 'down' | null>(null);
+    const [leverageAmount, setLeverageAmount] = useState(0); // Add this state
+    const [isWaitingResult, setIsWaitingResult] = useState(false);
+    const [currentPrediction, setCurrentPrediction] = useState<'up' | 'down' | null>(null);
+    const {accessToken} = useAuthStore();
+    const router = useRouter();
+    const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+    const [predictionStartPrice, setPredictionStartPrice] = useState<number | null>(null);
+    
+    const isBettingPeriod = countdown > 30;
+    // เพม useEffect สำหรับดึงข้อมูล balance
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            if (accessToken) {
+                try {
+                    const userInfo = await GetUserInfo(accessToken);
+                    //console.log('User Info received:', userInfo); // Debug log
+                    
+                    setUsers(userInfo.Data);
+                    if (userInfo?.Data?.balance) {
+                        setBalance(Number(userInfo.Data.balance));
+                    }
+                } catch (error) {
+                    console.error('Error fetching user info:', error);
+                }
+            } else {
+                router.push(`/${lng}/login`);
+            }
+        };
+        
+        fetchUserInfo();
+    }, [accessToken]);
+
+    const handlePrediction = async (prediction: 'up' | 'down') => {
+        if (!isPredictionDisabled && !isProcessingBet && !isWaitingResult) {
+            const baseBetAmount = 1; // เดิมพันพื้นฐาน 1
+            const calculatedBetAmount = baseBetAmount * selectedLeverage; // คูณด้ย leverage
             
-            <div className="h-14 bg-[#12141C] flex items-center justify-between px-4 border-b border-gray-800">
+            if (calculatedBetAmount <= balance) {
+                setIsProcessingBet(true);
+                
+                try {
+                    if (!accessToken) return;
+
+                    await createTransaction(accessToken, {
+                        status: '100',
+                        gameprovide: 'options',
+                        membername: users.membername,
+                        transactionamount: calculatedBetAmount.toString(),
+                        productid: 'BTC/USDT',
+                        beforebalance: balance.toString(),
+                        balance: (balance - calculatedBetAmount).toString(),
+                        afterbalance: (balance - calculatedBetAmount).toString()
+                    });
+                    
+                    if (currentPrice) {
+                        setPredictionStartPrice(currentPrice);
+                    }
+
+                    setCurrentPrediction(prediction);
+                    setIsWaitingResult(true);
+                    setBalance(prev => prev - calculatedBetAmount);
+                    setBetAmount(calculatedBetAmount);
+                    
+                } catch (error) {
+                    console.error('Betting error:', error);
+                } finally {
+                    setIsProcessingBet(false);
+                }
+            }
+        }
+    };
+
+    const handleLeverageClick = (leverage: number) => {
+        if (!isBettingPeriod || isProcessingBet || isWaitingResult) return;
+
+        setSelectedLeverage(leverage);
+        setLeverageAmount(1 * (leverage));
+    };
+
+    const handleClearLeverage = () => {
+        if (!isBettingPeriod || isProcessingBet || isWaitingResult) return;
+        setSelectedLeverage(1);
+        setLeverageAmount(0);
+    };
+    const CountdownDisplay = memo(({ countdown }: { countdown: number }) => {
+        // คำนวณเวลาแยกเป็น 2 ช่วง
+        const displayTime = countdown > 30 
+            ? countdown - 30  // 30 วินาทีแรก (30-1)
+            : countdown;      // 30 วินาทีหลัง (30-1)
+    
+        const message = countdown > 30 
+            ? "กรุณาลงเดิมพัน"
+            : "รอผลเดิมพัน";
+    
+        return (
+            <div 
+                className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-black/50 px-4 sm:px-6 py-1 sm:py-2 rounded-lg flex flex-col items-center"
+                style={{ backdropFilter: 'blur(4px)' }}
+            >
+                <span className="text-white font-bold text-sm mb-1">{message}</span>
+                <span className="text-white font-bold text-base sm:text-xl">
+                    {displayTime}s
+                </span>
+            </div>
+        );
+    });
+
+    const checkPredictionResult = async (currentPrice: number, newPrice: number) => {
+        if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
+            const isCorrect = (currentPrediction === 'up' && newPrice > currentPrice) ||
+                            (currentPrediction === 'down' && newPrice < currentPrice);
+            
+            const winAmount = isCorrect ? betAmount * 2 : 0;
+            
+            try {
+                await createTransaction(accessToken, {
+                    status: '101',
+                    gameprovide: 'options',
+                    membername: users.membername,
+                    transactionamount: winAmount.toString(),
+                    productid: 'BTC/USDT',
+                    beforebalance: balance.toString(),
+                    balance: (balance + winAmount).toString(),
+                    afterbalance: (balance + winAmount).toString()
+                });
+
+                if (isCorrect) {
+                    setBalance(prev => prev + winAmount);
+                    setLastBetResult('win');
+                } else {
+                    setLastBetResult('lose');
+                }
+                
+                setBetAmount(0);
+                setCurrentPrediction(null);
+                setIsWaitingResult(false);
+                setSelectedLeverage(1);
+                setLeverageAmount(0);
+            } catch (error) {
+                console.error('Result processing error:', error);
+                if (!accessToken) {
+                    router.push(`/${lng}/login`);
+                }
+            }
+        }
+    };
+
+    const memoizedChart = useMemo(() => (
+        <ChartComponent 
+            data={initialData} 
+            countdown={countdown}
+            onUpdateCountdown={setCountdown}
+            onPriceUpdate={setCurrentPrice}
+            onCheckPrediction={checkPredictionResult}
+        />
+    ), [initialData]);
+
+    // Add useEffect for countdown and candle management
+    useEffect(() => {
+        if (countdown <= 5) {
+            setIsPredictionDisabled(true);
+        }
+        if (countdown === 60) {
+            setIsNewCandle(true);
+            setIsPredictionDisabled(false);
+            setLastPrediction(null);
+            setIsWaitingResult(false);
+            setCurrentPrediction(null);
+            setLastBetResult(null);
+        }
+        // if (countdown === 0 && currentPrediction && isWaitingResult) {
+        //     checkPredictionResult();
+        // }
+    }, [countdown]);
+
+    return (
+        <div className="flex flex-col h-[500px] max-h-screen bg-[#1A1C24] max-w-[1024px] mx-auto w-full">
+            
+            <div className="h-14 bg-[#12141C] flex items-center justify-between px-4 border-b border-gray-800 w-full">
                 <div className="flex items-center space-x-4">
                     {/* Menu and Grid Icons */}
                     <div className="flex space-x-2">
@@ -157,17 +431,51 @@ export function Options(props: any) {
                         </button>
                     </div>
                     
-                    {/* Currency Pair */}
-                    <div className="flex items-center space-x-2">
-                        <span className="text-white font-semibold">BTC/USDT</span>
-                        <span className="text-gray-400">Forex</span>
+                    {/* User Info */}
+                    <div className="flex items-center space-x-4">
+                        <div className="flex flex-col">
+                            <span className="text-white font-semibold">
+                                {users?.username || 'Loading...'}
+                            </span>
+                            <span className="text-gray-400 text-sm">
+                                Balance: ${balance || '0.00'}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <span className="text-white">$1.0876</span>
-                    <button className="px-4 py-1.5 bg-green-600 text-white text-sm rounded">
-                       Balance
-                    </button>
+                <div className="flex items-center space-x-2">
+                {[5, 10, 15, 20, 25].map((leverage) => (
+                             <button
+                             key={leverage}
+                             onClick={() => handleLeverageClick(leverage)}
+                             disabled={!isBettingPeriod || isProcessingBet || isWaitingResult}
+                             className={`px-3 py-1 rounded ${
+                                 selectedLeverage === leverage
+                                     ? 'bg-blue-500 text-white'
+                                     : 'bg-gray-200 text-gray-700'
+                             } ${
+                                 !isBettingPeriod || isProcessingBet || isWaitingResult 
+                                     ? 'opacity-50 cursor-not-allowed' 
+                                     : 'hover:bg-blue-400'
+                             }`}
+                         >
+                             {leverage}x
+                         </button>
+                        ))}
+                    </div>
+                    <span className="text-white">${leverageAmount.toFixed(2)}</span>
+                    <button
+                    onClick={handleClearLeverage}
+                    disabled={!isBettingPeriod || isProcessingBet || isWaitingResult}
+                    className={`px-3 py-1 rounded bg-red-500 text-white
+                        ${!isBettingPeriod || isProcessingBet || isWaitingResult 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'hover:bg-red-400'
+                        }`}
+                >
+                    Clear
+                </button>
                 </div>
             </div>
             <div className="flex flex-1">
@@ -183,15 +491,64 @@ export function Options(props: any) {
                 <div className="flex-1 flex">
                     {/* Chart */}
                     <div className="flex-1 relative">
-                    <ChartComponent {...props} data={initialData} />
+                    {/* <ChartComponent {...props} data={initialData} countdown={countdown} /> */}
+                    {memoizedChart}
+                    <CountdownDisplay countdown={countdown} />
                     </div>
                     <div className="w-16 flex flex-col justify-center items-center space-y-2 px-2">
-                        <button className="w-full py-3 bg-green-500 text-white rounded hover:bg-green-600 transition-colors font-bold text-xs">
-                            BUY
-                        </button>
-                        <button className="w-full py-3 bg-red-500 text-white rounded hover:bg-red-600 transition-colors font-bold text-xs">
-                            SELL
-                        </button>
+                    <button 
+                onClick={() => handlePrediction('up')}
+                disabled={!isBettingPeriod || isProcessingBet || isWaitingResult}
+                className={`w-full py-3 rounded font-bold text-xs text-white relative
+                    ${!isBettingPeriod || isProcessingBet || isWaitingResult
+                        ? 'bg-green-500/50 cursor-not-allowed' 
+                        : 'bg-green-500 hover:bg-green-600 cursor-pointer'} 
+                    transition-colors`}
+            >
+                {isProcessingBet ? (
+                    'Processing...'
+                ) : isWaitingResult && currentPrediction === 'up' ? (
+                    'UP...'
+                ) : (
+                    'UP'
+                )}
+                {isWaitingResult && currentPrediction === 'up' && (
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                        <div className="animate-pulse text-xs">Waiting Result</div>
+                    </div>
+                )}
+            </button>
+            
+            <button 
+                onClick={() => handlePrediction('down')}
+                disabled={!isBettingPeriod || isProcessingBet || isWaitingResult}
+                className={`w-full py-3 rounded font-bold text-xs text-white relative
+                    ${!isBettingPeriod || isProcessingBet || isWaitingResult
+                        ? 'bg-red-500/50 cursor-not-allowed' 
+                        : 'bg-red-500 hover:bg-red-600 cursor-pointer'} 
+                    transition-colors`}
+            >
+                {isProcessingBet ? (
+                    'Processing...'
+                ) : isWaitingResult && currentPrediction === 'down' ? (
+                    'DOWN...'
+                ) : (
+                    'DOWN'
+                )}
+                {isWaitingResult && currentPrediction === 'down' && (
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                        <div className="animate-pulse text-xs">Waiting Result</div>
+                    </div>
+                )}
+            </button>
+
+            {/* แสดดสถานะการเดิมพัน */}
+            {isWaitingResult && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
+                    bg-black/70 px-4 py-2 rounded-lg text-white text-sm">
+                    Prediction: {currentPrediction === 'up' ? 'UP' : 'DOWN'}
+                </div>
+            )}
                     </div>
                 </div>
             </div>

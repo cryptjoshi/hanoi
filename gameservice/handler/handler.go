@@ -499,27 +499,54 @@ func Logout(c *fiber.Ctx) error {
 	// }
 	 
 }
-
+type TransactionRequest struct {
+    Status          int                 `json:"status"`
+    GameProvide     string                  `json:"gameProvide"`
+    MemberName      string                  `json:"memberName"`
+    TransactionAmount decimal.Decimal       `json:"transactionAmount"`
+	BetAmount       decimal.Decimal       `json:"betmount"`
+    ProductID       int64                     `json:"productID"`
+    BeforeBalance   string                  `json:"beforeBalance"`
+    Balance         decimal.Decimal                  `json:"balance"`
+    AfterBalance    string                  `json:"afterBalance"`
+}
 func AddTransactions(c *fiber.Ctx) error {
 
 //func AddTransactions(c *fiber.Ctx,transactionsub models.TransactionSub,membername string) Response {
 
-	//fmt.Println("transactionsub:",transactionsub)
+	
 
-	type TransactionRequest struct {
-		TransactionSub models.TransactionSub
-		MemberName string
+	type bodyRequest struct {
+		Body TransactionRequest
 	}
-	transactionRequest := new(TransactionRequest)
-	if err := c.BodyParser(transactionRequest); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"Status": false,
-			"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
-			"Data": map[string]interface{}{
-				"id": -1,
-			},
-		})
+	
+	//fmt.Println("transactionsub:",transactionsub)
+	//Body := make(map[string]interface{})
+	transactionRequest := new(bodyRequest)
+
+	if err := c.BodyParser(&transactionRequest); err != nil {
+		fmt.Printf(" %s ", err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
 	}
+
+	fmt.Printf("Body: %s",transactionRequest.Body)
+
+	
+	// transactionRequest := new(TransactionRequest)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+	// 		"Data": map[string]interface{}{
+	// 			"id": -1,
+	// 		},
+	// 	})
+	// }
+
 	transactionsub := models.TransactionSub{}
 
 	response := Response{
@@ -533,7 +560,7 @@ func AddTransactions(c *fiber.Ctx) error {
 	}
 
 	var users models.Users
-    if err_ := database.Database.Where("username = ? ", transactionRequest.MemberName).First(&users).Error; err_ != nil {
+    if err_ := database.Database.Where("username = ? ", transactionRequest.Body.MemberName).First(&users).Error; err_ != nil {
 		response = Response{
 			Status: false,
 			Message: "ไม่พบข้อมูล",
@@ -543,13 +570,13 @@ func AddTransactions(c *fiber.Ctx) error {
     	}
 	}
 
-   
-    transactionsub.GameProvide = transactionRequest.TransactionSub.GameProvide
-    transactionsub.MemberName = transactionRequest.TransactionSub.MemberName
-	transactionsub.ProductID = transactionRequest.TransactionSub.ProductID
-	transactionsub.BetAmount = transactionRequest.TransactionSub.BetAmount
+    transactionsub.Status = transactionRequest.Body.Status
+    transactionsub.GameProvide = transactionRequest.Body.GameProvide
+    transactionsub.MemberName = transactionRequest.Body.MemberName
+	transactionsub.ProductID = transactionRequest.Body.ProductID
+	transactionsub.BetAmount = transactionRequest.Body.TransactionAmount
 	transactionsub.BeforeBalance = users.Balance
-	transactionsub.Balance = users.Balance.Add(transactionRequest.TransactionSub.TransactionAmount)
+	transactionsub.Balance = transactionRequest.Body.Balance
 		
 	result := database.Database.Create(&transactionsub); 
 	//fmt.Println(result)

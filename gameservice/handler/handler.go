@@ -543,13 +543,14 @@ func AddTransactions(c *fiber.Ctx) error {
     	}
 	}
 
-    transactionsub.GameProvide = transactionRequest.GameProvide
-    transactionsub.MemberName = transactionRequest.MemberName
-	transactionsub.ProductID = transactionsub.ProductID
-	transactionsub.BetAmount = transactionsub.BetAmount
+   
+    transactionsub.GameProvide = transactionRequest.TransactionSub.GameProvide
+    transactionsub.MemberName = transactionRequest.TransactionSub.MemberName
+	transactionsub.ProductID = transactionRequest.TransactionSub.ProductID
+	transactionsub.BetAmount = transactionRequest.TransactionSub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
-	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	
+	transactionsub.Balance = users.Balance.Add(transactionRequest.TransactionSub.TransactionAmount)
+		
 	result := database.Database.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {

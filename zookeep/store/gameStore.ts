@@ -7,16 +7,16 @@ type GameStatus = {
 
 interface GameStore {
   gameStatus: GameStatus | null
-  fetchGameStatus: (prefix: string) => Promise<void>
+  fetchGameStatus: (prefix: string,token:string) => Promise<void>
 }
 
 const useGameStore = create<GameStore>((set) => ({
   gameStatus: null,
-  fetchGameStatus: async (prefix: string) => {
+  fetchGameStatus: async (prefix: string,token:string) => {
     try {
-      const response = await GetGameStatus(prefix)
-    //  console.log('response',response)
-       if(response.Status){
+      const response = await GetGameStatus(prefix,token)
+  
+       if(response && response.Status){
         const mappedData = response.Data.map((item: any) => {
             const status = item.status // แปลง JSON string เป็นอ็อบเจ็กต์
             return {

@@ -10,6 +10,7 @@ interface ChartComponentProps {
     onUpdateCountdown: (newCountdown: number) => void;  // เพิ่ม setter function
     onPriceUpdate?: (price: number) => void;  // Add this line
     data?: any;
+    onOpenPrice?:(open:number)=> void;
     onCheckPrediction?: (startPrice: number, endPrice: number) => void;  // Add this line
 }
 export const ChartComponent = (props: ChartComponentProps) => {
@@ -32,7 +33,7 @@ export const ChartComponent = (props: ChartComponentProps) => {
             time: Math.floor(item[0] / 1000),
         }));
     };
-    const [predictionStartPrice, setPredictionStartPrice] = useState<number | null>(null);
+  //  const [predictionStartPrice, setPredictionStartPrice] = useState<number | null>(null);
 
     const setupWebSocket = () => {
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
@@ -42,6 +43,7 @@ export const ChartComponent = (props: ChartComponentProps) => {
             const price = parseFloat(message.p);
             const timestamp = message.T;
             const currentTime = Math.floor(timestamp / 1000);
+           // console.log('currentCandlet:',currentCandle)
             if (currentCandle) {
                 // currentCandle.high = Math.max(currentCandle.high, price);
                 // currentCandle.low = Math.min(currentCandle.low, price);
@@ -65,9 +67,13 @@ export const ChartComponent = (props: ChartComponentProps) => {
                         low: price,
                         close: price
                     };
+                
                     currentCandle = newCandle;
+                    
                     candlestickSeriesRef.current.update(currentCandle);
                     // รีเซ็ต countdown เป็น 60 วินาที
+                    
+                    props.onOpenPrice?.(newCandle.open)
                     props.onUpdateCountdown(60);
                 } else {
                     // อัพเดตแท่งเทียนปัจจุบัน
@@ -75,7 +81,7 @@ export const ChartComponent = (props: ChartComponentProps) => {
                     currentCandle.low = Math.min(currentCandle.low, price);
                     currentCandle.close = price;
                     candlestickSeriesRef.current.update(currentCandle);
-
+                    //props.onPriceUpdate?.(price);
                     // คำนวณเวลาที่เหลือ
                     const remainingTime = Math.min(
                         60,
@@ -84,14 +90,21 @@ export const ChartComponent = (props: ChartComponentProps) => {
                     if (remainingTime >= 0) {
                         props.onUpdateCountdown(remainingTime);
                     }
+                  //  console.log("remainingTime:",remainingTime)
+                  //  console.log("predictionStartPrice:",predictionStartPrice)
 
-                    if (remainingTime === 0 && predictionStartPrice !== null) {
-                        props.onCheckPrediction?.(predictionStartPrice, price);
-                        setPredictionStartPrice(null);
+                     if (remainingTime === 0) {
+                    //    props.onOpenPrice?.(currentCandle.open)
+                       props.onCheckPrediction?.(currentCandle.open, price);
+                      //  setPredictionStartPrice(null);
                     }
                 }
             }
-            props.onPriceUpdate?.(price);
+           // if (currentTime >= currentCandle.time + 60) 
+            //    props.onOpenPrice?.(price)
+            //    else    
+            //    props.onPriceUpdate?.(price);
+
         };
 
         return { socket };
@@ -242,8 +255,8 @@ export function Options({lng,data}:{lng:string,data:any}) {
     const [currentPrediction, setCurrentPrediction] = useState<'up' | 'down' | null>(null);
     const {accessToken} = useAuthStore();
     const router = useRouter();
-    const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-    const [predictionStartPrice, setPredictionStartPrice] = useState<number | null>(null);
+    const [currentPrice, setCurrentPrice] = useState<number | 0>(0);
+    const [predictionStartPrice, setPredictionStartPrice] = useState<number | 0>(0);
     
     const isBettingPeriod = countdown > 30;
     // เพม useEffect สำหรับดึงข้อมูล balance
@@ -278,28 +291,30 @@ export function Options({lng,data}:{lng:string,data:any}) {
                 setIsProcessingBet(true);
                 
                 try {
-                    if (!accessToken) return;
+                    if (accessToken) {
+                        await createTransaction(accessToken, {
+                            Status: 100,
+                            GameProvide: 'options',
+                            MemberName: users.username,
+                            TransactionAmount: calculatedBetAmount.toString(),
+                            ProductID: 9000,
+                            BeforeBalance: balance.toString(),
+                            Balance: (balance - calculatedBetAmount).toString(),
+                            AfterBalance: (balance - calculatedBetAmount).toString()
+                        });
+                        
+                        if (predictionStartPrice !== null) {
+                            setPredictionStartPrice(predictionStartPrice);
+                        }
 
-                    await createTransaction(accessToken, {
-                        status: '100',
-                        gameprovide: 'options',
-                        membername: users.membername,
-                        transactionamount: calculatedBetAmount.toString(),
-                        productid: 'BTC/USDT',
-                        beforebalance: balance.toString(),
-                        balance: (balance - calculatedBetAmount).toString(),
-                        afterbalance: (balance - calculatedBetAmount).toString()
-                    });
-                    
-                    if (currentPrice) {
-                        setPredictionStartPrice(currentPrice);
+                        setCurrentPrediction(prediction);
+                        setIsWaitingResult(true);
+                        setBalance(prev => prev - calculatedBetAmount);
+                        setBetAmount(calculatedBetAmount);
+                    } else {
+                        router.push(`/${lng}/login`);
                     }
 
-                    setCurrentPrediction(prediction);
-                    setIsWaitingResult(true);
-                    setBalance(prev => prev - calculatedBetAmount);
-                    setBetAmount(calculatedBetAmount);
-                    
                 } catch (error) {
                     console.error('Betting error:', error);
                 } finally {
@@ -345,22 +360,23 @@ export function Options({lng,data}:{lng:string,data:any}) {
     });
 
     const checkPredictionResult = async (currentPrice: number, newPrice: number) => {
+        //console.log(currentPrediction, betAmount > 0 ,isWaitingResult , accessToken)
         if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
-            const isCorrect = (currentPrediction === 'up' && newPrice > currentPrice) ||
-                            (currentPrediction === 'down' && newPrice < currentPrice);
+            const isCorrect = (currentPrice < newPrice && currentPrediction === 'up') ||
+                              (currentPrice > newPrice && currentPrediction === 'down');
             
-            const winAmount = isCorrect ? betAmount * 2 : 0;
-            
+            const winAmount = isCorrect ? betAmount : 0; // บวกเพิ่ม 1 เท่าของยอดเดิมพันถ้าถูก
+
             try {
                 await createTransaction(accessToken, {
-                    status: '101',
-                    gameprovide: 'options',
-                    membername: users.membername,
-                    transactionamount: winAmount.toString(),
-                    productid: 'BTC/USDT',
-                    beforebalance: balance.toString(),
-                    balance: (balance + winAmount).toString(),
-                    afterbalance: (balance + winAmount).toString()
+                    Status: 101,
+                    GameProvide: 'options',
+                    MemberName: users.username,
+                    TransactionAmount: winAmount.toString(),
+                    ProductID: 9000,
+                    BeforeBalance: balance.toString(),
+                    Balance: (balance + winAmount).toString(),
+                    AfterBalance:  (balance + winAmount).toString()
                 });
 
                 if (isCorrect) {
@@ -391,6 +407,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
             onUpdateCountdown={setCountdown}
             onPriceUpdate={setCurrentPrice}
             onCheckPrediction={checkPredictionResult}
+            onOpenPrice={setPredictionStartPrice}
         />
     ), [initialData]);
 
@@ -407,9 +424,10 @@ export function Options({lng,data}:{lng:string,data:any}) {
             setCurrentPrediction(null);
             setLastBetResult(null);
         }
-        // if (countdown === 0 && currentPrediction && isWaitingResult) {
-        //     checkPredictionResult();
-        // }
+        
+         if (countdown === 0 && currentPrediction && isWaitingResult) {
+            checkPredictionResult(predictionStartPrice,currentPrice);
+         }
     }, [countdown]);
 
     return (
@@ -542,13 +560,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
                 )}
             </button>
 
-            {/* แสดดสถานะการเดิมพัน */}
-            {isWaitingResult && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
-                    bg-black/70 px-4 py-2 rounded-lg text-white text-sm">
-                    Prediction: {currentPrediction === 'up' ? 'UP' : 'DOWN'}
-                </div>
-            )}
+          
                     </div>
                 </div>
             </div>

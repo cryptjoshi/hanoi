@@ -22,19 +22,22 @@ export function Options({lng,data}:{lng:string,data:any}) {
     const [leverageAmount, setLeverageAmount] = useState(0); // Add this state
     const [isWaitingResult, setIsWaitingResult] = useState(false);
     const [currentPrediction, setCurrentPrediction] = useState<'up' | 'down' | null>(null);
-    const {accessToken} = useAuthStore();
+    //const {accessToken} = useAuthStore();
     const router = useRouter();
     const [currentPrice, setCurrentPrice] = useState<number | 0>(0);
     const [predictionStartPrice, setPredictionStartPrice] = useState<number | 0>(0);
     const [betPrice, setBetPrice] = useState<number | null>(null);
     const [closePrice, setClosePrice] = useState<number | null>(null);
     const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
-    
+    const {isLoggedIn,accessToken}= useAuthStore()
+
+
+
     const isBettingPeriod = countdown > 45;
     // เพม useEffect สำหรับดึงข้อมูล balance
     useEffect(() => {
         const fetchUserInfo = async () => {
-            if (accessToken) {
+            if (isLoggedIn) {
                 try {
                     const userInfo = await GetUserInfo(accessToken);
                     //console.log('User Info received:', userInfo); // Debug log
@@ -52,7 +55,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
         };
         
         fetchUserInfo();
-    }, [accessToken]);
+    }, [isLoggedIn]);
 
     useEffect(() => {
         if (isWaitingResult) {
@@ -68,12 +71,26 @@ export function Options({lng,data}:{lng:string,data:any}) {
         if (!isPredictionDisabled && !isProcessingBet && !isWaitingResult) {
             const calculatedBetAmount = 1 * selectedLeverage;
            
-            if (calculatedBetAmount <= balance) {
+            if (calculatedBetAmount <= balance && calculatedBetAmount > 0) {
                 setIsProcessingBet(true);
                 
                 try {
                     if (accessToken) {
-                        await createTransaction(accessToken, {
+                      
+                        // if (predictionStartPrice !== null) {
+                        //     setPredictionStartPrice(predictionStartPrice);
+                        // }
+                         
+                        setBetAmount(calculatedBetAmount); 
+                         // เพิ่ม debug log
+                        setIsPredictionDisabled(true);
+                        setBetPrice(currentPrice);
+                        setCurrentPrediction(prediction);
+                        setIsWaitingResult(true);
+                        setBalance(prev => prev - calculatedBetAmount);
+                        
+                        //console.log('Setting bet price:', currentPrice);
+                        const response = await createTransaction(accessToken, {
                             Status: 100,
                             GameProvide: 'options',
                             MemberName: users.username,
@@ -83,17 +100,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
                             Balance: (balance - calculatedBetAmount).toString(),
                             AfterBalance: (balance - calculatedBetAmount).toString()
                         });
-                        
-                        if (predictionStartPrice !== null) {
-                            setPredictionStartPrice(predictionStartPrice);
-                        }
-                        console.log('Setting bet price:', currentPrice); // เพิ่ม debug log
-                        setIsPredictionDisabled(true);
-                        setBetPrice(currentPrice);
-                        setCurrentPrediction(prediction);
-                        setIsWaitingResult(true);
-                        setBalance(prev => prev - calculatedBetAmount);
-                        setBetAmount(calculatedBetAmount);
+                        console.log("BetReponse:"+response)
                     } else {
                         router.push(`/${lng}/login`);
                     }
@@ -103,8 +110,11 @@ export function Options({lng,data}:{lng:string,data:any}) {
                 } finally {
                     setIsProcessingBet(false);
                 }
+            } else {
+                console.error('Invalid bet amount:', calculatedBetAmount);
             }
-        }
+            }
+       
     };
 
     const handleLeverageClick = (leverage: number) => {
@@ -131,28 +141,28 @@ export function Options({lng,data}:{lng:string,data:any}) {
         setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
         // ลงทะเบียน event listener
      
-
-
-       
-        
-
+        //console.log(currentPrediction,betAmount,isWaitingResult,accessToken)
+      //  console.log(currentPrediction && betAmount > 0 && isWaitingResult && accessToken)
         if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
+
+            console.log(currentPrediction,finalClosePrice+">"+startPrice)
+            console.log(currentPrediction,finalClosePrice+"<"+startPrice)
             const isCorrect = 
                 (currentPrediction === 'up' && finalClosePrice > startPrice) ||
                 (currentPrediction === 'down' && finalClosePrice < startPrice);
             
             const winAmount = isCorrect ? betAmount * 2 : 0;
 
-            console.log('Processing result:', {
-                isCorrect,
-                winAmount,
-                prediction: currentPrediction,
-                startPrice,
-                endPrice: finalClosePrice
-            });
+            // console.log('Processing result:', {
+            //     isCorrect,
+            //     winAmount,
+            //     prediction: currentPrediction,
+            //     startPrice,
+            //     endPrice: finalClosePrice
+            // });
 
             try {
-                await createTransaction(accessToken, {
+               const response = await createTransaction(accessToken, {
                     Status: 101,
                     GameProvide: 'options',
                     MemberName: users.username,
@@ -162,23 +172,29 @@ export function Options({lng,data}:{lng:string,data:any}) {
                     Balance: (balance + winAmount).toString(),
                     AfterBalance: (balance + winAmount).toString()
                 });
-
+                //console.log("result:",response)
                 // อัพเดทผลลัพธ์
+
+                console.log(!isBettingPeriod,isProcessingBet,isWaitingResult)
+
                 setBalance(prev => prev + winAmount);
                 setLastBetResult(isCorrect ? 'win' : 'lose');
-                
+                console.log(isCorrect ? 'win' : 'lose')
                 // Reset states
                 setBetAmount(0);
                 setCurrentPrediction(null);
                 setIsWaitingResult(false);
                 setSelectedLeverage(1);
                 setLeverageAmount(0);
+                
             } catch (error) {
                 console.error('Result processing error:', error);
                 if (!accessToken) {
                     router.push(`/${lng}/login`);
                 }
             }
+       } else if(betAmount==0){
+            console.log("BetAmount is Zero!")
        }
     };
 

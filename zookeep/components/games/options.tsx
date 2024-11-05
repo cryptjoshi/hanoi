@@ -56,6 +56,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
 
     useEffect(() => {
         if (isWaitingResult) {
+
             setClosePrice(currentPrice);
             if (betPrice) {
                 setPriceDirection(currentPrice > betPrice ? 'up' : 'down');
@@ -66,7 +67,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
     const handlePrediction = async (prediction: 'up' | 'down') => {
         if (!isPredictionDisabled && !isProcessingBet && !isWaitingResult) {
             const calculatedBetAmount = 1 * selectedLeverage;
-            
+           
             if (calculatedBetAmount <= balance) {
                 setIsProcessingBet(true);
                 
@@ -87,7 +88,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
                             setPredictionStartPrice(predictionStartPrice);
                         }
                         console.log('Setting bet price:', currentPrice); // เพิ่ม debug log
-                
+                        setIsPredictionDisabled(true);
                         setBetPrice(currentPrice);
                         setCurrentPrediction(prediction);
                         setIsWaitingResult(true);
@@ -119,71 +120,66 @@ export function Options({lng,data}:{lng:string,data:any}) {
         setLeverageAmount(0);
     };
 
-    const checkPredictionResult = async (startPrice: number, endPrice: number) => {
-        // console.log('Checking prediction:', {
-        //     startPrice,
-        //     endPrice,
-        //     currentPrediction,
-        //     betAmount,
-        //     isWaitingResult
-        // });
-        console.log('Checking prediction:', {
-            startPrice,
-            endPrice,
-            currentPrediction,
-            betAmount,
-            isWaitingResult
-        });
+    const checkPredictionResult = async (startPrice: number, endPrice: number,isNewCandle:boolean) => {
+      
+        
+     
 
 
-        // const finalClosePrice = endPrice;
-        // setClosePrice(finalClosePrice);
-        // setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
+        const finalClosePrice = endPrice;
+        setClosePrice(finalClosePrice);
+        setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
+        // ลงทะเบียน event listener
+     
 
-        // if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
-        //     const isCorrect = 
-        //         (currentPrediction === 'up' && finalClosePrice > startPrice) ||
-        //         (currentPrediction === 'down' && finalClosePrice < startPrice);
+
+       
+        
+
+        if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
+            const isCorrect = 
+                (currentPrediction === 'up' && finalClosePrice > startPrice) ||
+                (currentPrediction === 'down' && finalClosePrice < startPrice);
             
-        //     const winAmount = isCorrect ? betAmount * 2 : 0;
+            const winAmount = isCorrect ? betAmount * 2 : 0;
 
-        //     console.log('Processing result:', {
-        //         isCorrect,
-        //         winAmount,
-        //         prediction: currentPrediction,
-        //         startPrice,
-        //         endPrice: finalClosePrice
-        //     });
+            console.log('Processing result:', {
+                isCorrect,
+                winAmount,
+                prediction: currentPrediction,
+                startPrice,
+                endPrice: finalClosePrice
+            });
 
-        //     try {
-        //         await createTransaction(accessToken, {
-        //             Status: 101,
-        //             GameProvide: 'options',
-        //             MemberName: users.username,
-        //             TransactionAmount: winAmount.toString(),
-        //             ProductID: 9000,
-        //             BeforeBalance: balance.toString(),
-        //             Balance: (balance + winAmount).toString(),
-        //             AfterBalance: (balance + winAmount).toString()
-        //         });
+            try {
+                await createTransaction(accessToken, {
+                    Status: 101,
+                    GameProvide: 'options',
+                    MemberName: users.username,
+                    TransactionAmount: winAmount.toString(),
+                    ProductID: 9000,
+                    BeforeBalance: balance.toString(),
+                    Balance: (balance + winAmount).toString(),
+                    AfterBalance: (balance + winAmount).toString()
+                });
 
-        //         // อัพเดทผลลัพธ์
-        //         setBalance(prev => prev + winAmount);
-        //         setLastBetResult(isCorrect ? 'win' : 'lose');
+                // อัพเดทผลลัพธ์
+                setBalance(prev => prev + winAmount);
+                setLastBetResult(isCorrect ? 'win' : 'lose');
                 
-        //         // Reset states
+                // Reset states
                 setBetAmount(0);
                 setCurrentPrediction(null);
                 setIsWaitingResult(false);
                 setSelectedLeverage(1);
                 setLeverageAmount(0);
-        //     } catch (error) {
-        //         console.error('Result processing error:', error);
-        //         if (!accessToken) {
-        //             router.push(`/${lng}/login`);
-        //         }
-        //     }
-       // }
+            } catch (error) {
+                console.error('Result processing error:', error);
+                if (!accessToken) {
+                    router.push(`/${lng}/login`);
+                }
+            }
+       }
     };
 
     const memoizedChart = useMemo(() => (
@@ -351,7 +347,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
                 {isProcessingBet ? (
                     'Processing...'
                 ) : isWaitingResult && currentPrediction === 'up' ? (
-                    'UP...'
+                    'Processing...'
                 ) : (
                     'UP'
                 )}
@@ -374,7 +370,7 @@ export function Options({lng,data}:{lng:string,data:any}) {
                 {isProcessingBet ? (
                     'Processing...'
                 ) : isWaitingResult && currentPrediction === 'down' ? (
-                    'DOWN...'
+                    'Processing...'
                 ) : (
                     'DOWN'
                 )}

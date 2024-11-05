@@ -5,7 +5,7 @@ interface ChartProps {
     data: any;
     onPriceUpdate: (price: number) => void;
     onOpenPrice: (price: number) => void;
-    onCheckPrediction: (startPrice: number, endPrice: number) => void;
+    onCheckPrediction: (startPrice: number, endPrice: number,isNewCandle:boolean) => void;
     onBettingStateChange: (canBet: boolean) => void;
 }
 
@@ -145,7 +145,8 @@ const ChartComponent: React.FC<ChartProps> = (props) => {
 
             if (kline) {
                 const price = parseFloat(kline.c);
-                const isNewCandle = !currentCandle || kline.t !== currentCandle.time;
+                const klineTimeInSeconds = kline.t / 1000;
+                const isNewCandle = !currentCandle || klineTimeInSeconds !== currentCandle.time;
                 const currentTime = Math.floor(Date.now() / 1000);
                 const candleStartTime = Math.floor(kline.t / 1000);
                 const candleEndTime = candleStartTime + 60;
@@ -160,9 +161,13 @@ const ChartComponent: React.FC<ChartProps> = (props) => {
                 props.onPriceUpdate(price);
                 props.onBettingStateChange(remainingTime > 45);
 
+                // Check if we are in the betting period
+                const isBettingPeriod = remainingTime > 45; // Adjust this condition as needed
+             
                 if (isNewCandle) {
                     if (currentCandle) {
-                        props.onCheckPrediction(currentCandle.open, currentCandle.close);
+                      //  console.log(klineTimeInSeconds,currentCandle.time," is ",klineTimeInSeconds !== currentCandle.time)
+                        props.onCheckPrediction(currentCandle.open, currentCandle.close, isNewCandle);
                     }
 
                     currentCandle = {
@@ -175,7 +180,7 @@ const ChartComponent: React.FC<ChartProps> = (props) => {
 
                     candlestickSeriesRef.current?.update(currentCandle);
                     props.onOpenPrice(currentCandle.open);
-                   // countdownRef.current = 60;
+                    // countdownRef.current = 60;
 
                     // console.log('New Candle:', {
                     //     time: new Date(currentCandle.time * 1000).toLocaleTimeString(),
@@ -187,6 +192,7 @@ const ChartComponent: React.FC<ChartProps> = (props) => {
                     currentCandle.close = price;
                     candlestickSeriesRef.current?.update(currentCandle);
                     countdownRef.current = remainingTime;
+                  //  console.log("IsNewCandle:", isNewCandle);
                 }
             }
         };

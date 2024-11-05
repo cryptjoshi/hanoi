@@ -131,11 +131,6 @@ export function Options({lng,data}:{lng:string,data:any}) {
         setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
         // ลงทะเบียน event listener
      
-
-
-       
-        
-
         if (currentPrediction && betAmount > 0 && isWaitingResult && accessToken) {
             const isCorrect = 
                 (currentPrediction === 'up' && finalClosePrice > startPrice) ||

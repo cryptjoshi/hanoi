@@ -611,6 +611,7 @@ func AddTransactions(c *fiber.Ctx) error {
 		Data: ResponseBalance{
 			BeforeBalance: transactionsub.BeforeBalance,
 			Balance:       transactionsub.Balance,
+			BetAmount: transactionsub.BetAmount,
 		},
 		}
 		

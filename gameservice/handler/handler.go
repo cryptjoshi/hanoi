@@ -605,14 +605,14 @@ func AddTransactions(c *fiber.Ctx) error {
  
  
 	 
-	  response = Response{
-		Status: true,
-		Message: "สำเร็จ",
-		Data: ResponseBalance{
-			BeforeBalance: transactionsub.BeforeBalance,
-			Balance:       transactionsub.Balance,
-			BetAmount: transactionsub.BetAmount,
-		},
+		response = Response{
+			Status: true,
+			Message: "สำเร็จ",
+			Data: ResponseBalance{
+				BeforeBalance: transactionsub.BeforeBalance,
+				Balance:       transactionsub.Balance,
+				BetAmount: transactionsub.BetAmount,
+			},
 		}
 		
 	}

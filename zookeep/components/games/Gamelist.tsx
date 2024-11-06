@@ -21,7 +21,7 @@ export default function GameList({ id,lng }: { id:string,lng:string }) {
     useEffect(()=>{
         const fetchgame = async (id:string) =>{
             const response = await GetGameByType(accessToken,id)
-          
+            console.log(response)
             if(response.Status){
                 setGameList(response.Data)
             } else {

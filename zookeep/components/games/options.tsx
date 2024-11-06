@@ -4,7 +4,14 @@ import useAuthStore from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import useBetStore, { BetStore } from '@/store/betStore';
 import { createChart, ColorType, CrosshairMode,IChartApi,ISeriesApi } from 'lightweight-charts';
-
+interface ChartProps {
+    data: any;
+    onPriceUpdate: (price: number) => void;
+    onOpenPrice: (price: number) => void;
+    onCheckPrediction: (startPrice: number, endPrice: number,isNewCandle:boolean) => void;
+    betting: boolean;
+    onWaitingStateChange: (waiting: boolean) => void;
+}
 
 export function Options({ lng, data }: { lng: string; data: any }) {
     const initialData = data;
@@ -13,6 +20,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
     const [selectedLeverage, setSelectedLeverage] = useState(1);
     const [currentPrice, setCurrentPrice] = useState<number | 0>(0);
     const [isProcessingBet, setIsProcessingBet] = useState(false);
+    const [predictionStartPrice, setPredictionStartPrice] = useState<number | 0>(0);
     const [isWaitingResult, setWaitingResultState] = useState<boolean>(() => {
         const storedValue = localStorage.getItem('waitingResult');
         return storedValue === 'true';
@@ -27,8 +35,16 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
     // Update localStorage when isWaitingResult changes
     useEffect(() => {
-        localStorage.setItem('waitingResult', JSON.stringify(isWaitingResult));
-    }, [isWaitingResult]);
+        //console.log("isWaitingResult:",isWaitingResult)
+        if(isProcessingBet)
+            localStorage.setItem('waitingResult', JSON.stringify(isProcessingBet));
+        else    
+            localStorage.setItem('waitingResult', JSON.stringify(isWaitingResult));
+       // console.log(currentPrice)
+     
+          // Enable the pred
+       
+    }, [isWaitingResult,isProcessingBet]);
 
     const handlePrediction = async (prediction: 'up' | 'down') => {
         if (prediction) {
@@ -40,12 +56,12 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     
                     setBetPredict(prediction);
                     setBetAmount(calculatedBetAmount);
-                    setBetPrice(currentPrice);
+                    //setBetPrice(currentPrice);
                     setBalance(prev => prev - calculatedBetAmount);
 
                     // Simulate a delay for processing (replace with actual processing logic)
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds delay
-
+                    // await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds delay
+                    console.log('handlePrediction Bet State:', isProcessingBet);
                 } catch (error) {
                     console.error('Betting error:', error);
                 } finally {
@@ -73,9 +89,33 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         );
     });
 
+    const checkPredictionResult = async (startPrice: number, endPrice: number,isNewCandle:boolean) => {
 
+        const finalClosePrice = endPrice;
+        setClosePrice(finalClosePrice);
+        
+
+
+        const isCorrect = 
+        (finalClosePrice > startPrice  && finalClosePrice > startPrice) ||
+        (finalClosePrice < startPrice  && finalClosePrice < startPrice);
+        
+        const winAmount = isCorrect ? betAmount * 2 : 0;
+
+        console.log('Processing result:', {
+            isCorrect,
+            winAmount,
+            prediction: betPredict,
+            startPrice,
+            endPrice
+        });
+        
+
+    }
+
+ 
     // ChartComponent definition
-    const ChartComponent = ({ data, onPriceUpdate }:any) => {
+    const ChartComponent:React.FC<ChartProps & { isProcessingBet: boolean }> = (props) => {
 
 
         const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -86,7 +126,11 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         const [displayCountdown, setDisplayCountdown] = useState<number>(60);
         const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick">>();
         let currentCandle: any = null;
-   
+
+        useEffect(() => {
+            console.log('Processing Bet State:', props.isProcessingBet);
+            // ทำการอัปเดตหรือทำงานตามที่ต้องการเมื่อ isProcessingBet เปลี่ยนแปลง
+        }, [props.isProcessingBet]); // ตรวจสอบการเปลี่ยนแปลงที่นี่
 
         const fetchBTCData = async () => {
             const response = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1440');
@@ -151,14 +195,18 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     if (Math.abs(remainingTime - countdownRef.current) > 1) {
                         countdownRef.current = Math.max(0, remainingTime);
                         setDisplayCountdown(countdownRef.current);
+                        //const isBettingPeriod = countdownRef.current > 45; 
                     }
                     
-                    onPriceUpdate(price);
+                    props.onPriceUpdate(price);
                   // console.log(remainingTime)
-                   // onBettingStateChange(remainingTime > 45);
+                  console.log('Processing Bet State:', props.isProcessingBet);
+                    props.onWaitingStateChange(!(remainingTime > 45));
+                 
+                  // props.onWaitingStateChange(props.onBettingStateChange)
                     
                     // Check if we are in the betting period
-                    const isBettingPeriod = remainingTime > 45; // Adjust this condition as needed
+                    //const isBettingPeriod = remainingTime > 45; // Adjust this condition as needed
                  
                     if (isNewCandle) {
                         if (currentCandle) {
@@ -299,7 +347,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
             const interval = setInterval(() => {
                 const newPrice = Math.random() * 100; // Simulate price update
-                onPriceUpdate(newPrice);
+                props.onPriceUpdate(newPrice);
             }, 1000); // Update every second
 
       
@@ -314,7 +362,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                 }
             };
         }
-        }, [onPriceUpdate]);
+        }, [props.onPriceUpdate,props.isProcessingBet]);
 
         useEffect(() => {
             let lastTick = Date.now();
@@ -361,22 +409,28 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         <ChartComponent 
             data={initialData}
             onPriceUpdate={setCurrentPrice}
+            onOpenPrice={setPredictionStartPrice}
+            onCheckPrediction={checkPredictionResult}
+            betting={isProcessingBet}
+            onWaitingStateChange={setWaitingResultState}
+            isProcessingBet={isProcessingBet}
           
         />
-    ), [initialData]);
+    ), [initialData,isProcessingBet]);
 
 
     function handleClearLeverag(event: any): void {
         //throw new Error('Function not implemented.');
-        if (isProcessingBet || isWaitingResult) return;
-        
+        if ( isWaitingResult) return;
+
         setSelectedLeverage(1);
         setLeverageAmount(0);
+        setWaitingResultState(false)
     }
 
     function handleLeverageClick(leverage: number): void {
        // throw new Error('Function not implemented.');
-       if (isProcessingBet || isWaitingResult) return;
+       if ( isWaitingResult) return;
 
        setSelectedLeverage(leverage);
        setLeverageAmount(1 * (leverage));
@@ -436,13 +490,13 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                              <button
                              key={leverage}
                              onClick={() => handleLeverageClick(leverage)}
-                             disabled={ isProcessingBet || isWaitingResult}
+                             disabled={  isWaitingResult}
                              className={`px-3 py-1 rounded ${
                                  selectedLeverage === leverage
                                      ? 'bg-blue-500 text-white'
                                      : 'bg-gray-200 text-gray-700'
                              } ${
-                                  isProcessingBet || isWaitingResult 
+                                   isWaitingResult 
                                      ? 'opacity-50 cursor-not-allowed' 
                                      : 'hover:bg-blue-400'
                              }`}
@@ -454,9 +508,9 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     <span className="text-white">${leverageAmount?.toFixed(2)}</span>
                     <button
                     onClick={handleClearLeverag}
-                    disabled={ isProcessingBet || isWaitingResult}
+                    disabled={  isWaitingResult}
                     className={`px-3 py-1 rounded bg-red-500 text-white
-                        ${ isProcessingBet || isWaitingResult 
+                        ${ isWaitingResult 
                             ? 'opacity-50 cursor-not-allowed' 
                             : 'hover:bg-red-400'
                         }`}
@@ -485,17 +539,15 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     <div className="w-16 flex flex-col justify-center items-center space-y-2 px-2">
                     <button 
                         onClick={() => handlePrediction('up')}
-                        disabled={ isProcessingBet || isWaitingResult}
+                        disabled={  isWaitingResult}
                         className={`w-full py-3 w-10 h-10 rounded font-bold text-xs text-white relative
-                        ${isProcessingBet || isWaitingResult
+                        ${ isWaitingResult
                         ? 'bg-green-500/50 cursor-not-allowed' 
                         : 'bg-green-500 hover:bg-green-600 cursor-pointer'} 
                         transition-colors`}
                     >
-                        {isProcessingBet ? (
-                            ''
-                        ) : isWaitingResult && betPredict === 'up' ? (
-                            ''
+                        {  isWaitingResult && betPredict === 'up' ? (
+                            'Waiting...'
                         ) : (
                             'UP'
                         )}
@@ -508,17 +560,15 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             
                     <button 
                         onClick={() => handlePrediction('down')}
-                        disabled={isProcessingBet || isWaitingResult}
+                        disabled={ isWaitingResult}
                         className={`w-full py-3 w-10 h-10 rounded font-bold text-xs text-white relative
-                            ${isProcessingBet || isWaitingResult
+                            ${ isWaitingResult
                                 ? 'bg-red-500/50 cursor-not-allowed' 
                                 : 'bg-red-500 hover:bg-red-600 cursor-pointer'} 
                             transition-colors`}
                     >
-                        {isProcessingBet ? (
-                            ''
-                        ) : isWaitingResult && betPredict === 'down' ? (
-                            ''
+                        { isWaitingResult && betPredict === 'down' ? (
+                            'Waiting....'
                         ) : (
                             'DOWN'
                         )}

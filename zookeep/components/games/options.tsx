@@ -4,6 +4,7 @@ import useAuthStore from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import useBetStore, { BetStore } from '@/store/betStore';
 import { createChart, ColorType, CrosshairMode,IChartApi,ISeriesApi } from 'lightweight-charts';
+import { createTransaction, GetUserInfo } from '@/actions';
 interface ChartProps {
     data: any;
     onPriceUpdate: (price: number) => void;
@@ -19,8 +20,9 @@ export function Options({ lng, data }: { lng: string; data: any }) {
     const [balance, setBalance] = useState<number>(0);
     const [selectedLeverage, setSelectedLeverage] = useState(1);
     const [currentPrice, setCurrentPrice] = useState<number | 0>(0);
-    const [isProcessingBet, setIsProcessingBet] = useState(false);
+    const [isProcessingBet, setIsProcessingBet] = useState<boolean>(false);
     const [predictionStartPrice, setPredictionStartPrice] = useState<number | 0>(0);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
     const [isWaitingResult, setWaitingResultState] = useState<boolean>(() => {
         const storedValue = localStorage.getItem('waitingResult');
         return storedValue === 'true';
@@ -40,33 +42,68 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             localStorage.setItem('waitingResult', JSON.stringify(isProcessingBet));
         else    
             localStorage.setItem('waitingResult', JSON.stringify(isWaitingResult));
+        const fetchUserInfo = async () => {
+            if (isLoggedIn) {
+                try {
+                    const userInfo = await GetUserInfo(accessToken);
+                    //console.log('User Info received:', userInfo.Data); // Debug log
+                    
+                    setUsers(userInfo.Data);
+                    if (userInfo?.Data?.balance) {
+                        setBalance(Number(userInfo.Data.balance));
+                    }
+                } catch (error) {
+                    console.error('Error fetching user info:', error);
+                }
+            } else {
+                router.push(`/${lng}/login`);
+            }
+        };
+        
+        fetchUserInfo();
+     
        // console.log(currentPrice)
      
           // Enable the pred
        
-    }, [isWaitingResult,isProcessingBet]);
+    }, [isWaitingResult,isProcessingBet,isLoggedIn,accessToken,currentPrice]);
 
     const handlePrediction = async (prediction: 'up' | 'down') => {
+        
         if (prediction) {
             const calculatedBetAmount = 1 * selectedLeverage;
+            // console.log("Calculated Bet Amount:",calculatedBetAmount)
+            // console.log("Balance:",balance)
+
             if (calculatedBetAmount <= balance && calculatedBetAmount > 0) {
                 try {
-                    setIsProcessingBet(true);
+                    const response = await createTransaction(accessToken, {
+                        Status: 100,
+                        GameProvide: 'options',
+                        MemberName: users.username,
+                        TransactionAmount: calculatedBetAmount.toString(),
+                        ProductID: 9000,
+                        BeforeBalance: balance.toString(),
+                        Balance: (balance - calculatedBetAmount).toString(),
+                        AfterBalance: (balance - calculatedBetAmount).toString()
+                    });
+               
+    
                     setWaitingResultState(true); // Set waiting result to true
                     
                     setBetPredict(prediction);
                     setBetAmount(calculatedBetAmount);
-                    //setBetPrice(currentPrice);
+                    setBetPrice(currentPrice);
                     setBalance(prev => prev - calculatedBetAmount);
-
+                    setIsProcessingBet(true);
                     // Simulate a delay for processing (replace with actual processing logic)
                     // await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds delay
                     console.log('handlePrediction Bet State:', isProcessingBet);
                 } catch (error) {
                     console.error('Betting error:', error);
                 } finally {
-                    setIsProcessingBet(false);
-                    setWaitingResultState(false); // Set waiting result back to false
+                   // setIsProcessingBet(false);
+                  //  setWaitingResultState(false); // Set waiting result back to false
                 }
             }
         }
@@ -92,24 +129,84 @@ export function Options({ lng, data }: { lng: string; data: any }) {
     const checkPredictionResult = async (startPrice: number, endPrice: number,isNewCandle:boolean) => {
 
         const finalClosePrice = endPrice;
+        console.log("Start Price:",startPrice)
+        console.log("Final Close Price:",finalClosePrice)
+       
+      
         setClosePrice(finalClosePrice);
-        
+        setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
 
 
-        const isCorrect = 
-        (finalClosePrice > startPrice  && finalClosePrice > startPrice) ||
-        (finalClosePrice < startPrice  && finalClosePrice < startPrice);
-        
-        const winAmount = isCorrect ? betAmount * 2 : 0;
+       
 
-        console.log('Processing result:', {
-            isCorrect,
-            winAmount,
-            prediction: betPredict,
-            startPrice,
-            endPrice
-        });
-        
+        if (priceDirection && betAmount > 0 && isWaitingResult && accessToken) {
+
+            console.log(priceDirection,finalClosePrice+">"+startPrice)
+            console.log(priceDirection,finalClosePrice+"<"+startPrice)
+            const isCorrect = 
+                (priceDirection === 'up' && finalClosePrice > startPrice) ||
+                (priceDirection === 'down' && finalClosePrice < startPrice);
+            
+            const winAmount = isCorrect ? betAmount * 2 : 0;
+
+            // console.log('Processing result:', {
+            //     isCorrect,
+            //     winAmount,
+            //     prediction: currentPrediction,
+            //     startPrice,
+            //     endPrice: finalClosePrice
+            // });
+
+            try {
+               const response = await createTransaction(accessToken, {
+                    Status: 101,
+                    GameProvide: 'options',
+                    MemberName: users.username,
+                    TransactionAmount: winAmount.toString(),
+                    PayoutAmount: winAmount.toString(),
+                    ProductID: 9000,
+                    BeforeBalance: balance.toString(),
+                    Balance: (balance + winAmount).toString(),
+                    AfterBalance: (balance + winAmount).toString()
+                });
+           
+
+             
+                setBalance(prev => prev + winAmount);
+               //setLastBetResult(isCorrect ? 'win' : 'lose');
+                console.log(isCorrect ? 'win' : 'lose')
+                // Reset states
+                setBetAmount(0);
+                setBetPredict("");
+                setIsProcessingBet(false);
+                setWaitingResultState(false);
+                setSelectedLeverage(1);
+                setLeverageAmount(0);
+                
+            } catch (error) {
+                console.error('Result processing error:', error);
+                if (!accessToken) {
+                    router.push(`/${lng}/login`);
+                }
+            }
+       } else if(betAmount==0){
+           console.log("BetAmount is Zero!")
+       }
+
+        // console.log('Processing result:', {
+        //     isCorrect,
+        //     winAmount,
+        //     prediction: betPredict,
+        //     startPrice,
+        //     endPrice
+        // });
+        // setClosePrice(0);
+        // setLeverageAmount(0);
+        // setBetAmount(0);
+        // setBetPredict("");
+        // setWaitingResultState(false);
+        // setIsProcessingBet(false);
+        // setSelectedLeverage(1);
 
     }
 
@@ -198,11 +295,19 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                         //const isBettingPeriod = countdownRef.current > 45; 
                     }
                     
-                    props.onPriceUpdate(price);
+                    
                   // console.log(remainingTime)
-                  console.log('Processing Bet State:', props.isProcessingBet);
+                   console.log('Processing Bet State:', props.isProcessingBet);
+                  
                     props.onWaitingStateChange(!(remainingTime > 45));
-                 
+
+                    if(props.isProcessingBet)
+                        props.onWaitingStateChange(props.isProcessingBet);
+                    
+                    props.onPriceUpdate(price);
+                
+                  // else
+                  //  props.onWaitingStateChange(!props.isProcessingBet);
                   // props.onWaitingStateChange(props.onBettingStateChange)
                     
                     // Check if we are in the betting period
@@ -211,7 +316,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     if (isNewCandle) {
                         if (currentCandle) {
                           //  console.log(klineTimeInSeconds,currentCandle.time," is ",klineTimeInSeconds !== currentCandle.time)
-                          //  onCheckPrediction(currentCandle.open, currentCandle.close, isNewCandle);
+                           props.onCheckPrediction(currentCandle.open, currentCandle.close, isNewCandle);
                         }
     
                         currentCandle = {

@@ -320,11 +320,13 @@ func AddStatement(c *fiber.Ctx) error {
 	
 	id := c.Locals("ID").(int)
 
-
+	// if err := db.AutoMigrate(&models.BankStatement{}); err != nil {
+	// 	fmt.Println(err)
+	// }
 	BankStatement := new(models.BankStatement)
 
 	if err := c.BodyParser(BankStatement); err != nil {
-		//fmt.Println(err)
+	 
 		return c.Status(200).SendString(err.Error())
 	}
 
@@ -467,8 +469,9 @@ func AddStatement(c *fiber.Ctx) error {
 		 
 			fmt.Printf("pro_setting: %v ",pro_setting)
 			minTurnover := users.MinTurnover
+			fmt.Printf("bankstatement.Turnover: %v ",BankStatement.Turnover)
 			fmt.Printf("minTurnover: %v ",minTurnover)
-		  if users.Turnover.GreaterThan(minTurnover) || users.Turnover.Equal(minTurnover) {
+		  if BankStatement.Turnover.GreaterThan(minTurnover) || BankStatement.Turnover.Equal(minTurnover) {
 			BankStatement.Balance = users.Balance.Add(deposit)
 			// clear turnover
 			
@@ -504,6 +507,15 @@ func AddStatement(c *fiber.Ctx) error {
 		users.ProStatus = ""
 	}
 
+	if users.Balance.LessThan(deposit.Abs()) && deposit.LessThan(decimal.Zero) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": fmt.Sprintf("ยอดคงเหลือไม่สามารถถอนเงินได้ %v %v !",users.Balance,users.Currency),
+			"Data": fiber.Map{
+				"id": -1,
+			}})
+	}
+	
 	result := db.Create(&BankStatement); 
 	
 	if result.Error != nil {

@@ -328,8 +328,10 @@ func GetUser(c *fiber.Ctx) error {
 		Turnover decimal.Decimal `json:"turnover"`
 	}
 	var summary Summary
-	db.Debug().Select("sum(betammount) as turnover").Where("userid= ?", id).Scan(&summary)
-	fmt.Println(summary)
+	db.Debug().Model(&models.TransactionSub{}).Select("sum(BetAmount) as turnover").Where("member_name= ?", users.Username).Scan(&summary)
+	
+	//fmt.Println(summary.Turnover)
+	
 	response := fiber.Map{
 		"Status":  true,
 		"Message": "สำเร็จ",
@@ -341,7 +343,7 @@ func GetUser(c *fiber.Ctx) error {
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
-			"turnover":   users.Turnover,
+			"turnover":   summary.Turnover,
 			"minturnover": users.MinTurnover,
 			"pro_status": users.ProStatus,
 		}}

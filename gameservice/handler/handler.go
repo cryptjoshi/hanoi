@@ -504,8 +504,9 @@ type TransactionRequest struct {
     GameProvide     string                  `json:"gameProvide"`
     MemberName      string                  `json:"memberName"`
     TransactionAmount decimal.Decimal       `json:"transactionAmount"`
-	BetAmount       decimal.Decimal       `json:"betmount"`
-    ProductID       int64                     `json:"productID"`
+	PayoutAmount      decimal.Decimal       `json:"payoutAmount"`
+	BetAmount         decimal.Decimal       `json:"betAmount"`
+    ProductID         int64                     `json:"productID"`
     BeforeBalance   string                  `json:"beforeBalance"`
     Balance         decimal.Decimal                  `json:"balance"`
     AfterBalance    string                  `json:"afterBalance"`
@@ -570,15 +571,20 @@ func AddTransactions(c *fiber.Ctx) error {
     	}
 	}
 
+	
+
     transactionsub.Status = transactionRequest.Body.Status
     transactionsub.GameProvide = transactionRequest.Body.GameProvide
     transactionsub.MemberName = transactionRequest.Body.MemberName
 	transactionsub.ProductID = transactionRequest.Body.ProductID
-	transactionsub.BetAmount = transactionRequest.Body.TransactionAmount
+	transactionsub.BetAmount = transactionRequest.Body.BetAmount
+	transactionsub.PayoutAmount = transactionRequest.Body.PayoutAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = transactionRequest.Body.Balance
-		
-	result := database.Database.Create(&transactionsub); 
+
+	fmt.Println(transactionsub)
+
+	result := database.Database.Debug().Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
 		response = Response{

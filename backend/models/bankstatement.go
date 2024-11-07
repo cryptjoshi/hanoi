@@ -23,6 +23,7 @@ type BankStatement struct {
 	Proamount         decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:proamount"`
 	AddOnamount       decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:addonamount"`
 	Balance           decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:balance"`
+	Turnover          decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:turnover"`
 	Unix              int       `gorm:"column:unix"`
 	CreatedAt         time.Time `gorm:"column:createdAt;NOT NULL"`
 	UpdatedAt         time.Time `gorm:"column:updatedAt;NOT NULL"`
@@ -56,6 +57,7 @@ type SwaggerBankStatement struct {
 	Transactionamount decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:transactionamount;NOT NULL"`
 	Beforebalance     decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:beforebalance"`
 	Balance           decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:balance"`
+	Turnover          decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:turnover"`
 	Unix              int       `gorm:"column:unix"`
 	CreatedAt         time.Time `gorm:"column:createdAt;NOT NULL"`
 	UpdatedAt         time.Time `gorm:"column:updatedAt;NOT NULL"`

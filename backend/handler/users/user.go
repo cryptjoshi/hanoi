@@ -324,6 +324,12 @@ func GetUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
+	type Summary struct {
+		Turnover decimal.Decimal `json:"turnover"`
+	}
+	var summary Summary
+	db.Debug().Select("sum(betammount) as turnover").Where("userid= ?", id).Scan(&summary)
+	fmt.Println(summary)
 	response := fiber.Map{
 		"Status":  true,
 		"Message": "สำเร็จ",

@@ -28,26 +28,37 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         return storedValue === 'true';
     });
     const websocketRef = useRef<WebSocket | null>(null);
-    const [betResult, setBetResult] = useState<'win' | 'lose' | null>(null); // เพิ่ม state สำหรับผลลัพธ์
-
+    const [betResult, setBetResult] = useState<'win' | 'lose' | "">(""); // เพิ่ม state สำหรับผลลัพธ์
+    const [betPrice, setBetPrice] = useState<number>(0);
+    const [betAmount, setBetAmount] = useState<number>(0);
+    const [betPredict, setBetPredict] = useState<string>("");
     const { isLoggedIn, accessToken } = useAuthStore();
-    const { betPrice, betAmount, setBetAmount, setBetPrice,betPredict, setBetPredict } = useBetStore() as BetStore;
-    const [closePrice, setClosePrice] = useState<number | null>(0);
-    const [leverageAmount, setLeverageAmount] = useState<number | null>(0);
-   
+   // const { betPrice, betAmount, setBetAmount, setBetPrice,betPredict, setBetPredict } = useBetStore() as BetStore;
+    const [closePrice, setClosePrice] = useState<number>(0);
+    const [leverageAmount, setLeverageAmount] = useState<number>(0);
+    const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+    const [token, setToken] = useState<string>(userLoginStatus.state.accessToken);
+    
     const router = useRouter();
 
     // Update localStorage when isWaitingResult changes
     useEffect(() => {
         //console.log("isWaitingResult:",isWaitingResult)
-        if(isProcessingBet)
-            localStorage.setItem('waitingResult', JSON.stringify(isProcessingBet));
-        else    
-            localStorage.setItem('waitingResult', JSON.stringify(isWaitingResult));
+        // if(isProcessingBet)
+        //     localStorage.setItem('waitingResult', JSON.stringify(isProcessingBet));
+        // else    
+        //     localStorage.setItem('waitingResult', JSON.stringify(isWaitingResult));
+         
+       
+        //console.log("isLoggedIn:",userLoginStatus.state.isLoggedIn)
+        //console.log("accessToken:",userLoginStatus.state.accessToken)
+        if(!token)
+            setToken(userLoginStatus.state.accessToken);
+
         const fetchUserInfo = async () => {
-            if (isLoggedIn) {
+            if (userLoginStatus.state.isLoggedIn) {
                 try {
-                    const userInfo = await GetUserInfo(accessToken);
+                        const userInfo = await GetUserInfo(token);
                     //console.log('User Info received:', userInfo.Data); // Debug log
                     
                     setUsers(userInfo.Data);
@@ -68,7 +79,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
      
           // Enable the pred
        
-    }, [isWaitingResult,isProcessingBet,isLoggedIn,accessToken,currentPrice]);
+    }, [isWaitingResult,isProcessingBet,isLoggedIn,token]);
 
     const handlePrediction = async (prediction: 'up' | 'down') => {
         
@@ -83,7 +94,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                    
                     console.log("Current Price:",currentPrice)
 
-                    const response = await createTransaction(accessToken, {
+                    const response = await createTransaction(token,{
                         Status: 100,
                         GameProvide: 'options',
                         MemberName: users.username,
@@ -123,7 +134,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         }
     };
 
-    const CountdownDisplay = memo(({ countdown,betResult }: { countdown: number,betResult: 'win' | 'lose' | null  }) => {
+    const CountdownDisplay = memo(({ countdown,betResult }: { countdown: number,betResult: 'win' | 'lose' | ""  }) => {
         const isBettingPeriod = countdown > 45;
         const message = isBettingPeriod ? "เวลาเดิมพัน" : "รอผลเดิมพัน";
         const resultMessage = betResult ? (betResult === 'win' ? "ชนะ" : "แพ้") : ""; // แสดงผลลัพธ์
@@ -154,11 +165,15 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
 
         setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
-
-        if (priceDirection && betAmount > 0 && isWaitingResult && accessToken) {
-
-           // console.log(priceDirection,finalClosePrice+">"+startPrice)
-           // console.log(priceDirection,finalClosePrice+"<"+startPrice)
+        // console.log("finalClosePrice:",finalClosePrice)
+        // console.log("startPrice:",startPrice)
+        // console.log("priceDirection:",priceDirection)
+        // console.log("betAmount:",betAmount)
+        // console.log("isWaitingResult:",isWaitingResult)
+        // console.log("accessToken:",accessToken)
+        if (priceDirection && betAmount > 0 && isWaitingResult) {
+            setBetPrice(startPrice)
+     
             const isCorrect = 
                 (priceDirection === 'up' && finalClosePrice > startPrice) ||
                 (priceDirection === 'down' && finalClosePrice < startPrice);
@@ -179,7 +194,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             // });
 
             try {
-               const response = await createTransaction(accessToken, {
+               const response = await createTransaction(token,{
                     Status: 101,
                     GameProvide: 'options',
                     MemberName: users.username,
@@ -194,8 +209,8 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
              
                 setBalance(prev => prev + winAmount);
-               //setLastBetResult(isCorrect ? 'win' : 'lose');
-                console.log(isCorrect ? 'win' : 'lose')
+                setBetResult(isCorrect ? 'win' : 'lose');
+              //  console.log(isCorrect ? 'win' : 'lose')
                 // Reset states
                 setCurrentPrice(0)
                 setBetAmount(0);
@@ -204,16 +219,18 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                 setWaitingResultState(false);
                 setSelectedLeverage(1);
                 setLeverageAmount(0);
-                setBetResult(null);
+                setTimeout(() => {
+                    setBetResult("");
+                }, 5000);
                 
             } catch (error) {
                 console.error('Result processing error:', error);
-                if (!accessToken) {
-                    router.push(`/${lng}/login`);
-                }
+                // if (!accessToken) {
+                //     router.push(`/${lng}/login`);
+                // }
             }
        } else {
-           setBetPrice(startPrice)
+          
            console.log("BetAmount is Zero!")
        }
 
@@ -527,7 +544,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             }} 
            
             />
-                <CountdownDisplay countdown={displayCountdown}   betResult={betResult} />
+                <CountdownDisplay countdown={displayCountdown}   betResult={""} />
             </div>
             // </div>
             // </div>
@@ -598,22 +615,22 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                         </div>
                     </div>
               
-                    <div className="flex flex-col">
+                     <div className="flex flex-col">
                             <span className="text-white font-semibold">
-                               {"Bet Price"}
+                               {"Prediction Result"}
                             </span>
-                            <span className="text-gray-400 text-sm">
-                                {!isWaitingResult && `${currentPrice?.toFixed(2)}`}
+                            <span className="text-gray-400  font-semibold">
+                                {`${betResult}`}
                             </span>
                     </div>
-                    <div className="flex flex-col">
+                    {/*<div className="flex flex-col">
                             <span className="text-white font-semibold">
                                {"Close Price"}
                             </span>
                             <span className="text-gray-400 text-sm">
                                 {isWaitingResult?`${currentPrice?.toFixed(2)}`:`0.00`}
                             </span>
-                    </div>
+                    </div> */}
               
                 </div>
             <div className="flex items-center space-x-4">
@@ -679,13 +696,13 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                         transition-colors`}
                     >
                         {  isWaitingResult && betPredict === 'up' ? (
-                            'Waiting...'
+                            ''
                         ) : (
                             'UP'
                         )}
                         {isWaitingResult && betPredict === 'up' && (
                             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                                <div className="animate-pulse text-xs">Waiting Result</div>
+                                <div className="animate-pulse text-xs text-red-500">UP</div>
                             </div>
                         )}
                     </button>
@@ -700,13 +717,13 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                             transition-colors`}
                     >
                         { isWaitingResult && betPredict === 'down' ? (
-                            'Waiting....'
+                            ''
                         ) : (
                             'DOWN'
                         )}
                         {isWaitingResult && betPredict === 'down' && (
                             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                                <div className="animate-pulse text-xs">Waiting Result</div>
+                                <div className="animate-pulse text-xs text-green-500">DOWN</div>
                             </div>
                         )}
                     </button>

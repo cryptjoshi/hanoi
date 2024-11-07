@@ -26,6 +26,7 @@ export interface AuthStore {
 export type User = {
     username: string;
     password: string;
+    fullname:string;
     prefix:string;
 };
 
@@ -53,7 +54,7 @@ const useAuthStore = create<AuthStore>()(
        // const router = useRouter()
         try {
         
-          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix});
+          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix,fullname:body.fullname});
           // const response = await fetch(endpoint, {
           //   method: 'POST',
           //   headers: {

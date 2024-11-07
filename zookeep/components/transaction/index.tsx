@@ -81,12 +81,12 @@ function TransactionForm({lng,slug}:TransProps) {
           if (userLoginStatus.state) {
                     if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
             const user = await GetUserInfo(userLoginStatus.state.accessToken);
-         
+            console.log(user)
             if(user.Status){
               setBalance(user.Data.balance);
               setUser(user.Data);
               setCurrency(userLoginStatus.state.customerCurrency);
-              setTurnOver(user.Data.Turnover)
+              setTurnOver(user.Data.turnover)
             //  setPrefix(user.Data.prefix);
                
             } else {
@@ -142,6 +142,7 @@ function TransactionForm({lng,slug}:TransProps) {
             ...values,
            // walletid:"",
            // uid:"",
+            turnover:turnover,
             transactionType:slug,
             transactionamount:slug==="deposit"?values.transactionamount:values.transactionamount*(-1),
             channel:"1stpay",

@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useState } from 'react';
 import { redirect, useRouter } from 'next/navigation';
 import { Avatar} from "@/components/ui/avatar";
 import { Card } from '@/components/ui/card';
@@ -45,13 +45,15 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const { t } = useTranslation(lng,'home',undefined);
 
   const { toast } = useToast();
-  const { accessToken } = useAuthStore()
+ // const { accessToken } = useAuthStore()
+  const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+  const [token, setToken] = useState<string>(userLoginStatus.state.accessToken);
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {
  
-      if(accessToken && prefix!=""){
-      const res = await UpdateUserPromotion(accessToken,{"prefix":prefix,"pro_status":promotion.ID})
+      if(token && prefix!=""){
+      const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
       if(res.Status){
       toast({
         title: t('common.success'),
@@ -131,8 +133,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   React.useEffect(() => {
     const fetchPromotion = async (prefix: string) => {
       setIsLoading(true);
-      if(accessToken){
-      const promotion = await GetPromotion(accessToken);
+      if(token){
+      const promotion = await GetPromotion(token);
       
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status

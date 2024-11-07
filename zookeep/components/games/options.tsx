@@ -27,6 +27,8 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         const storedValue = localStorage.getItem('waitingResult');
         return storedValue === 'true';
     });
+    const websocketRef = useRef<WebSocket | null>(null);
+    const [betResult, setBetResult] = useState<'win' | 'lose' | null>(null); // เพิ่ม state สำหรับผลลัพธ์
 
     const { isLoggedIn, accessToken } = useAuthStore();
     const { betPrice, betAmount, setBetAmount, setBetPrice,betPredict, setBetPredict } = useBetStore() as BetStore;
@@ -77,11 +79,16 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
             if (calculatedBetAmount <= balance && calculatedBetAmount > 0) {
                 try {
+                   
+                   
+                    console.log("Current Price:",currentPrice)
+
                     const response = await createTransaction(accessToken, {
                         Status: 100,
                         GameProvide: 'options',
                         MemberName: users.username,
                         TransactionAmount: calculatedBetAmount.toString(),
+                        BetAmount:calculatedBetAmount.toString(),
                         ProductID: 9000,
                         BeforeBalance: balance.toString(),
                         Balance: (balance - calculatedBetAmount).toString(),
@@ -90,12 +97,19 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                
     
                     setWaitingResultState(true); // Set waiting result to true
-                    
+                   
                     setBetPredict(prediction);
                     setBetAmount(calculatedBetAmount);
-                    setBetPrice(currentPrice);
+            
                     setBalance(prev => prev - calculatedBetAmount);
                     setIsProcessingBet(true);
+
+                    if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+                        // ส่งข้อมูลไปยัง WebSocket ถ้าจำเป็น
+                    } else {
+                        console.error('WebSocket is not open');
+                    }
+
                     // Simulate a delay for processing (replace with actual processing logic)
                     // await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds delay
                     console.log('handlePrediction Bet State:', isProcessingBet);
@@ -109,10 +123,10 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         }
     };
 
-    const CountdownDisplay = memo(({ countdown }: { countdown: number }) => {
+    const CountdownDisplay = memo(({ countdown,betResult }: { countdown: number,betResult: 'win' | 'lose' | null  }) => {
         const isBettingPeriod = countdown > 45;
         const message = isBettingPeriod ? "เวลาเดิมพัน" : "รอผลเดิมพัน";
-    
+        const resultMessage = betResult ? (betResult === 'win' ? "ชนะ" : "แพ้") : ""; // แสดงผลลัพธ์
         // เพิ่ม log เพื่อตรวจสอบการ render
         //console.log('CountdownDisplay rendered:', countdown);
     
@@ -122,6 +136,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                 <span className="text-white font-bold text-base sm:text-xl">
                     {countdown}s
                 </span>
+                {resultMessage && <span className="text-white font-bold text-lg">{resultMessage}</span>} {/* แสดงผลลัพธ์ */}
             </div>
         );
     });
@@ -133,22 +148,28 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         console.log("Final Close Price:",finalClosePrice)
        
       
-        setClosePrice(finalClosePrice);
+        // setClosePrice(finalClosePrice);
+   
+        
+
+
         setPriceDirection(finalClosePrice > startPrice ? 'up' : 'down');
-
-
-       
 
         if (priceDirection && betAmount > 0 && isWaitingResult && accessToken) {
 
-            console.log(priceDirection,finalClosePrice+">"+startPrice)
-            console.log(priceDirection,finalClosePrice+"<"+startPrice)
+           // console.log(priceDirection,finalClosePrice+">"+startPrice)
+           // console.log(priceDirection,finalClosePrice+"<"+startPrice)
             const isCorrect = 
                 (priceDirection === 'up' && finalClosePrice > startPrice) ||
                 (priceDirection === 'down' && finalClosePrice < startPrice);
             
             const winAmount = isCorrect ? betAmount * 2 : 0;
 
+            if (isCorrect) {
+                setBetResult('win'); // ตั้งค่าเป็น 'win' ถ้าชนะ
+            } else {
+                setBetResult('lose'); // ตั้งค่าเป็น 'lose' ถ้าแพ้
+            }
             // console.log('Processing result:', {
             //     isCorrect,
             //     winAmount,
@@ -176,12 +197,14 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                //setLastBetResult(isCorrect ? 'win' : 'lose');
                 console.log(isCorrect ? 'win' : 'lose')
                 // Reset states
+                setCurrentPrice(0)
                 setBetAmount(0);
                 setBetPredict("");
                 setIsProcessingBet(false);
                 setWaitingResultState(false);
                 setSelectedLeverage(1);
                 setLeverageAmount(0);
+                setBetResult(null);
                 
             } catch (error) {
                 console.error('Result processing error:', error);
@@ -189,7 +212,8 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     router.push(`/${lng}/login`);
                 }
             }
-       } else if(betAmount==0){
+       } else {
+           setBetPrice(startPrice)
            console.log("BetAmount is Zero!")
        }
 
@@ -212,12 +236,12 @@ export function Options({ lng, data }: { lng: string; data: any }) {
 
  
     // ChartComponent definition
-    const ChartComponent:React.FC<ChartProps & { isProcessingBet: boolean }> = (props) => {
+    const ChartComponent:React.FC<ChartProps & { isProcessingBet: boolean;websocketRef: React.RefObject<WebSocket> }> = (props) => {
 
 
         const chartContainerRef = useRef<HTMLDivElement>(null);
         const chartRef = useRef<IChartApi | null>(null);
-        const websocketRef = useRef<WebSocket | null>(null);
+        //const websocketRef = useRef<WebSocket | null>(null);
         const countdownRef = useRef<number>(60);
         const isMounted = useRef<boolean>(false);
         const [displayCountdown, setDisplayCountdown] = useState<number>(60);
@@ -297,14 +321,17 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     
                     
                   // console.log(remainingTime)
-                   console.log('Processing Bet State:', props.isProcessingBet);
+                 //  console.log('Processing Bet State:', props.isProcessingBet);
                   
                     props.onWaitingStateChange(!(remainingTime > 45));
 
                     if(props.isProcessingBet)
-                        props.onWaitingStateChange(props.isProcessingBet);
+                        {
+                            props.onWaitingStateChange(props.isProcessingBet);
+                            props.onPriceUpdate(price);
+                        }
                     
-                    props.onPriceUpdate(price);
+                    
                 
                   // else
                   //  props.onWaitingStateChange(!props.isProcessingBet);
@@ -437,7 +464,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             const ws = setupWebSocket();
             websocketRef.current = ws;
 
-            websocketRef.current = ws;
+             
             const handleResize = () => {
                 if (chartContainerRef.current && chartRef.current) {
                     chartRef.current.applyOptions({
@@ -450,10 +477,10 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             window.addEventListener('resize', handleResize);
         
 
-            const interval = setInterval(() => {
-                const newPrice = Math.random() * 100; // Simulate price update
-                props.onPriceUpdate(newPrice);
-            }, 1000); // Update every second
+            // const interval = setInterval(() => {
+            //     const newPrice = Math.random() * 100; // Simulate price update
+            //     props.onPriceUpdate(newPrice);
+            // }, 1000); // Update every second
 
       
             return () => {
@@ -462,7 +489,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                     websocketRef.current = null;
                     isMounted.current = false;
                     chartRef.current.remove();
-                    clearInterval(interval);
+                    //clearInterval(interval);
                     window.removeEventListener('resize', handleResize);
                 }
             };
@@ -500,7 +527,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             }} 
            
             />
-                <CountdownDisplay countdown={displayCountdown} />
+                <CountdownDisplay countdown={displayCountdown}   betResult={betResult} />
             </div>
             // </div>
             // </div>
@@ -519,7 +546,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             betting={isProcessingBet}
             onWaitingStateChange={setWaitingResultState}
             isProcessingBet={isProcessingBet}
-          
+            websocketRef={websocketRef}
         />
     ), [initialData,isProcessingBet]);
 
@@ -576,7 +603,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                                {"Bet Price"}
                             </span>
                             <span className="text-gray-400 text-sm">
-                                {betPrice && `${betPrice.toFixed(2)}`}
+                                {!isWaitingResult && `${currentPrice?.toFixed(2)}`}
                             </span>
                     </div>
                     <div className="flex flex-col">
@@ -584,7 +611,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                                {"Close Price"}
                             </span>
                             <span className="text-gray-400 text-sm">
-                                {isWaitingResult && `${closePrice?.toFixed(2)}`}
+                                {isWaitingResult?`${currentPrice?.toFixed(2)}`:`0.00`}
                             </span>
                     </div>
               

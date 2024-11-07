@@ -157,10 +157,11 @@ const ChartComponent: React.FC<ChartProps> = (props) => {
                     countdownRef.current = Math.max(0, remainingTime);
                     setDisplayCountdown(countdownRef.current);
                 }
-
+                
                 props.onPriceUpdate(price);
+              // console.log(remainingTime)
                 props.onBettingStateChange(remainingTime > 45);
-
+                
                 // Check if we are in the betting period
                 const isBettingPeriod = remainingTime > 45; // Adjust this condition as needed
              

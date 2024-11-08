@@ -210,7 +210,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
              
                 setBalance(prev => prev + winAmount);
                 setBetResult(isCorrect ? 'win' : 'lose');
-              //  console.log(isCorrect ? 'win' : 'lose')
+              //  console.log(isCorrect ? 'win' : 'lose'
                 // Reset states
                 setCurrentPrice(0)
                 setBetAmount(0);

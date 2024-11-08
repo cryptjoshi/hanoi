@@ -4,6 +4,7 @@
 'use server'
 import { AnyMxRecord } from 'dns';
 import { redirect } from 'next/navigation'
+ 
 
 type User = {
     username: string;
@@ -373,13 +374,13 @@ export const AddStatement = async (token:string,body:any)=>{
 }
 
 
-export const createTransaction = async (token:string,body:any) =>{
- console.log(body)
+export const createTransaction = async (accessToken:string,body:any) =>{
+ 
   const response = await fetch("http://152.42.185.164:4007/api/v1/transaction/add", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +  token
+      'Authorization': 'Bearer ' +  accessToken
       },
       body: JSON.stringify({"Body":body})
 })

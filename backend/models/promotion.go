@@ -40,7 +40,7 @@ type Promotion struct {
 	EndDate string `gorm:"size:255;not null;" json:"endDate"`
 	Status        int  `json:"status"`
 	Example string `gorm:"size:255;not null;" json:"example"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	//DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 

@@ -136,7 +136,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/statement/add",jwt.JwtMiddleware, wallet.AddStatement)
 	// app.Post("/transaction/add",handler.AddTransactions)
 	// app.Post("/transaction/update",handler.UpdateTransactions)
-
+	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)
 	// dashboard
 	// app.Post("/api/bank/statement",handler.GetBankStatement)
 	// app.Post("/api/first/statement",handler.GetFirstUsers)

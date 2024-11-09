@@ -499,7 +499,7 @@ func AddStatement(c *fiber.Ctx) error {
 	} else {
 	 
 		if deposit.LessThan(decimal.Zero) {
-			
+			fmt.Println("502")
 		 if strings.Contains(users.MinTurnover.String(), "%") {
 			 
 				fmt.Println(users.MinTurnover)
@@ -512,6 +512,7 @@ func AddStatement(c *fiber.Ctx) error {
 		BankStatement.Balance = users.Balance.Add(deposit)
 			}	
 		}
+
 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
 	//user.Username = user.Prefix + user.Username
@@ -527,9 +528,11 @@ func AddStatement(c *fiber.Ctx) error {
 			"Data": fiber.Map{
 				"id": -1,
 			}})
+	} else if users.Balance.GreaterThan(decimal.Zero) {
+		BankStatement.Balance = users.Balance.Add(deposit)
 	}
 	
-	result := db.Create(&BankStatement); 
+	result := db.Debug().Create(&BankStatement); 
 	
 	if result.Error != nil {
 	 

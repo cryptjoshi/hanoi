@@ -100,6 +100,17 @@ type ExchangeRateResponse struct {
 	Rates map[string]float64 `json:"rates"`
 }
 
+
+type Response struct {
+    Message string      `json:"message"`
+    Status  bool        `json:"status"`
+    Data    interface{} `json:"data"` // ใช้ interface{} เพื่อรองรับข้อมูลหลายประเภทใน field data
+}
+type ResponseBalance struct {
+	BetAmount decimal.Decimal `json:"betamount"`
+	BeforeBalance decimal.Decimal `json:"beforebalance"`
+	Balance decimal.Decimal `json:"balance"`
+}
 func InitAMQP() {
 	fmt.Println("Init AMQP RABBIT")
 	fmt.Println("channel")
@@ -410,6 +421,7 @@ func GenerateSeedPhrase(length int) string {
 }
 
 func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
+	fmt.Println(c.Locals("db"))
 	dbInterface := c.Locals("db")
  
 	if dbInterface == nil {
@@ -2140,5 +2152,140 @@ func UpdateMaster(c *fiber.Ctx) error {
 		"Status":  true,
 		"Data":    body.Body,
 	}
+	return c.JSON(response)
+}
+
+type TransactionRequest struct {
+    Status          int                 `json:"status"`
+    GameProvide     string                  `json:"gameProvide"`
+    MemberName      string                  `json:"memberName"`
+    TransactionAmount decimal.Decimal       `json:"transactionAmount"`
+	PayoutAmount      decimal.Decimal       `json:"payoutAmount"`
+	BetAmount         decimal.Decimal       `json:"betAmount"`
+    ProductID         int64                     `json:"productID"`
+    BeforeBalance   string                  `json:"beforeBalance"`
+    Balance         decimal.Decimal                  `json:"balance"`
+    AfterBalance    string                  `json:"afterBalance"`
+}
+
+func AddTransactions(c *fiber.Ctx) error {
+
+ 
+
+	type bodyRequest struct {
+		Body TransactionRequest
+	}
+	
+	//fmt.Println("transactionsub:",transactionsub)
+	//Body := make(map[string]interface{})
+	transactionRequest := new(bodyRequest)
+
+	if err := c.BodyParser(&transactionRequest); err != nil {
+		fmt.Printf(" %s ", err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	db, err := GetDBFromContext(c)
+    if err != nil {
+		fmt.Println(err)
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Database connection error",
+            "Status":  false,
+        })
+    }
+
+	fmt.Printf("Body: %s",transactionRequest.Body)
+
+	
+	// transactionRequest := new(TransactionRequest)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+	// 		"Data": map[string]interface{}{
+	// 			"id": -1,
+	// 		},
+	// 	})
+	// }
+
+	transactionsub := models.TransactionSub{}
+
+	response := Response{
+		Status: false,
+		Message:"Success",
+		Data: ResponseBalance{
+			BetAmount: decimal.NewFromFloat(0),
+			BeforeBalance: decimal.NewFromFloat(0),
+			Balance: decimal.NewFromFloat(0),
+		},
+	}
+
+	var users models.Users
+    if err_ := db.Where("username = ? ", transactionRequest.Body.MemberName).First(&users).Error; err_ != nil {
+		response = Response{
+			Status: false,
+			Message: "ไม่พบข้อมูล",
+			Data:map[string]interface{}{
+				"id": -1,
+			},
+    	}
+	}
+
+	
+
+    transactionsub.Status = transactionRequest.Body.Status
+    transactionsub.GameProvide = transactionRequest.Body.GameProvide
+    transactionsub.MemberName = transactionRequest.Body.MemberName
+	transactionsub.ProductID = transactionRequest.Body.ProductID
+	transactionsub.BetAmount = transactionRequest.Body.BetAmount
+	transactionsub.PayoutAmount = transactionRequest.Body.PayoutAmount
+	transactionsub.BeforeBalance = users.Balance
+	transactionsub.Balance = transactionRequest.Body.Balance
+
+	fmt.Println(transactionsub)
+
+	result := db.Debug().Create(&transactionsub); 
+	//fmt.Println(result)
+	if result.Error != nil {
+		response = Response{
+			Status: false,
+			Message:  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			Data: map[string]interface{}{ 
+				"id": -1,
+			}}
+	} else {
+
+		updates := map[string]interface{}{
+			"Balance": transactionsub.Balance,
+				}
+	
+		 
+		  repository.UpdateFieldsUserString(db,users.Username, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		//fmt.Println(_err)
+		// if _err != nil {
+		// 	fmt.Println("Error:", _err)
+		// } else {
+		// 	//fmt.Println("User fields updated successfully")
+		// }
+
+ 
+ 
+	 
+		response = Response{
+			Status: true,
+			Message: "สำเร็จ",
+			Data: ResponseBalance{
+				BeforeBalance: transactionsub.BeforeBalance,
+				Balance:       transactionsub.Balance,
+				BetAmount: transactionsub.BetAmount,
+			},
+		}
+		
+	}
+ 
 	return c.JSON(response)
 }

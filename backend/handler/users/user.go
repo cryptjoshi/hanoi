@@ -29,7 +29,7 @@ import (
 	// 	// "net/http"
 	"os"
 	// 	// "strconv"
-	// 	"time"
+	//"time"
 	"fmt"
 	"strings"
 	//"errors"
@@ -324,14 +324,24 @@ func GetUser(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	type Summary struct {
-		Turnover decimal.Decimal `json:"turnover"`
-	}
-	var summary Summary
+	// type Summary struct {
+	// 	Turnover decimal.Decimal `json:"turnover"`
+	// 	createdAt time.Time `json:"createdat"`
+	// }
+	var summary models.BankStatement
 	
-	//db.Debug().Model(&models.BankStatement{}).Select("")
+	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
+	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ?", users.ID).Order("createdat DESC").Limit(1).Scan(&summary)
+	
+		 
+	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
 
-	db.Debug().Model(&models.TransactionSub{}).Select("sum(BetAmount) as turnover").Where("member_name= ?", users.Username).Scan(&summary)
+	//createdate := summary.createdAt.Format("2006-01-02")
+	if summary.Turnover.GreaterThan(decimal.Zero) {
+	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("member_name= ?", users.Username).Scan(&summary)
+	} else {
+		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("member_name= ? and createdat > ?", users.Username,summary.CreatedAt.Format("2006-01-02")).Scan(&summary)
+	}
 	
 	//fmt.Println(summary.Turnover)
 	
@@ -892,15 +902,17 @@ func UpdateUserPro(c *fiber.Ctx) error {
 				
 			}
 		} else {
+
+			fmt.Println(user.Balance)
 			if user.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
 				//user.ProStatus = old_promo
 			} else if user.ProStatus != "" {
 				updates["ProStatus"] = old_promo
 				repository.UpdateFieldsUserString(db, username, updates)
 				response := fiber.Map{
-					"Message": "คุณใช้งานโปรโมชั่นอยู่",
+					"Message": "คุณใช้งานโปรโมชั่นนี้แล้ว ",
 					"Status":  false,
-					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+					"Data":    "คุณใช้งานโปรโมชั่นนี้แล้ว",
 				}
 				return c.JSON(response)
 			}

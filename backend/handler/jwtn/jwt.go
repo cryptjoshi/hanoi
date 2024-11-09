@@ -267,6 +267,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })
+	fmt.Println(claims.Prefix)
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         

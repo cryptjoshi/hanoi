@@ -17,7 +17,7 @@ func UpdateUser(db *gorm.DB, user *models.Users) error {
     return nil
 }
  
-
+ 
 func UpdateFieldsUserString(db *gorm.DB,username string, updates map[string]interface{}) error {
 
     // ดึงข้อมูลของยูสเซอร์ที่ต้องการแก้ไขจากฐานข้อมูล

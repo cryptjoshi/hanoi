@@ -92,7 +92,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
       
 
-      if (userLoginStatus.state) {
+    
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
      
@@ -102,21 +102,13 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           setCurrency(userLoginStatus.state.customerCurrency);
           setPrefix(user.Data.prefix);
            
-        } else {
-          // Redirect to login page if token is null
-        router.push(`/${lng}/login`);
-        return;
-        }
-       
+        }  
      
       } else {
         router.push(`/${lng}/login`);
         return;
         }
-      } else {
-        router.push(`/${lng}/login`);
-        return;
-      }
+     
       } catch (error) {
        // router.push(`/${lng}/login`);
        console.log(error)

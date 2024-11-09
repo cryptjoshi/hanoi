@@ -75,6 +75,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/list",handler.GetDatabaseList)
 	app.Post("/db/prefix",handler.GetDatabaseByPrefix)
 	app.Post("/db/update",handler.UpdateDatabase)
+	app.Post("/db/setting",handler.GetMasterSetting)
 	
 	app.Post("/db/promotion/all",handler.GetAllPromotion)
 	app.Post("/db/promotion/byuser",jwt.JwtMiddleware,handler.GetPromotionByUser)

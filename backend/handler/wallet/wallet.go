@@ -497,8 +497,21 @@ func AddStatement(c *fiber.Ctx) error {
 				}
 		}
 	} else {
+	 
+		if deposit.LessThan(decimal.Zero) {
+			
+		 if strings.Contains(users.MinTurnover.String(), "%") {
+			 
+				fmt.Println(users.MinTurnover)
+			} else {
+				fmt.Println(users.MinTurnover)
+			}
+
+
+		} else {
 		BankStatement.Balance = users.Balance.Add(deposit)
-	}	
+			}	
+		}
 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
 	//user.Username = user.Prefix + user.Username

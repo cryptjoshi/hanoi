@@ -3,12 +3,13 @@ package database
 import (
 	"fmt"
 	"log"
-	"os"
+	//"os"
 	"strings"
 	"sync"
-
+	"hanoi/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	
 )
 
 // var Database *gorm.DB
@@ -67,6 +68,45 @@ func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
 
 	return nil
 }
+func migrateNormal(db *gorm.DB) {
+
+	if err := db.AutoMigrate(&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},
+		&models.BankStatement{},&models.BuyInOut{},&models.PromotionLog{},&models.Games{},&models.Promotion{},&models.Provider{},&models.TsxAdmin{}); err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	 
+	fmt.Println("Migrations Normal Tables executed successfully")
+}
+
+type Setting struct {
+	Value string `gorm:"column:value"` // Adjust the struct according to your table schema
+}
+
+func getMaster(prefix string) (Setting,error) {
+
+	masterDSN := fmt.Sprintf(baseDSN, "master") // Assuming 'master' is the database name for settings
+	masterDB, err := gorm.Open(mysql.Open(masterDSN), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+		SkipDefaultTransaction:                   true,
+		PrepareStmt:                              true,
+	})
+	if err != nil {
+		fmt.Errorf("Error %s ",err)
+		return Setting{}, err// Return the error if connection to master fails
+	}
+	defer func() {
+		sqlDB, _ := masterDB.DB() // รับการเชื่อมต่อ SQL
+		sqlDB.Close()              // ปิดการเชื่อมต่อ
+	}()
+
+	var setting Setting
+	
+	if err := masterDB.Table("Settings").Where("`key` = ?", prefix).First(&setting).Error; err != nil {
+		return Setting{}, fmt.Errorf("failed to read setting for prefix '%s': %v", prefix, err)
+	}
+	 
+	return setting,nil
+}
 
 // Connect function to establish a database connection based on the prefix
 func ConnectToDB(prefix string) (*gorm.DB, error) {
@@ -75,34 +115,41 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	prefix = strings.ToLower(prefix)
 
+	//var setting Setting
+
+	setting,_ := getMaster(prefix)
+
+	// Determine the database name based on the retrieved value
+	dbName := fmt.Sprintf("%s_%s", prefix, setting.Value)
+
 	// Check if the connection already exists
-	if db, exists := dbConnections[prefix]; exists {
+	if db, exists := dbConnections[dbName]; exists {
 		return db, nil
 	}
 
 	// Read database prefixes and environment from environment variable
 	//prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
-	env := os.Getenv("ENVIRONMENT") // Read the environment variable
-	var dbName string
-	suffix := "development" // Default to dev
+	// env := os.Getenv("ENVIRONMENT") // Read the environment variable
+	// var dbName string
+	// suffix := "development" // Default to dev
 
-	if env == "production" {
-		suffix = "production"
-	}
-
-	if strings.Contains(prefix, suffix) {
-		//suffix = "production"
-		dbName = fmt.Sprintf("%s", prefix)
-	} else {
-		dbName = fmt.Sprintf("%s_%s", prefix, suffix)
-	}
-	// // Determine the database name based on the prefix
-	// if contains(prefixes, prefix) {
-	// 	dbName = fmt.Sprintf("%s_%s", prefix, suffix)
-	// } else {
-	// 	//return nil, fmt.Errorf("unknown prefix: %s", prefix)
-	// 	dbName = fmt.Sprintf("%s", prefix)
+	// if env == "production" {
+	// 	suffix = "production"
 	// }
+
+	// if strings.Contains(prefix, suffix) {
+	// 	//suffix = "production"
+	// 	dbName = fmt.Sprintf("%s", prefix)
+	// } else {
+	// 	dbName = fmt.Sprintf("%s_%s", prefix, suffix)
+	// }
+ 
+	// Connect to the master database to read settings
+
+	//defer masterDB.Close() // Ensure the masterDB connection is closed
+
+	// Read the value from the settings table
+
 
 	// Create the DSN for the selected database
 	dsn := fmt.Sprintf(baseDSN, dbName)
@@ -114,12 +161,12 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	})
 
 	if err == nil {
-		dbConnections[prefix] = db // Store the connection in the map
+		dbConnections[dbName] = db // Store the connection in the map
 		fmt.Println("Successfully connected to DB:", dbName)
 	} else {
 		return nil, err // Return the error if connection fails
 	}
-
+	migrateNormal(db)
 	return db, nil
 }
 

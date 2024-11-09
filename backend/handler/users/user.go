@@ -328,6 +328,9 @@ func GetUser(c *fiber.Ctx) error {
 		Turnover decimal.Decimal `json:"turnover"`
 	}
 	var summary Summary
+	
+	//db.Debug().Model(&models.BankStatement{}).Select("")
+
 	db.Debug().Model(&models.TransactionSub{}).Select("sum(BetAmount) as turnover").Where("member_name= ?", users.Username).Scan(&summary)
 	
 	//fmt.Println(summary.Turnover)

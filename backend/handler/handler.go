@@ -601,6 +601,67 @@ func GetDatabaseList(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+func GetMasterSetting(c *fiber.Ctx) error {
+	loginRequest := new(Dbstruct)
+
+	if err := c.BodyParser(loginRequest); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	//dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, "master")
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	var settings models.Settings
+	var existingSetting models.Settings
+	db.Debug().Model(&settings).Where("`key` = ?",loginRequest.Prefix ).First(&existingSetting)
+	// rows, err := db.Raw("SHOW DATABASES").Rows()
+	// if err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดในการดึงรายชื่อฐานข้อมูล",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	//defer rows.Close()
+
+	// systemDatabases := map[string]bool{
+	// 	"information_schema": true,
+	// 	"mysql":              true,
+	// 	"performance_schema": true,
+	// 	"sys":                true,
+	// }
+
+	// var databaseNames []string
+	// for rows.Next() {
+	// 	var dbName string
+	// 	if err := rows.Scan(&dbName); err != nil {
+	// 		continue
+	// 	}
+
+	// 	if strings.HasPrefix(dbName, loginRequest.Prefix+"_") && !systemDatabases[dbName] {
+	// 		databaseNames = append(databaseNames, dbName)
+	// 	}
+	// }
+   
+	response := fiber.Map{
+		"Message":   "ดึงข้อมูลสำเร็จ",
+		"Status":    true,
+		"Setting": map[string]string{ // แก้ไขที่นี่
+			"Key":   loginRequest.Prefix,
+			"Value": existingSetting.Value,
+		}, // เพิ่มจุลภาคที่นี่
+	}
+	return c.JSON(response)
+}
 func GetDatabaseByPrefix(c *fiber.Ctx) error {
 	loginRequest := new(Dbstruct)
 
@@ -744,14 +805,8 @@ func CreatePromotion(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+
+	db, err := database.ConnectToDB(data.Prefix)
 	if db == nil {
 
 		response := fiber.Map{
@@ -827,7 +882,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	// 	production:  body.Prefix + "_production",
 	// }
 	//fmt.Printf("prefixs: %s",prefixs)
-	// db, err := database.ConnectToDB(prefixs.development)
+	// db, err := database.ConnectToDB(body.Prefix)
 	// if err != nil {
 
 	// 	response := fiber.Map{
@@ -881,15 +936,15 @@ func GetAllPromotion(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	//fmt.Printf("prefixs: %s",prefixs)
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 
 		response := fiber.Map{
@@ -935,14 +990,8 @@ func GetPromotionById(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 
 		response := fiber.Map{
@@ -998,14 +1047,14 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Example:            data.Body.Example,
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: data.Prefix + "_development",
+	// 	production:  data.Prefix + "_production",
+	// }
+	db, err := database.ConnectToDB(data.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1042,14 +1091,14 @@ func DeletePromotion(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
@@ -1116,15 +1165,9 @@ func CreateGame(c *fiber.Ctx) error {
 		Status:      data.Body.Status,
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
+	 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(data.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1156,15 +1199,15 @@ func GetGameList(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1293,15 +1336,9 @@ func GetGameById(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1350,7 +1387,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	// 	production:  body.Prefix + "_production",
 	// }
 
-	//db, err := database.ConnectToDB(prefixs.development)
+	//db, err := database.ConnectToDB(body.Prefix)
 	db,err := GetDBFromContext(c)
 	if err != nil {
 		fmt.Println("err:", err)
@@ -1396,15 +1433,9 @@ func UpdateGame(c *fiber.Ctx) error {
 		})
 	}
 	//fmt.Println(body)
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1504,16 +1535,9 @@ func GetGameStatus(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
+ 
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1606,15 +1630,8 @@ func GetMemberList(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1652,6 +1669,7 @@ type MemberBody struct {
 		Bankname   string `json:"bankname"`
 		Banknumber string `json:"banknumber"`
 		ProStatus  string `json:"prostatus"`
+		MinTurnoverDef string `json:"minturnoverdef"`
 	}
 }
 func CreateMember(c *fiber.Ctx) error {
@@ -1666,15 +1684,8 @@ func CreateMember(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1688,6 +1699,7 @@ func CreateMember(c *fiber.Ctx) error {
 	member.Username = body.Body.Username
 	member.Password = body.Body.Password
 	member.Status = body.Body.Status
+	member.MinTurnoverDef = body.Body.MinTurnoverDef
 	member.Role = "user"
 
 	err = db.Debug().Create(&member).Error
@@ -1718,15 +1730,9 @@ func GetMemberById(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1806,15 +1812,8 @@ func UpdateMember(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1831,8 +1830,9 @@ func UpdateMember(c *fiber.Ctx) error {
 	member.Bankname = body.Body.Bankname
 	member.Banknumber = body.Body.Banknumber
 	member.Status = body.Body.Status
+	member.MinTurnoverDef=body.Body.MinTurnoverDef
 	
-	fmt.Println(member)
+	//fmt.Println(member)
 	// pro_setting, err := GetProdetail(db, body.Body.ProStatus)
  
 	// if pro_setting != nil {
@@ -2114,21 +2114,26 @@ func UpdateMaster(c *fiber.Ctx) error {
 	
 	allrowsAffected := db.Debug().Model(&settings).Select("id").Find(&settings).RowsAffected
 
+	//var parry Pairy
+
 	if allrowsAffected == 0 {
 		db.Debug().Create(&body.Body)
 	} else {
-		// var parry Pairy
-		// for _, setting := range body.Body {
-	 
-		// 	rows := db.Debug().Model(&settings).Where("`key` = ?", setting.Key).Find(&parry).RowsAffected
-		 
-		//  	// if rows == 0 {
-		// 	// 	db.Debug().Model(&settings).Create(setting)
-		// 	// } else {
-		// 	// 	db.Debug().Model(&settings).Where("`key` = ?", setting.Key).Updates(parry)
-		// 	// }
-		// }
-		db.Debug().Model(&settings).Updates(body.Body)
+		for _, setting := range body.Body {
+			var existingSetting models.Settings
+			// Check if the setting with the given key exists
+			result := db.Debug().Model(&settings).Where("`key` = ?", setting.Key).First(&existingSetting)
+	
+			if result.RowsAffected == 0 {
+				// If it doesn't exist, create a new entry
+				db.Debug().Create(&setting)
+			} else {
+				// If it exists, update the existing entry
+				db.Debug().Model(&existingSetting).Updates(setting)
+			}
+		}
+ 
+		//db.Debug().Model(&settings).Updates(body.Body)
 	}
 	response := fiber.Map{
 		"Message": "อัพเดตข้อมูลสำเร็จ",

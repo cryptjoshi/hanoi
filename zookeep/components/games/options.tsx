@@ -105,7 +105,8 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                         Balance: (balance - calculatedBetAmount).toString(),
                         AfterBalance: (balance - calculatedBetAmount).toString()
                     });
-               
+                    
+                    console.log("response:",response)
     
                     setWaitingResultState(true); // Set waiting result to true
                    

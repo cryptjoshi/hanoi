@@ -376,7 +376,7 @@ export const AddStatement = async (token:string,body:any)=>{
 
 export const createTransaction = async (accessToken:string,body:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4007/api/v1/transaction/add", { method: 'POST',
+  const response = await fetch("http://152.42.185.164:4006/api/v1/transaction/add", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',

@@ -70,9 +70,12 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/users/update/pro",jwt.JwtMiddleware,users.UpdateUserPro)
     
 	app.Post("/db/create",handler.CreateDatabase)
+	app.Post("/db/register",handler.Register)
 	app.Post("/db/login",handler.RootLogin)
 	app.Post("/db/list",handler.GetDatabaseList)
 	app.Post("/db/prefix",handler.GetDatabaseByPrefix)
+	app.Post("/db/update",handler.UpdateDatabase)
+	app.Post("/db/setting",handler.GetMasterSetting)
 	
 	app.Post("/db/promotion/all",handler.GetAllPromotion)
 	app.Post("/db/promotion/byuser",jwt.JwtMiddleware,handler.GetPromotionByUser)
@@ -88,10 +91,10 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/game/create",handler.CreateGame)
 	app.Post("/db/game/update",handler.UpdateGame)
 
-	app.Post("/db/create", handler.CreateDatabase)
-	app.Post("/db/login", handler.RootLogin)
-	app.Post("/db/list", handler.GetDatabaseList)
-	app.Post("/db/prefix", handler.GetDatabaseByPrefix)
+	// app.Post("/db/create", handler.CreateDatabase)
+	// app.Post("/db/login", handler.RootLogin)
+	// app.Post("/db/list", handler.GetDatabaseList)
+	// app.Post("/db/prefix", handler.GetDatabaseByPrefix)
 
 	// app.Post("/db/promotion/all", handler.GetPromotion)
 	// app.Post("/db/promotion/user", handler.GetPromotionByUser)
@@ -133,7 +136,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/statement/add",jwt.JwtMiddleware, wallet.AddStatement)
 	// app.Post("/transaction/add",handler.AddTransactions)
 	// app.Post("/transaction/update",handler.UpdateTransactions)
-
+	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)
 	// dashboard
 	// app.Post("/api/bank/statement",handler.GetBankStatement)
 	// app.Post("/api/first/statement",handler.GetFirstUsers)

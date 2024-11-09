@@ -30,7 +30,9 @@ type Users struct {
 	Win              decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:win;default:0"`
 	Lose             decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:lose;default:0"`
 	Turnover         decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:turnover;default:0"`
-	MinTurnover      decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:minturnover;default:0"`
+	MinTurnover      decimal.Decimal   `gorm:"column:minturnover;"gorm:"type:decimal(10,2);default:0"`
+	MinTurnoverDef   string    `gorm:"column:minturnoverdef;"gorm:"type:varchar(50);"gorm:"default:'10%'"`
+	BetLimit         string    `gorm:"column:betlimit;"gorm:"type:varchar(50);"`
 	Currency         string    `gorm:"type:varchar(50)";gorm:"column:currency"`
 	ProID            string    `gorm:"type:varchar(50)";gorm:"column:pro_id"`
 	PartnersKey      string    `gorm:"type:varchar(50)";gorm:"column:partners_key"`

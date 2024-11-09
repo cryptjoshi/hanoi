@@ -100,6 +100,17 @@ type ExchangeRateResponse struct {
 	Rates map[string]float64 `json:"rates"`
 }
 
+
+type Response struct {
+    Message string      `json:"message"`
+    Status  bool        `json:"status"`
+    Data    interface{} `json:"data"` // ใช้ interface{} เพื่อรองรับข้อมูลหลายประเภทใน field data
+}
+type ResponseBalance struct {
+	BetAmount decimal.Decimal `json:"betamount"`
+	BeforeBalance decimal.Decimal `json:"beforebalance"`
+	Balance decimal.Decimal `json:"balance"`
+}
 func InitAMQP() {
 	fmt.Println("Init AMQP RABBIT")
 	fmt.Println("channel")
@@ -410,6 +421,7 @@ func GenerateSeedPhrase(length int) string {
 }
 
 func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
+	fmt.Println(c.Locals("db"))
 	dbInterface := c.Locals("db")
  
 	if dbInterface == nil {
@@ -472,7 +484,6 @@ func createDatabase(dbName string) *gorm.DB {
 
 	return newDB
 }
-
 // Function to connect and create a database with a specific prefix and name
 func CreateDatabase(c *fiber.Ctx) error {
 
@@ -530,6 +541,7 @@ func CreateDatabase(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+
 func GetDatabaseList(c *fiber.Ctx) error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
 
@@ -598,6 +610,67 @@ func GetDatabaseList(c *fiber.Ctx) error {
 		"Message":   "ดึงรายชื่อฐานข้อมูลสำเร็จ",
 		"Status":    true,
 		"Databases": groupedDatabases,
+	}
+	return c.JSON(response)
+}
+func GetMasterSetting(c *fiber.Ctx) error {
+	loginRequest := new(Dbstruct)
+
+	if err := c.BodyParser(loginRequest); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	//dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, "master")
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	var settings models.Settings
+	var existingSetting models.Settings
+	db.Debug().Model(&settings).Where("`key` = ?",loginRequest.Prefix ).First(&existingSetting)
+	// rows, err := db.Raw("SHOW DATABASES").Rows()
+	// if err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดในการดึงรายชื่อฐานข้อมูล",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	//defer rows.Close()
+
+	// systemDatabases := map[string]bool{
+	// 	"information_schema": true,
+	// 	"mysql":              true,
+	// 	"performance_schema": true,
+	// 	"sys":                true,
+	// }
+
+	// var databaseNames []string
+	// for rows.Next() {
+	// 	var dbName string
+	// 	if err := rows.Scan(&dbName); err != nil {
+	// 		continue
+	// 	}
+
+	// 	if strings.HasPrefix(dbName, loginRequest.Prefix+"_") && !systemDatabases[dbName] {
+	// 		databaseNames = append(databaseNames, dbName)
+	// 	}
+	// }
+   
+	response := fiber.Map{
+		"Message":   "ดึงข้อมูลสำเร็จ",
+		"Status":    true,
+		"Setting": map[string]string{ // แก้ไขที่นี่
+			"Key":   loginRequest.Prefix,
+			"Value": existingSetting.Value,
+		}, // เพิ่มจุลภาคที่นี่
 	}
 	return c.JSON(response)
 }
@@ -693,7 +766,6 @@ func RootLogin(c *fiber.Ctx) error {
 	return c.JSON(response)
 
 }
-
 // ฟังก์ชันสำหรับสร้างฐานข้อมูลใหม่
 func CreateDB(db *gorm.DB, dbName string) error {
 	// ตรวจสอบว่าฐานข้อมูลที่ต้องการสร้างมีอยู่หรือยัง ถ้าไม่มีให้สร้าง
@@ -707,8 +779,6 @@ func CreateDB(db *gorm.DB, dbName string) error {
 	fmt.Printf("Database %s created successfully\n", dbName)
 	return nil
 }
-
-// promotion
 type ProBody struct  {
 	Name               string              `json:"name"`
 	Description        string              `json:"description"`
@@ -734,7 +804,6 @@ type promotiondata struct {
 	Body   ProBody `json:"body"`
 	PromotionId int `json:"promotionId"`
 }
-
 func CreatePromotion(c *fiber.Ctx) error {
 
 	var data promotiondata
@@ -748,14 +817,8 @@ func CreatePromotion(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+
+	db, err := database.ConnectToDB(data.Prefix)
 	if db == nil {
 
 		response := fiber.Map{
@@ -814,7 +877,6 @@ func CreatePromotion(c *fiber.Ctx) error {
 
 	return c.JSON(response)
 }
-
 func GetPromotionByUser(c *fiber.Ctx) error {
 
 	// body := new(Dbstruct)
@@ -832,7 +894,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	// 	production:  body.Prefix + "_production",
 	// }
 	//fmt.Printf("prefixs: %s",prefixs)
-	// db, err := database.ConnectToDB(prefixs.development)
+	// db, err := database.ConnectToDB(body.Prefix)
 	// if err != nil {
 
 	// 	response := fiber.Map{
@@ -848,7 +910,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 		fmt.Println(_err)
 		response := fiber.Map{
 			"Status":  false,
-			"Message": "โทเคนไม่ถูกต้อง!!",
+			"Message": "โทเคนไม่ถูกต��อง!!",
 		}
 		return c.JSON(response)
 	}
@@ -878,7 +940,6 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	return c.JSON(response)
  
 }
-
 func GetAllPromotion(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {
@@ -887,28 +948,28 @@ func GetAllPromotion(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	//fmt.Printf("prefixs: %s",prefixs)
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 
 		response := fiber.Map{
-			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Message": "มีข้อผ���ดพลาดเกิดขึ้น!!",
 			"Status":  false,
 		}
 		return c.JSON(response)
 	}
-	//database.CheckAndCreateTable(db, models.Promotion{})
-	// err = db.AutoMigrate(&models.Promotion{})
-	// if err != nil {
-	// 	fmt.Println("err:", err)
-	// }
+	//db.AutoMigrate(models.Promotion{})
+	err = db.AutoMigrate(&models.Promotion{})
+	if err != nil {
+		fmt.Println("err:", err)
+	}
 	promotions := []models.Promotion{}
 
 	err = db.Debug().Find(&promotions).Error
@@ -931,7 +992,6 @@ func GetAllPromotion(c *fiber.Ctx) error {
 
 	//	return c.JSON(promotions)
 }
-
 func GetPromotionById(c *fiber.Ctx) error {
 	body := new(promotiondata)
 	if err := c.BodyParser(body); err != nil {
@@ -942,14 +1002,8 @@ func GetPromotionById(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 
 		response := fiber.Map{
@@ -975,7 +1029,6 @@ func GetPromotionById(c *fiber.Ctx) error {
 	return c.JSON(response)
 
 }
-
 func UpdatePromotion(c *fiber.Ctx) error {
 	data := new(promotiondata)
 	if err := c.BodyParser(data); err != nil {
@@ -1006,14 +1059,14 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Example:            data.Body.Example,
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: data.Prefix + "_development",
+	// 	production:  data.Prefix + "_production",
+	// }
+	db, err := database.ConnectToDB(data.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1039,7 +1092,6 @@ func UpdatePromotion(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 func DeletePromotion(c *fiber.Ctx) error {
 	body := new(promotiondata)
 	if err := c.BodyParser(body); err != nil {
@@ -1051,14 +1103,14 @@ func DeletePromotion(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-	db, err := database.ConnectToDB(prefixs.development)
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
@@ -1082,7 +1134,6 @@ func DeletePromotion(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 // game
 type gameData struct {
 	Prefix string `json:"prefix"`
@@ -1099,7 +1150,13 @@ type gameData struct {
 		Status      string `json:"status"`
 	} `json:"body"`
 }
-
+func Register(c *fiber.Ctx) error {
+	//user := models.User{}
+	// CREATE USER 'username'@'localhost' IDENTIFIED BY 'password';
+	// GRANT ALL PRIVILEGES ON *.* TO 'username'@'localhost' WITH GRANT OPTION;
+	// FLUSH PRIVILEGES;
+	return nil
+}
 func CreateGame(c *fiber.Ctx) error {
 	data := new(gameData)
 	if err := c.BodyParser(data); err != nil {
@@ -1120,15 +1177,9 @@ func CreateGame(c *fiber.Ctx) error {
 		Status:      data.Body.Status,
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: data.Prefix + "_development",
-		production:  data.Prefix + "_production",
-	}
+	 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(data.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1152,7 +1203,6 @@ func CreateGame(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 func GetGameList(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {
@@ -1161,15 +1211,15 @@ func GetGameList(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1289,7 +1339,6 @@ func GetGameList(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 func GetGameById(c *fiber.Ctx) error {
 	body := new(gameData)
 	if err := c.BodyParser(body); err != nil {
@@ -1299,15 +1348,9 @@ func GetGameById(c *fiber.Ctx) error {
 		})
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1332,7 +1375,6 @@ func GetGameById(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 func GetGameByType(c *fiber.Ctx) error {
 	type gameType struct {
 		ID string `json:"id"`
@@ -1357,7 +1399,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	// 	production:  body.Prefix + "_production",
 	// }
 
-	//db, err := database.ConnectToDB(prefixs.development)
+	//db, err := database.ConnectToDB(body.Prefix)
 	db,err := GetDBFromContext(c)
 	if err != nil {
 		fmt.Println("err:", err)
@@ -1403,15 +1445,9 @@ func UpdateGame(c *fiber.Ctx) error {
 		})
 	}
 	//fmt.Println(body)
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1495,7 +1531,6 @@ func getGameStatusRedis() ([]Product,error) {
 	}
 	return products,nil
 }
-
 func GetGameStatus(c *fiber.Ctx) error {
 
 	type GameStatus struct {
@@ -1512,16 +1547,9 @@ func GetGameStatus(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
+ 
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1603,7 +1631,6 @@ func GetGameStatus(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 func GetMemberList(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {
@@ -1615,15 +1642,8 @@ func GetMemberList(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1650,7 +1670,6 @@ func GetMemberList(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
 type MemberBody struct {
 	Prefix string `json:"prefix"`
 	ID     int    `json:"id"`
@@ -1662,9 +1681,9 @@ type MemberBody struct {
 		Bankname   string `json:"bankname"`
 		Banknumber string `json:"banknumber"`
 		ProStatus  string `json:"prostatus"`
+		MinTurnoverDef string `json:"minturnoverdef"`
 	}
 }
-
 func CreateMember(c *fiber.Ctx) error {
 
 	body := new(MemberBody)
@@ -1677,15 +1696,8 @@ func CreateMember(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1699,6 +1711,7 @@ func CreateMember(c *fiber.Ctx) error {
 	member.Username = body.Body.Username
 	member.Password = body.Body.Password
 	member.Status = body.Body.Status
+	member.MinTurnoverDef = body.Body.MinTurnoverDef
 	member.Role = "user"
 
 	err = db.Debug().Create(&member).Error
@@ -1729,15 +1742,9 @@ func GetMemberById(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
+ 
 
-	db, err := database.ConnectToDB(prefixs.development)
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1817,15 +1824,8 @@ func UpdateMember(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	var prefixs = struct {
-		development string
-		production  string
-	}{
-		development: body.Prefix + "_development",
-		production:  body.Prefix + "_production",
-	}
-
-	db, err := database.ConnectToDB(prefixs.development)
+ 
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1841,8 +1841,10 @@ func UpdateMember(c *fiber.Ctx) error {
 	member.Status = body.Body.Status
 	member.Bankname = body.Body.Bankname
 	member.Banknumber = body.Body.Banknumber
+	member.Status = body.Body.Status
+	member.MinTurnoverDef=body.Body.MinTurnoverDef
 	
-
+	//fmt.Println(member)
 	// pro_setting, err := GetProdetail(db, body.Body.ProStatus)
  
 	// if pro_setting != nil {
@@ -1995,13 +1997,64 @@ func GetExchangeRates(c *fiber.Ctx) error {
 	return c.SendString(string(ratesJSON))
 }
 
-func UpdateMaster(c *fiber.Ctx) error {
+type MasterBody struct {
+	Prefix string          `json:"prefix"`
+	ID     int             `json:"id"`
+	Body   []models.Settings `json:"body"`
+}
 
-	type MasterBody struct {
-		Prefix string          `json:"prefix"`
-		ID     int             `json:"id"`
-		Body   models.Settings `json:"body"`
-	}
+type Pairy struct {
+	Key string `json:"key"`
+	Value string `json:"value"`
+}
+
+func BulkInsertSettings(c *fiber.Ctx, updateData map[string]interface{}) error {
+    // Assuming you have a function to get the database connection
+    db, err := GetDBFromContext(c)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Database connection error",
+            "Status":  false,
+        })
+    }
+
+    // Prepare a slice to hold the settings
+    settings := []models.Settings{
+        {
+            Key:   "baseCurrency",
+            Value: updateData["baseCurrency"].(string),
+        },
+        {
+            Key:   "customerCurrency",
+            Value: updateData["customerCurrency"].(string),
+        },
+        {
+            Key:   "baseRate",
+            Value: fmt.Sprintf("%v", updateData["baseRate"]), // Convert to string if necessary
+        },
+        {
+            Key:   "customerRate",
+            Value: fmt.Sprintf("%v", updateData["customerRate"]), // Convert to string if necessary
+        },
+    }
+
+    // Perform bulk insert
+    if err := db.Create(&settings).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Error saving settings",
+            "Status":  false,
+            "Data":    err.Error(),
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "Message": "Settings saved successfully",
+        "Status":  true,
+    })
+}
+
+func UpdateDatabase(c *fiber.Ctx) error {
+
 	body := new(MasterBody)
 	if err := c.BodyParser(body); err != nil {
 		response := fiber.Map{
@@ -2011,6 +2064,37 @@ func UpdateMaster(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
+	var settings models.Settings
+
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
+
+	// Connect to MySQL without a specific database
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	db.Debug().Model(&settings).Updates(body.Body)
+	// 
+
+	response := fiber.Map{
+		"Message": "อัพเดตฐานข้อมูลสำเร็จ!",
+		"Status":  true,
+	}
+	return c.JSON(response)
+}
+func UpdateMaster(c *fiber.Ctx) error {
+
+	type MasterBodys struct {
+		Prefix string          `json:"prefix"`
+		ID     int             `json:"id"`
+		Body   []models.Settings `json:"body"`
+	}
+	
 	var settings models.Settings
 
 	db := createDatabase("master")
@@ -2024,17 +2108,184 @@ func UpdateMaster(c *fiber.Ctx) error {
 	}
 
 	db.AutoMigrate(&models.Settings{})
-	var RowsAffected int64
-	db.Debug().Model(&settings).Select("id").Scan(&settings).Count(&RowsAffected)
-	if RowsAffected == 0 {
+	//var rowsAffected int64
+
+	body := new(MasterBodys)
+	 
+
+	if err := c.BodyParser(body); err != nil {
+		fmt.Printf(" %s ",err)
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	
+	allrowsAffected := db.Debug().Model(&settings).Select("id").Find(&settings).RowsAffected
+
+	//var parry Pairy
+
+	if allrowsAffected == 0 {
 		db.Debug().Create(&body.Body)
 	} else {
-		db.Debug().Model(&settings).Updates(body.Body)
+		for _, setting := range body.Body {
+			var existingSetting models.Settings
+			// Check if the setting with the given key exists
+			result := db.Debug().Model(&settings).Where("`key` = ?", setting.Key).First(&existingSetting)
+	
+			if result.RowsAffected == 0 {
+				// If it doesn't exist, create a new entry
+				db.Debug().Create(&setting)
+			} else {
+				// If it exists, update the existing entry
+				db.Debug().Model(&existingSetting).Updates(setting)
+			}
+		}
+ 
+		//db.Debug().Model(&settings).Updates(body.Body)
 	}
 	response := fiber.Map{
 		"Message": "อัพเดตข้อมูลสำเร็จ",
 		"Status":  true,
 		"Data":    body.Body,
 	}
+	return c.JSON(response)
+}
+
+type TransactionRequest struct {
+    Status          int                 `json:"status"`
+    GameProvide     string                  `json:"gameProvide"`
+    MemberName      string                  `json:"memberName"`
+    TransactionAmount decimal.Decimal       `json:"transactionAmount"`
+	PayoutAmount      decimal.Decimal       `json:"payoutAmount"`
+	BetAmount         decimal.Decimal       `json:"betAmount"`
+    ProductID         int64                     `json:"productID"`
+    BeforeBalance   string                  `json:"beforeBalance"`
+    Balance         decimal.Decimal                  `json:"balance"`
+    AfterBalance    string                  `json:"afterBalance"`
+}
+
+func AddTransactions(c *fiber.Ctx) error {
+
+ 
+
+	type bodyRequest struct {
+		Body TransactionRequest
+	}
+	
+	//fmt.Println("transactionsub:",transactionsub)
+	//Body := make(map[string]interface{})
+	transactionRequest := new(bodyRequest)
+
+	if err := c.BodyParser(&transactionRequest); err != nil {
+		fmt.Printf(" %s ", err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	db, err := GetDBFromContext(c)
+    if err != nil {
+		fmt.Println(err)
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Database connection error",
+            "Status":  false,
+        })
+    }
+
+	fmt.Printf("Body: %s",transactionRequest.Body)
+
+	
+	// transactionRequest := new(TransactionRequest)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+	// 		"Data": map[string]interface{}{
+	// 			"id": -1,
+	// 		},
+	// 	})
+	// }
+
+	transactionsub := models.TransactionSub{}
+
+	response := Response{
+		Status: false,
+		Message:"Success",
+		Data: ResponseBalance{
+			BetAmount: decimal.NewFromFloat(0),
+			BeforeBalance: decimal.NewFromFloat(0),
+			Balance: decimal.NewFromFloat(0),
+		},
+	}
+
+	var users models.Users
+    if err_ := db.Where("username = ? ", transactionRequest.Body.MemberName).First(&users).Error; err_ != nil {
+		response = Response{
+			Status: false,
+			Message: "ไม่พบข้อมูล",
+			Data:map[string]interface{}{
+				"id": -1,
+			},
+    	}
+	}
+
+	
+
+    transactionsub.Status = transactionRequest.Body.Status
+    transactionsub.GameProvide = transactionRequest.Body.GameProvide
+    transactionsub.MemberName = transactionRequest.Body.MemberName
+	transactionsub.ProductID = transactionRequest.Body.ProductID
+	transactionsub.BetAmount = transactionRequest.Body.BetAmount
+	transactionsub.PayoutAmount = transactionRequest.Body.PayoutAmount
+	transactionsub.BeforeBalance = users.Balance
+	transactionsub.Balance = transactionRequest.Body.Balance
+
+	fmt.Println(transactionsub)
+
+	result := db.Debug().Create(&transactionsub); 
+	//fmt.Println(result)
+	if result.Error != nil {
+		response = Response{
+			Status: false,
+			Message:  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			Data: map[string]interface{}{ 
+				"id": -1,
+			}}
+	} else {
+
+		updates := map[string]interface{}{
+			"Balance": transactionsub.Balance,
+				}
+	
+		 
+		  repository.UpdateFieldsUserString(db,users.Username, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+		//fmt.Println(_err)
+		// if _err != nil {
+		// 	fmt.Println("Error:", _err)
+		// } else {
+		// 	//fmt.Println("User fields updated successfully")
+		// }
+
+ 
+ 
+	 
+		response = Response{
+			Status: true,
+			Message: "สำเร็จ",
+			Data: ResponseBalance{
+				BeforeBalance: transactionsub.BeforeBalance,
+				Balance:       transactionsub.Balance,
+				BetAmount: transactionsub.BetAmount,
+			},
+		}
+		
+	}
+ 
 	return c.JSON(response)
 }

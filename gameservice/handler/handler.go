@@ -513,9 +513,7 @@ type TransactionRequest struct {
 }
 func AddTransactions(c *fiber.Ctx) error {
 
-//func AddTransactions(c *fiber.Ctx,transactionsub models.TransactionSub,membername string) Response {
-
-	
+ 
 
 	type bodyRequest struct {
 		Body TransactionRequest

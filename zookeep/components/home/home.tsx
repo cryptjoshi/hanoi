@@ -51,7 +51,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {
- 
+      console.log(token,prefix)
+      console.log(promotion)
       if(token && prefix!=""){
       const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
       if(res.Status){
@@ -98,6 +99,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
      
         if(user.Status){
           setBalance(user.Data.balance);
+       
           setUser(user.Data);
           setCurrency(userLoginStatus.state.customerCurrency);
           setPrefix(user.Data.prefix);
@@ -210,7 +212,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
  
  
-      <GameList prefix={prefix} lng={lng} />
+      <GameList prefix={prefix} includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
  
       {isLoading ? <div>Loading...</div> : (
       <PromotionList 

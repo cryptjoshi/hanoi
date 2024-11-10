@@ -7,6 +7,9 @@ export default async function GamePage({ params: { lng,id } }: { params: { lng: 
 
     const {t} = await useTranslation(lng,"translation",undefined)
 
+    
+
+
     return (
         <ContentLayout title="Games">
         <div>

@@ -1,13 +1,16 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import useGameStore from '@/store/gameStore'
 import { useTranslation } from '@/app/i18n/client';
 import  { useRouter } from "next/navigation"
 import Link from 'next/link';
 import useAuthStore from '@/store/auth';
+import { User } from 'lucide-react';
+import { GameStatus } from '@/lib/zod/gameStatus';
 
 
-const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
+const GameList = ({ prefix,lng,includegames,excludegames }: { prefix: string,lng:string,includegames:string,excludegames:string }) => {
   const { gameStatus, fetchGameStatus } = useGameStore()
+  const [games,setGames] = useState<any>()
   const {t} = useTranslation(lng,'translation',undefined);
   const {accessToken} = useAuthStore()
   const router = useRouter()
@@ -20,6 +23,7 @@ const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
   useEffect(() => {
     if(accessToken){
       fetchGameStatus(prefix,accessToken)
+    
     } else {
        router.push(`/${lng}/login`)
     }
@@ -28,10 +32,13 @@ const GameList = ({ prefix,lng }: { prefix: string,lng:string }) => {
 
   if (!gameStatus) {
     return <div>Loading game status...</div>
-  }
-
-
-
+  }   
+    //gameStatus.filter((game)=>includegames.split(",").includes(game.id))
+ 
+   
+    
+ 
+// 
   return (
     <>
    

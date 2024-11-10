@@ -31,7 +31,7 @@ import (
 	// "net"
 	// "net/http"
 	// "os"
-	// "strconv"
+	//"strconv"
 	"time"
 	"strings"
 	"fmt"
@@ -358,6 +358,11 @@ func AddStatement(c *fiber.Ctx) error {
 	BankStatement.Beforebalance = users.Balance
 	deposit := BankStatement.Transactionamount
 
+ 
+	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
+
+	
+
 	fmt.Printf("deposit: %v ",deposit)
 	fmt.Printf("Prosetting: %v ",pro_setting)
 	if pro_setting != nil {
@@ -497,16 +502,44 @@ func AddStatement(c *fiber.Ctx) error {
 				}
 		}
 	} else {
-	 
+		var percentStr = ""
 		if deposit.LessThan(decimal.Zero) {
-			fmt.Println("502")
-		 if strings.Contains(users.MinTurnover.String(), "%") {
-			 
-				fmt.Println(users.MinTurnover)
-			} else {
-				fmt.Println(users.MinTurnover)
-			}
 
+		 if strings.Contains(users.MinTurnover.String(), "%") {
+				percentStr = strings.TrimSuffix(users.MinTurnoverDef, "%")
+				
+				 
+			} else {
+				 percentStr = users.MinTurnoverDef
+			}
+			
+			fmt.Printf(" MinturnoverDef : %s ",percentStr)
+			// แปลงเป็น float64
+			percentValue, _ := decimal.NewFromString(percentStr)
+		 
+		
+			// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
+			percentValue = percentValue.Div(decimal.NewFromInt(100))
+		
+			// ใช้ในสูตรคำนวณ
+			//baseValue := 500.0
+		
+			result := BankStatement.Transactionamount.Mul(percentValue)
+			fmt.Printf(" Result : %v ",result)
+			fmt.Printf(" Turnover : %v ",BankStatement.Turnover)
+			
+			if BankStatement.Turnover.LessThanOrEqual(result) || BankStatement.Turnover.IsZero() {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"Status": false,
+					"Message": fmt.Sprintf("ยอดเทิร์นโอเวอร์น้อยกว่ายอดเทิร์นโอเวอร์ขั้นต่ำ %v %v ของยอดฝากล่าสุด !",users.MinTurnoverDef,users.Currency),
+					"Data": fiber.Map{
+						"id": -1,
+					}})
+			}  else {
+				BankStatement.Balance = users.Balance.Add(deposit)
+			}
+			
+			//fmt.Printf("ผลลัพธ์: %.2f\n", result)
 
 		} else {
 		BankStatement.Balance = users.Balance.Add(deposit)

@@ -343,8 +343,15 @@ func GetUser(c *fiber.Ctx) error {
 		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("member_name= ? and createdat > ?", users.Username,summary.CreatedAt.Format("2006-01-02")).Scan(&summary)
 	}
 	
+	var promotion models.Promotion
 	//fmt.Println(summary.Turnover)
-	
+	if users.ProStatus != "" {
+		db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
+	}
+
+
+
+
 	response := fiber.Map{
 		"Status":  true,
 		"Message": "สำเร็จ",
@@ -359,6 +366,8 @@ func GetUser(c *fiber.Ctx) error {
 			"turnover":   summary.Turnover,
 			"minturnover": users.MinTurnover,
 			"pro_status": users.ProStatus,
+			"includegames": promotion.Includegames,
+			"excludegames": promotion.Excludegames,
 		}}
 	return c.JSON(response)
 }
@@ -843,7 +852,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 
 	pro_setting, err := handler.GetProdetail(db,proStatus)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Errorf(" %s ",err)
 	}
 
 	fmt.Printf("ProDetail: %s",pro_setting)
@@ -902,11 +911,9 @@ func UpdateUserPro(c *fiber.Ctx) error {
 				
 			}
 		} else {
-
+			fmt.Printf("Prostatus:  %s \n",user.ProStatus)
 			fmt.Println(user.Balance)
-			if user.Balance.IsZero() { // หรือใช้ decimal.NewFromInt(0)
-				//user.ProStatus = old_promo
-			} else if user.ProStatus != "" {
+			 if user.ProStatus != "" {
 				updates["ProStatus"] = old_promo
 				repository.UpdateFieldsUserString(db, username, updates)
 				response := fiber.Map{
@@ -915,6 +922,16 @@ func UpdateUserPro(c *fiber.Ctx) error {
 					"Data":    "คุณใช้งานโปรโมชั่นนี้แล้ว",
 				}
 				return c.JSON(response)
+			} else if user.Balance.IsZero() == false { // หรือใช้ decimal.NewFromInt(0)
+				//user.ProStatus = old_promo
+				response := fiber.Map{
+					"Message": "ยอดคงเหลือมากกว่าศูนย์!",
+					"Status":  false,
+					"Data":    "ยอดคงเหลือมากกว่าศูนย์!",
+				}
+				return c.JSON(response)
+			} else {
+				
 			}
 		}
 		

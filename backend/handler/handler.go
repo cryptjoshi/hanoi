@@ -910,7 +910,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 		fmt.Println(_err)
 		response := fiber.Map{
 			"Status":  false,
-			"Message": "โทเคนไม่ถูกต��อง!!",
+			"Message": "โทเคนไม่ถูกต้อง!!",
 		}
 		return c.JSON(response)
 	}
@@ -2246,7 +2246,7 @@ func AddTransactions(c *fiber.Ctx) error {
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = transactionRequest.Body.Balance
 
-	fmt.Println(transactionsub)
+	//fmt.Println(transactionsub)
 
 	result := db.Debug().Create(&transactionsub); 
 	//fmt.Println(result)

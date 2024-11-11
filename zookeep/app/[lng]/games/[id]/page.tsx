@@ -14,11 +14,12 @@ export default async function GamePage({ params: { lng,id } }: { params: { lng: 
         <ContentLayout title="Games">
         <div>
         <h1>{`${t("menu.games")} No. ${id}`}</h1>
-            {id == "all" ? (           
+            {/* {id == "all" ? (           
              <Options lng={lng} id={id}/>
              ) : (
              <GameList lng={lng} id={id}/>
-             )}
+             )} */}
+              <Options lng={lng} id={id}/>
         </div>
         </ContentLayout>
     )

@@ -47,7 +47,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const { toast } = useToast();
  // const { accessToken } = useAuthStore()
   const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-  const [token, setToken] = useState<string>(userLoginStatus.state.accessToken);
+  const [token, setToken] = useState<string>(userLoginStatus.state?.accessToken);
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {

@@ -258,6 +258,8 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 	switch ProItem.ProType.Type {
 	case "first", "once","week":
 		response["minDept"] = promotion.MinDept
+		response["Widthdrawmax"] = promotion.MaxSpend
+		response["MinTurnover"] = promotion.MinSpend
 		response["count"] = ProItem.UsageLimit
 		response["Formular"] = promotion.Example
 		response["Name"] = promotion.Name
@@ -362,7 +364,7 @@ func AddStatement(c *fiber.Ctx) error {
 	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
 
 	
-
+	var percentStr = ""
 	fmt.Printf("deposit: %v ",deposit)
 	fmt.Printf("Prosetting: %v ",pro_setting)
 	if pro_setting != nil {
@@ -472,18 +474,47 @@ func AddStatement(c *fiber.Ctx) error {
 			}})
 		} else if deposit.LessThan(decimal.Zero) {
 		 
+
+			if strings.Contains(users.MinTurnover.String(), "%") {
+				percentStr = strings.TrimSuffix(users.MinTurnover.String(), "%")
+				
+				 
+			} else {
+				 percentStr = users.MinTurnover.String()
+			}
+			
+			fmt.Printf(" Minturnover : %s ",percentStr)
+			// แปลงเป็น float64
+			percentValue, _ := decimal.NewFromString(percentStr)
+		 
+		
+			// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
+			percentValue = percentValue.Div(decimal.NewFromInt(100))
+
+			result := users.LastDeposit.Mul(percentValue)	
+
 			fmt.Printf("pro_setting: %v ",pro_setting)
-			minTurnover := users.MinTurnover
+			//minTurnover := users.MinTurnover
 			fmt.Printf("bankstatement.Turnover: %v ",BankStatement.Turnover)
-			fmt.Printf("minTurnover: %v ",minTurnover)
-		  if BankStatement.Turnover.GreaterThan(minTurnover) || BankStatement.Turnover.Equal(minTurnover) {
+			fmt.Printf("result: %v ",result)
+			//fmt.Printf("minTurnover: %v ",minTurnover)
+		  if (BankStatement.Turnover.GreaterThan(result) || BankStatement.Turnover.Equal(result)) && BankStatement.Turnover.GreaterThan(decimal.Zero) {
+			if deposit.Abs().LessThanOrEqual(pro_setting["Widthdrawmax"].(decimal.Decimal)) {
 			BankStatement.Balance = users.Balance.Add(deposit)
+			} else {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"Status": false,
+					"Message": fmt.Sprintf("ยอดเงินถอนสูงกว่ายอดถอนสูงสุดของโปรโมชั่น %v %v!",pro_setting["Widthdrawmax"],users.Currency),
+					"Data": fiber.Map{
+						"id": -1,
+					}})
+			}
 			// clear turnover
 			
 		  } else {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"Status": false,
-				"Message": fmt.Sprintf("ยอดเทิร์นโอเวอร์น้อยกว่ายอดเทิร์นโอเวอร์ขั้นต่ำ %v %v !",minTurnover,users.Currency),
+				"Message": fmt.Sprintf("ยอดเทิร์นโอเวอร์น้อยกว่ายอดเทิร์นโอเวอร์ขั้นต่ำ %v %v !",result,users.Currency),
 				"Data": fiber.Map{
 					"id": -1,
 				}})
@@ -502,7 +533,7 @@ func AddStatement(c *fiber.Ctx) error {
 				}
 		}
 	} else {
-		var percentStr = ""
+	
 		if deposit.LessThan(decimal.Zero) {
 
 		 if strings.Contains(users.MinTurnover.String(), "%") {
@@ -567,6 +598,9 @@ func AddStatement(c *fiber.Ctx) error {
 	
 	result := db.Debug().Create(&BankStatement); 
 	
+
+
+	
 	if result.Error != nil {
 	 
 			response := fiber.Map{
@@ -585,8 +619,21 @@ func AddStatement(c *fiber.Ctx) error {
 			}
 	
 		//db, _ = database.ConnectToDB(BankStatement.Prefix)
-		_err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-	 
+	_err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+	if _err != nil {
+		return c.Status(200).JSON(fiber.Map{
+			"Status": false,
+			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			"Data": fiber.Map{ 
+				"id": -1,
+			}})
+		}
+     if BankStatement.Transactionamount.LessThan(decimal.Zero) {
+		updates["LastWithdraw"] = BankStatement.Transactionamount
+	 } else {
+		updates["LastDeposit"] = BankStatement.Transactionamount
+	 }
+	 _err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
 		if _err != nil {
 			return c.Status(200).JSON(fiber.Map{
 				"Status": false,

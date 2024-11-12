@@ -2289,3 +2289,77 @@ func AddTransactions(c *fiber.Ctx) error {
  
 	return c.JSON(response)
 }
+func GetAllTransaction(c *fiber.Ctx) error {
+
+	// type bodyRequest struct {
+	// 	Body TransactionRequest
+	// }
+	
+	//fmt.Println("transactionsub:",transactionsub)
+	//Body := make(map[string]interface{})
+	// transactionRequest := new(bodyRequest)
+
+	// if err := c.BodyParser(&transactionRequest); err != nil {
+	// 	fmt.Printf(" %s ", err.Error())
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	db, err := GetDBFromContext(c)
+    if err != nil {
+		fmt.Println(err)
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Database connection error",
+            "Status":  false,
+        })
+    }
+
+	//fmt.Printf("Body: %s",transactionRequest.Body)
+
+	
+	// transactionRequest := new(TransactionRequest)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+	// 		"Data": map[string]interface{}{
+	// 			"id": -1,
+	// 		},
+	// 	})
+	// }
+
+	transactionsub := []models.TransactionSub{}
+
+
+	var users models.Users
+    if err_ := db.Where("ID = ? ", c.Locals("ID")).First(&users).Error; err_ != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่พบข้อมูล",
+			"Data":map[string]interface{}{
+				"id": -1,
+			},
+    	})
+	}
+
+	err_ := db.Debug().Where("membername = ?", users.Username).Find(&transactionsub).Error
+	if err_ != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่พบข้อมูล",
+			"Data":map[string]interface{}{
+				"id": -1,
+			},
+    	})
+	} else {
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"Status": true,
+			"Message": "สำเร็จ",
+			"Data": transactionsub,
+		})
+	}
+}

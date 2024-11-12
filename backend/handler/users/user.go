@@ -331,16 +331,18 @@ func GetUser(c *fiber.Ctx) error {
 	var summary models.BankStatement
 	
 	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
-	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ?", users.ID).Order("createdat DESC").Limit(1).Scan(&summary)
+	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
 	
 		 
 	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
 
 	//createdate := summary.createdAt.Format("2006-01-02")
-	if summary.Turnover.GreaterThan(decimal.Zero) {
-	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("member_name= ?", users.Username).Scan(&summary)
+	fmt.Println(summary.Turnover)
+	fmt.Println(summary.CreatedAt)
+	if summary.Turnover.LessThanOrEqual(decimal.Zero) {
+	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
 	} else {
-		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("member_name= ? and createdat > ?", users.Username,summary.CreatedAt.Format("2006-01-02")).Scan(&summary)
+		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
 	}
 	
 	var promotion models.Promotion
@@ -365,6 +367,8 @@ func GetUser(c *fiber.Ctx) error {
 			"prefix":     users.Prefix,
 			"turnover":   summary.Turnover,
 			"minturnover": users.MinTurnover,
+			"lastdeposit": users.LastDeposit,
+			"lastwithdraw": users.LastWithdraw,
 			"pro_status": users.ProStatus,
 			"includegames": promotion.Includegames,
 			"excludegames": promotion.Excludegames,
@@ -811,7 +815,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 
 	// Update the user with the provided fields
 	//fmt.Printf("Body: %s",body)
-
+	//fmt.Printf("Old_promo: %s",old_promo)
 
 
 	 
@@ -823,7 +827,10 @@ func UpdateUserPro(c *fiber.Ctx) error {
 			"Message": "pro_status not found",
 		})
 	}
+
+	//fmt.Printf("ProStatusValue: %s",proStatusValue)
 	proStatus := fmt.Sprintf("%v", proStatusValue)
+
 // Check the type of proStatusValue
 // switch v := proStatusValue.(type) {
 // case string:
@@ -851,11 +858,12 @@ func UpdateUserPro(c *fiber.Ctx) error {
 	 
 
 	pro_setting, err := handler.GetProdetail(db,proStatus)
+	
 	if err != nil {
 		fmt.Errorf(" %s ",err)
 	}
 
-	fmt.Printf("ProDetail: %s",pro_setting)
+	//fmt.Printf("ProDetail: %s",pro_setting)
 
 	if pro_setting != nil {
 		 
@@ -912,7 +920,8 @@ func UpdateUserPro(c *fiber.Ctx) error {
 			}
 		} else {
 			fmt.Printf("Prostatus:  %s \n",user.ProStatus)
-			fmt.Println(user.Balance)
+			fmt.Printf("921 line Balance: %s \n",user.Balance)
+
 			 if user.ProStatus != "" {
 				updates["ProStatus"] = old_promo
 				repository.UpdateFieldsUserString(db, username, updates)
@@ -931,7 +940,8 @@ func UpdateUserPro(c *fiber.Ctx) error {
 				}
 				return c.JSON(response)
 			} else {
-				
+				fmt.Printf("941 line db: %s  username: %s updates: %s\n",db,username,updates)
+				repository.UpdateFieldsUserString(db, username, updates)
 			}
 		}
 		

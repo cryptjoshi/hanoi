@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select"
 import { useTranslation } from "@/app/i18n/client"
 import { Textarea } from "@/components/ui/textarea"
-import { CreateUser, GetDatabaseListByPrefix, UpdateDatabaseListByPrefix } from "@/actions"
+import { CreateUser, GetDatabaseListByPrefix, GetDBMode, UpdateDatabaseListByPrefix, UpdateMaster } from "@/actions"
 import { useState, useEffect, useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from 'next/navigation'
@@ -144,7 +144,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
 
           // Check if all database names are the same as prefix + mode
           const isDbNameSameAsPrefix = databases.every(db => 
-            db === `${prefix}_development` || db === `${prefix}_production`
+            db === `${prefix}_development` || db === `${prefix}_production` || db === `${prefix}_dev` || db === `${prefix}_prod`  
           );
           setIsDbNameSameAsPrefix(isDbNameSameAsPrefix);
 
@@ -153,8 +153,20 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
             development: databases.some(db => db.endsWith('_development')),
             production: databases.some(db => db.endsWith('_production')),
           });
+          const res = await GetDBMode(prefix)
+          console.log(res.Setting.Value)
+          setModeSelectionActive({
+            development: res.Setting.Value !== "production",
+            production: res.Setting.Value === "production"
+          });
+          //setModeSelectionActive(res.Setting.Value)//=="production"?modeSelectionActive.production:modeSelectionActive.development)
+          //console.log(res)
         }
+
       }
+
+      
+
     }
     fetchData();
   }, [id, form]);
@@ -200,11 +212,21 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
 
     try {
       const response = await UpdateDatabaseListByPrefix(submitData);  
+
+     
+
+      const responsedb = await UpdateMaster(data.prefix,1,[{
+        "key":   data.prefix,
+        "value": modeSelectionActive.production?"production":"development"    }])
+  
+
+
       toast({
         title: t("agents.settings.edit.success"),
         description: (
           <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
             <code className="text-white">{JSON.stringify(response.data, null, 2)}</code>
+            <code className="text-white">{JSON.stringify(responsedb.data, null, 2)}</code>
           </pre>
         ),
       });

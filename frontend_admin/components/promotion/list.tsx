@@ -309,7 +309,7 @@ export default function PromotionListDataTable({
     //   cell: info => info.getValue(),
     // }),
     columnHelper.accessor('minSpend', {
-      header: t('promotion.minSpend'),
+      header: t('promotion.minSpend') + "%",
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('maxSpend', {
@@ -412,7 +412,7 @@ export default function PromotionListDataTable({
   };
 
   if (isLoading) {
-    return <div>Loading promotions...</div>;
+    return <div>Loading {t('promotion.title')}...</div>;
   }
 
   return (

@@ -58,8 +58,8 @@
         "specificTime": "เฉพาะเวลา",
         "paymentMethod": "ชำระเงิน",
         "minDept":"ฝากขั้นต่ำ",
-        "minSpend": "ยอดเงินขั้นต่ำ",
-        "maxSpend": "ยอดเงินสูงสุด",
+        "minSpend": "ยอดเทิร์นขั้นต่ำ",
+        "maxSpend": "ยอดถอนเงินสูงสุด",
         "amount":"จำนวน",
         "balance":"ยอดเงิน",
         "deposit":"รายการฝาก",
@@ -246,11 +246,19 @@
         "description": "รายละเอียดสมาชิก",
         "edit": {
             "title": "แก้ไขสมาชิก",
-            "description": "แก้ไขรายละเอียดสมาชิก"
+            "description": "แก้ไขรายละเอียดสมาชิก",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการแก้ไขสมาชิก",
+            "success_description": "สำเร็จในการแก้ไขสมาชิก"
         },
         "add": {
             "title": "เพิ่มสมาชิก",
-            "description": "เพิ่มรายละเอียดสมาชิก"
+            "description": "เพิ่มรายละเอียดสมาชิก",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการเพิ่มสมาชิก",
+            "success_description": "สำเร็จในการเพิ่มสมาชิก"
         },
         "columns": {
             "id": "ID",
@@ -268,7 +276,9 @@
             "edit":"แก้ไข",
             "backToList":"กลับไปยังรายการ",
             "search":"ค้นหา",
-            "add":"เพิ่มสมาชิก"
+            "add":"เพิ่มสมาชิก",
+            "cancel":"ยกเลิก",
+            "minturnover_def":"เทิร์นโอเวอร์ต่ำสุด เริ่มต้น"
         }
     },
     "settings": {

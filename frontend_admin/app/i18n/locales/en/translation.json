@@ -44,7 +44,9 @@
             "error_database_name_not_allowed_special_characters_description": "Database name must be special characters only",
             "error_database_name_not_allowed_reserved_words": "Database name must be special characters only",
             "error_database_name_not_allowed_reserved_words_description": "Database name must be special characters only",
-            "database_mode_active":"Database Active Mode"
+            "database_mode_active":"Database Active Mode",
+            "success_description":"Edit success description",
+            "unsuccess_description":"Edit unsuccess "
         }
     }
     },
@@ -58,7 +60,7 @@
         "paymentMethod": "Payment Method",
         "minDept":"Min Deposit",
         "minSpend": "Min Turnover",
-        "maxSpend": "Max Withdrawal",
+        "maxSpend": "Max Withdrawal ",
         "amount":"Amount",
         "balance":"Balance",
         "deposit":"Deposit",
@@ -244,11 +246,19 @@
         "description": "Member detail",
         "edit": {
             "title": "Edit Member",
-            "description": "Edit member detail"
+            "description": "Edit member detail",
+            "success": "Success",
+            "error": "Error",
+            "error_description": "Member edit error description",
+            "success_description": "Member edit success description"
         },
         "add": {
             "title": "Add Member",
-            "description": "Add member detail"
+            "description": "Add member detail",
+            "success": "Success",
+            "error": "Error",
+            "error_description": "Member edit error description",
+            "success_description": "Member edit success description"
         },
         "columns": {
             "id": "ID",
@@ -267,7 +277,8 @@
             "search":"Search",
             "add":"Add",
             "save":"Save",
-            "cancel":"Cancel"
+            "cancel":"Cancel",
+            "minturnover_def":"Minimum TurnOver Default"
         }
         
         

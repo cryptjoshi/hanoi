@@ -62,7 +62,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
     }
-    
+    console.log(data)
     data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
  
    const result = !isAdd ? await UpdateMember(prefix, memberId, data) : await AddMember(prefix, data)
@@ -71,8 +71,8 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
     if (result.Status) {
       toast({
-        title: t("edit.success"),
-        description: t("edit.success_description"),
+        title: t("member.edit.success"),
+        description: t("member.edit.success_description"),
         variant: "default",
       })
       onClose();
@@ -87,15 +87,15 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   
     if (result.Status) {
       toast({
-        title: t("add.success"),
-        description: t("add.success_description"),
+        title: t("member.add.success"),
+        description: t("member.add.success_description"),
         variant: "default",
       })
       onClose();
     } else {
       toast({
-        title: t("add.error"),
-        description: t("add.error_description") + result.Message,
+        title: t("member.add.error"),
+        description: t("member.add.error_description") + result.Message,
         variant: "destructive",
       })
     }
@@ -277,7 +277,19 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 </FormItem>
               )}
             />  
-            
+              <FormField
+                control={form.control}
+                name="MinTurnoverDef"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('member.columns.minturnover_def')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={"10%"} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {/* <FormField
                 control={form.control}
                 name="gameType"

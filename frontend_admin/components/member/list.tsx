@@ -190,7 +190,7 @@ export default function MemberListDataTable({
       header: t('member.columns.balance'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value.toString()), 2);
+        return formatNumber(parseFloat(value?.toString()), 2);
       }
     }),
       columnHelper.accessor('Status', {
@@ -335,7 +335,7 @@ export default function MemberListDataTable({
   };
 
   if (isLoading) {
-    return <div>Loading games...</div>;
+    return <div>Loading {t('member.title')}...</div>;
   }
 
   return (

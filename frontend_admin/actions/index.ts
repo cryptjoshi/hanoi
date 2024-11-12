@@ -270,6 +270,9 @@ export const GetExchangeRate = async (currency:string) =>{
 }
 
 export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
+  
+  console.log(body)
+
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json',

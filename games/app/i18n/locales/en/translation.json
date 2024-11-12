@@ -43,8 +43,7 @@
             "error_database_name_not_allowed_special_characters": "Database name must be special characters only",
             "error_database_name_not_allowed_special_characters_description": "Database name must be special characters only",
             "error_database_name_not_allowed_reserved_words": "Database name must be special characters only",
-            "error_database_name_not_allowed_reserved_words_description": "Database name must be special characters only",
-            "database_mode_active":"Database Active Mode"
+            "error_database_name_not_allowed_reserved_words_description": "Database name must be special characters only"
         }
     }
     },

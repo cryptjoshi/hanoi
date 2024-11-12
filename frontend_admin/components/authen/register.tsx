@@ -28,7 +28,7 @@ type User = {
   
     // const state = useAuthStore()
     try {
-    const response = await  fetch("http://167.71.100.123:3003/api/v1/users/register", { method: 'POST',
+    const response = await  fetch("http://152.42.185.164:4006/api/v1/users/register", { method: 'POST',
           headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -195,11 +195,11 @@ export default function RegisterComponent() {
               </button>
             </div>
             <Separator className="my-4" />
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <button onClick={()=>{location.replace("/login")}} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 Login
               </button>
-            </div>
+            </div> */}
             <div className="mt-3">
             <button onClick={()=>reset()} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 Cancel

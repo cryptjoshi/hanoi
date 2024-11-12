@@ -43,8 +43,7 @@
             "error_database_name_not_allowed_special_characters": "ชื่อฐานข้อมูลต้องมีตัวอักษรพิเศษเท่านั้น",
             "error_database_name_not_allowed_special_characters_description": "ชื่อฐานข้อมูลต้องมีตัวอักษรพิเศษเท่านั้น",
             "error_database_name_not_allowed_reserved_words": "ชื่อฐานข้อมูลต้องมีตัวอักษรพิเศษเท่านั้น",
-            "error_database_name_not_allowed_reserved_words_description": "ชื่อฐานข้อมูลต้องมีตัวอักษรพิเศษเท่านั้น",
-              "database_mode_active":"ฐานข้อมูลที่เลือกใช้"
+            "error_database_name_not_allowed_reserved_words_description": "ชื่อฐานข้อมูลต้องมีตัวอักษรพิเศษเท่านั้น"
             
         }
     }

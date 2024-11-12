@@ -57,12 +57,14 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   }, [memberId, prefix]);
 
   const handleSubmit = async (data: Member) => {
+  
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
     }
-    data.Status = JSON.parse(data.Status?.toString() || '{}').name
-   //console.log(data)
+    
+    data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
+ 
    const result = !isAdd ? await UpdateMember(prefix, memberId, data) : await AddMember(prefix, data)
    if (!isAdd) {
  
@@ -337,7 +339,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                   <FormItem>
                     <FormLabel>{t('member.columns.status')}</FormLabel>
                     <Select
-                onValueChange={(value) => field.onChange(parseInt(value))}
+                onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
                       value={field.value?.toString() || ''}
                     >
                     <FormControl>

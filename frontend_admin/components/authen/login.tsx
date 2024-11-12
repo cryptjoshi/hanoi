@@ -130,11 +130,11 @@ export default function Login({lng}:{lng:string}) {
               </button>
             </div>
             <Separator className="my-4" />
-            <div className="mt-3">
+            {/* <div className="mt-3">
             <button onClick={redirect} className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 {t('login.register')}
               </button>
-            </div>
+            </div> */}
         </div>
       </div>
     </div>

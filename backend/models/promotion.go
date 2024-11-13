@@ -26,13 +26,14 @@ type Promotion struct {
 	Options   string   `gorm:"size:255;not null;" json:"options"`
 	Name string `gorm:"size:255;not null;" json:"name"`
 	PercentDiscount decimal.Decimal `gorm:"type:numeric" json:"percentDiscount"`
-	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"maxDiscount"`
+	MaxDiscount decimal.Decimal `gorm:"type:numeric" json:"max_discount"`
 	Unit string  `gorm:"size:50;not null;" json:"unit"`
 	UsageLimit int `json:"usageLimit"`
 	SpecificTime string `gorm:"size:255;not null;" json:"specificTime"`
 	PaymentMethod string `gorm:"size:255;not null;" json:"paymentMethod"`
 	MinDept decimal.Decimal `gorm:"type:numeric" json:"minDept"`
-	MinSpend decimal.Decimal `gorm:"type:numeric" json:"minSpend"`
+	MinSpend string `gorm:"size:255;not null;" json:"minSpend"`
+	MinSpendType string `gorm:"size:255;column:minSpendType;" json:"minSpendType"`
 	MaxSpend decimal.Decimal `gorm:"type:numeric" json:"maxSpend"`
 	TermsAndConditions string `gorm:"size:255;not null;" json:"termsAndConditions"`
 	Description string `gorm:"size:255;not null;" json:"description"`

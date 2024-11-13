@@ -368,6 +368,7 @@ func GetUser(c *fiber.Ctx) error {
 			"turnover":   summary.Turnover,
 			"minturnover": users.MinTurnover,
 			"lastdeposit": users.LastDeposit,
+			"lastproamount": users.LastProamount,
 			"lastwithdraw": users.LastWithdraw,
 			"pro_status": users.ProStatus,
 			"includegames": promotion.Includegames,
@@ -376,6 +377,100 @@ func GetUser(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func GetUserByUsername(c *fiber.Ctx) error {
+	user := new(models.Users)
+
+	if err := c.BodyParser(user); err != nil {
+		return c.Status(200).SendString(err.Error())
+	}
+	fmt.Printf(" %s ",user.Username)
+	db, conn := database.ConnectToDB(user.Prefix)
+
+
+	//db, _err := handler.GetDBFromContext(c)
+	prefix := c.Locals("Prefix")
+	fmt.Println("prefix:", prefix)
+	if conn != nil {
+
+		// response := fiber.Map{
+		// "Message": "โทเคนไม่ถูกต้อง!!",
+		// "Status":  false,
+		// "Data": fiber.Map{
+		// "prefix": prefix,
+		// 	},
+		// }
+		// return c.JSON(response)
+		db, _ = database.ConnectToDB(prefix.(string))
+	}
+	//id := c.Locals("Walletid")
+	var users models.Users
+	u_err := db.Debug().Where("username= ?", user.Username).Find(&users).Error
+
+	if u_err != nil {
+
+		response := fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+			"Data": fiber.Map{
+				"prefix": prefix,
+			},
+		}
+
+		return c.JSON(response)
+	}
+
+	// type Summary struct {
+	// 	Turnover decimal.Decimal `json:"turnover"`
+	// 	createdAt time.Time `json:"createdat"`
+	// }
+	var summary models.BankStatement
+	
+	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
+	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
+	
+		 
+	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
+
+	//createdate := summary.createdAt.Format("2006-01-02")
+	fmt.Println(summary.Turnover)
+	fmt.Println(summary.CreatedAt)
+	if summary.Turnover.LessThanOrEqual(decimal.Zero) {
+	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
+	} else {
+		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
+	}
+	
+	var promotion models.Promotion
+	//fmt.Println(summary.Turnover)
+	if users.ProStatus != "" {
+		db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
+	}
+
+
+
+
+	response := fiber.Map{
+		"Status":  true,
+		"Message": "สำเร็จ",
+		"Data": fiber.Map{
+			"id":         users.ID,
+			"fullname":   users.Fullname,
+			"banknumber": users.Banknumber,
+			"bankname":   users.Bankname,
+			"username":   strings.ToUpper(users.Username),
+			"balance":    users.Balance,
+			"prefix":     users.Prefix,
+			"turnover":   summary.Turnover,
+			"minturnover": users.MinTurnover,
+			"lastdeposit": users.LastDeposit,
+			"lastproamount": users.LastProamount,
+			"lastwithdraw": users.LastWithdraw,
+			"pro_status": users.ProStatus,
+			"includegames": promotion.Includegames,
+			"excludegames": promotion.Excludegames,
+		}}
+	return c.JSON(response)
+}
 // @Summary Get user balance
 // @Description Get user balance in the database.
 // @Tags users
@@ -776,6 +871,11 @@ func UpdateUser(c *fiber.Ctx) error {
 		"Message": "อัปเดตข้อมูลสำเร็จ!",
 	}
 	return c.JSON(response)
+}
+
+
+func checkProlog(pro_id string,userid string) {
+	
 }
 
 func UpdateUserPro(c *fiber.Ctx) error {

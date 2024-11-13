@@ -258,11 +258,13 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 	switch ProItem.ProType.Type {
 	case "first", "once","week":
 		response["minDept"] = promotion.MinDept
+		response["maxDept"] = promotion.MaxDiscount
 		response["Widthdrawmax"] = promotion.MaxSpend
 		response["MinTurnover"] = promotion.MinSpend
 		response["count"] = ProItem.UsageLimit
 		response["Formular"] = promotion.Example
 		response["Name"] = promotion.Name
+		response["MinSpendType"] = promotion.MinSpendType
 		if ProItem.ProType.Type == "week" {
 			response["Week"] = ProItem.ProType.DaysOfWeek
 		}
@@ -363,10 +365,11 @@ func AddStatement(c *fiber.Ctx) error {
  
 	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
 
-	
+	var result decimal.Decimal
+	var percentValue decimal.Decimal
 	var percentStr = ""
-	fmt.Printf("deposit: %v ",deposit)
-	fmt.Printf("Prosetting: %v ",pro_setting)
+	//fmt.Printf("deposit: %v ",deposit)
+	//fmt.Printf("Prosetting: %v ",pro_setting)
 	if pro_setting != nil {
 		if users.Balance.IsZero() && deposit.GreaterThan(decimal.Zero) {
 		
@@ -376,7 +379,7 @@ func AddStatement(c *fiber.Ctx) error {
 
 		// Ensure pro_setting["Example"] is not nil before type assertion
 
-		fmt.Printf("deposit > 0 : %v ",deposit.GreaterThan(decimal.Zero))
+		//fmt.Printf("deposit > 0 : %v ",deposit.GreaterThan(decimal.Zero))
 
 	 
 
@@ -425,7 +428,11 @@ func AddStatement(c *fiber.Ctx) error {
 			//fmt.Printf("balanceIncrease: %v ",balanceIncrease)
 			BankStatement.Proamount = balanceIncrease.Sub(deposit)
 			// Update BankStatement.Balance
-			BankStatement.Balance = users.Balance.Add(balanceIncrease)
+			if balanceIncrease.GreaterThan(pro_setting["maxDept"].(decimal.Decimal)) {
+				BankStatement.Balance = users.Balance.Add(deposit.Add(pro_setting["maxDept"].(decimal.Decimal)))
+			} else {
+				BankStatement.Balance = users.Balance.Add(balanceIncrease)
+			}
 
 			promotionLog := models.PromotionLog{
 
@@ -473,30 +480,45 @@ func AddStatement(c *fiber.Ctx) error {
 				"id": -1,
 			}})
 		} else if deposit.LessThan(decimal.Zero) {
-		 
+			//fmt.Printf("MinTurnover: %v \n",pro_setting["MinTurnover"])
 
-			if strings.Contains(users.MinTurnover.String(), "%") {
-				percentStr = strings.TrimSuffix(users.MinTurnover.String(), "%")
+			if strings.Contains(pro_setting["MinTurnover"].(string), "%") {
+				percentStr = strings.TrimSuffix(pro_setting["MinTurnover"].(string), "%")
+			 
+				//fmt.Printf(" MinturnoverDef : %s %",percentStr)
+				// แปลงเป็น float64
+				percentValue, _ = decimal.NewFromString(percentStr)
 				
+				// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
+				percentValue = percentValue.Div(decimal.NewFromInt(100))
 				 
 			} else {
-				 percentStr = users.MinTurnover.String()
+				 percentStr = pro_setting["MinTurnover"].(string)
+				// fmt.Printf(" 492 MinturnoverDef : %s % \n",percentStr)
+				 percentValue, _ = decimal.NewFromString(percentStr)
 			}
 			
-			fmt.Printf(" Minturnover : %s ",percentStr)
+			//fmt.Printf(" Minturnover : %s ",percentStr)
 			// แปลงเป็น float64
-			percentValue, _ := decimal.NewFromString(percentStr)
+			//percentValue, _ := decimal.NewFromString(percentStr)
 		 
 		
 			// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
-			percentValue = percentValue.Div(decimal.NewFromInt(100))
+			
 
-			result := users.LastDeposit.Mul(percentValue)	
+			fmt.Printf(" PercentValue: %v \n",percentValue)
+			fmt.Printf(" Users.LastDeposit: %v \n",users.LastDeposit)
+			fmt.Printf(" Users.LastProamount: %v \n",users.LastProamount)
+			if pro_setting["MinSpendType"] == "deposit" {
+				result = users.LastDeposit.Mul(percentValue)	
+			} else {
+				result = users.LastDeposit.Add(users.LastProamount).Mul(percentValue)	
+			}
 
-			fmt.Printf("pro_setting: %v ",pro_setting)
+			fmt.Printf("pro_setting: %v \n",pro_setting)
 			//minTurnover := users.MinTurnover
-			fmt.Printf("bankstatement.Turnover: %v ",BankStatement.Turnover)
-			fmt.Printf("result: %v ",result)
+			fmt.Printf("bankstatement.Turnover: %v \n",BankStatement.Turnover)
+			fmt.Printf("result: %v \n",result)
 			//fmt.Printf("minTurnover: %v ",minTurnover)
 		  if (BankStatement.Turnover.GreaterThan(result) || BankStatement.Turnover.Equal(result)) && BankStatement.Turnover.GreaterThan(decimal.Zero) {
 			if deposit.Abs().LessThanOrEqual(pro_setting["Widthdrawmax"].(decimal.Decimal)) {
@@ -533,29 +555,41 @@ func AddStatement(c *fiber.Ctx) error {
 				}
 		}
 	} else {
-	
+		
 		if deposit.LessThan(decimal.Zero) {
 
 		 if strings.Contains(users.MinTurnover.String(), "%") {
 				percentStr = strings.TrimSuffix(users.MinTurnoverDef, "%")
-				
+				fmt.Printf(" MinturnoverDef : %s %",percentStr)
+				// แปลงเป็น float64
+				percentValue, _ = decimal.NewFromString(percentStr)
+		 
+		
+			// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
+				percentValue = percentValue.Div(decimal.NewFromInt(100))
 				 
 			} else {
 				 percentStr = users.MinTurnoverDef
+				 fmt.Printf(" MinturnoverDef : %s ",percentStr)
+			// แปลงเป็น float64
+				percentValue, _ = decimal.NewFromString(percentStr)
+		  
 			}
 			
 			fmt.Printf(" MinturnoverDef : %s ",percentStr)
 			// แปลงเป็น float64
-			percentValue, _ := decimal.NewFromString(percentStr)
+			//percentValue, _ := decimal.NewFromString(percentStr)
 		 
 		
 			// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
-			percentValue = percentValue.Div(decimal.NewFromInt(100))
+			//percentValue = percentValue.Div(decimal.NewFromInt(100))
 		
 			// ใช้ในสูตรคำนวณ
 			//baseValue := 500.0
-		
+			fmt.Printf(" PercentValue: %v ",percentValue)
 			result := BankStatement.Transactionamount.Mul(percentValue)
+
+			
 			fmt.Printf(" Result : %v ",result)
 			fmt.Printf(" Turnover : %v ",BankStatement.Turnover)
 			
@@ -596,12 +630,12 @@ func AddStatement(c *fiber.Ctx) error {
 		BankStatement.Balance = users.Balance.Add(deposit)
 	}
 	
-	result := db.Debug().Create(&BankStatement); 
+	resultz := db.Debug().Create(&BankStatement); 
 	
 
 
 	
-	if result.Error != nil {
+	if resultz.Error != nil {
 	 
 			response := fiber.Map{
 				"Message": "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
@@ -632,6 +666,7 @@ func AddStatement(c *fiber.Ctx) error {
 		updates["LastWithdraw"] = BankStatement.Transactionamount
 	 } else {
 		updates["LastDeposit"] = BankStatement.Transactionamount
+		updates["LastProamount"] = BankStatement.Proamount
 	 }
 	 _err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
 		if _err != nil {

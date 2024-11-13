@@ -791,13 +791,14 @@ type ProBody struct  {
 	SpecificTime       string              `json:"specificTime"`
 	PaymentMethod      string              `json:"paymentMethod"`
 	MinDept            decimal.NullDecimal `json:"minDept"`
-	MinSpend           decimal.NullDecimal `json:"minSpend"`
+	MinSpend           string              `json:"minSpend"`
 	MaxSpend           decimal.NullDecimal `json:"maxSpend"`
 	TermsAndConditions string              `json:"termsAndConditions"`
 	Status             int                 `json:"status"`
 	Includegames       string              `json:"includegames"`
 	Excludegames       string              `json:"excludegames"`
 	Example            string              `json:"example"`
+	MinSpendType       string              `json:"minSpendType"`
 }
 type promotiondata struct {
 	Prefix string `json:"prefix"`
@@ -851,7 +852,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
 		MinDept:            data.Body.MinDept.Decimal,
-		MinSpend:           data.Body.MinSpend.Decimal,
+		MinSpend:           data.Body.MinSpend,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
@@ -960,7 +961,7 @@ func GetAllPromotion(c *fiber.Ctx) error {
 	if err != nil {
 
 		response := fiber.Map{
-			"Message": "มีข้อผ���ดพลาดเกิดขึ้น!!",
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
 			"Status":  false,
 		}
 		return c.JSON(response)
@@ -1050,13 +1051,14 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
 		MinDept:            data.Body.MinDept.Decimal,
-		MinSpend:           data.Body.MinSpend.Decimal,
+		MinSpend:           data.Body.MinSpend,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
+		MinSpendType:       data.Body.MinSpendType,
 	}
 
 	// var prefixs = struct {

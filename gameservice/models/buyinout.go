@@ -41,7 +41,7 @@ type BuyInOut struct {
 	CreatedAt         string `gorm:"column:createdAt;NOT NULL"`
 	UpdatedAt         string `gorm:"column:updatedAt;NOT NULL"`
 	DeletedAt         string `gorm:"column:deletedAt"`
-	TransactionID     string    `gorm:"type:varchar(255)";gorm:"column:TransactionID"`
+	TransactionID     string    `gorm:"type:varchar(255)";column:TransactionID"`
 	IsEndRound        int       `gorm:"column:IsEndRound"`
 	IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
 	IsFeature         int       `gorm:"column:IsFeature"`

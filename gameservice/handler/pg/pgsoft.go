@@ -64,7 +64,9 @@ type ResponseBalance struct {
 var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
 var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
 
-
+//http://ambsuperapi.com
+//user : sunshinepgthb
+//pass : Sunshine@688
 
 func Index(c *fiber.Ctx) error {
 
@@ -92,7 +94,8 @@ func GetBalance(c *fiber.Ctx) error {
 	var users models.Users
 	users = handler.ValidateJWTReturn(request.SessionToken);
 
- 
+	fmt.Printf("users: %s ",users.Token)
+	fmt.Printf("request: %s ",request.SessionToken)
 
 	balanceFloat, _ := users.Balance.Float64()
 	if users.Token == request.SessionToken {

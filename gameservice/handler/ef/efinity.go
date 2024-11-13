@@ -423,7 +423,7 @@ func PlaceBet(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -517,7 +517,7 @@ func GameResult(c *fiber.Ctx) error {
 
 	} else {
 		var c_transaction_found models.TransactionSub
-		rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+		rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 		 if rowsAffected == 0 {
 			result := AddTransactions(transaction,request.MemberName)
@@ -583,7 +583,7 @@ func RollBack(c *fiber.Ctx) error {
 			} else 
 			 {
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 				
 				 if rowsAffected == 0 {
 					result := AddTransactions(transaction,request.MemberName)
@@ -669,7 +669,7 @@ func CancelBet(c *fiber.Ctx) error {
 			} else 
 			 {
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 				
 				 if rowsAffected == 0 {
 					result := AddTransactions(transaction,request.MemberName)
@@ -754,7 +754,7 @@ func Bonus(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -825,7 +825,7 @@ func Jackpot(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 
@@ -896,7 +896,7 @@ func PushBet(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("transaction_id = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
+				rowsAffected := database.Database.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
 

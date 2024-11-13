@@ -51,16 +51,21 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {
+     
       console.log(token,prefix)
       console.log(promotion)
+      
       if(token && prefix!=""){
-      const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
+     
+        const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
+
       if(res.Status){
       toast({
         title: t('common.success'),
         description: t('common.promotionAccept'),
         variant: "default",
       })
+
       //onSelectPromotion(item);
       setSelectedPromotion(promotion)
     } else {
@@ -80,6 +85,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     router.push(`/${lng}/login`);
   }
   }
+  
   accepted(promotion)
  // acceptPromotion()
   }

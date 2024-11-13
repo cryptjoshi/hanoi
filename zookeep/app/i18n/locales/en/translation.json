@@ -325,7 +325,23 @@
         "beforeBalance": "Before Balance",
         "transactionAmount": "Transaction Amount",
         "proAmount": "Pro Amount",
-        "balance": "Balance"
+        "balance": "Balance",
+        "deposit": "Deposit",
+        "withdraw": "Withdraw"
+    },
+    "transaction": {
+        "transaction": "Transaction",
+        "transactionDescription": "Transaction description",
+        "bet": "Bet",
+        "result": "Result",
+        "Status": "Status",
+        "betamount": "Bet Amount",
+        "transactionAmount": "Transaction Amount",
+        "beforeBalance": "Before Balance",
+        "gameprovide": "Game Provide",
+        "transactionDate": "Transaction Date",
+        "failed": "Failed",
+        "success": "Success"
     },
     "common": {
         "mon": "Mon",

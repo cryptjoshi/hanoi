@@ -349,7 +349,7 @@ export const UpdateUserPromotion = async (token:string,body:any) =>{
     return response.json()
 }
 export const UpdateUser = async (token:string,body:any) =>{
- 
+ console.log(JSON.stringify(body))
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -399,6 +399,17 @@ export const GetHistory = async (token:string,prefix:string) =>{
 return response.json()
 }
  
+export const GetTransaction = async (token:string,prefix:string) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/transaction/all", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify({"prefix":prefix})
+})
+return response.json()
+}
 
 export const RegisterUser = async (prefix:string,body:User)=>{
  

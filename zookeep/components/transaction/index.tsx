@@ -10,7 +10,8 @@ import { formatNumber } from '@/lib/utils';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddStatement, GetUserInfo } from '@/actions';
+import { AddStatement, GetPromotion, GetUserInfo } from '@/actions';
+import type { User } from '@/store/auth';
 import useAuthStore from '@/store/auth';
  import { useRouter } from 'next/navigation';
  import { useToast } from "@/hooks/use-toast"
@@ -52,7 +53,7 @@ function TransactionForm({lng,slug}:TransProps) {
     const [loading, setLoading] = React.useState(true);
     const [balance, setBalance] = React.useState(0);
     const [turnover,setTurnOver] =React.useState(0);
-    const [user, setUser] = React.useState(null);
+    const [user, setUser] = React.useState<any | null>(null);
     const [currency, setCurrency] = React.useState('USD');
     const {t} = useTranslation(lng,"home",undefined)
     const { toast } = useToast()
@@ -68,7 +69,11 @@ function TransactionForm({lng,slug}:TransProps) {
    // console.log(lng)
     //if(!accessToken)
     //    router.push(`${lng}/login`)
-  
+    const [promotions, setPromotions] = React.useState<any>();
+    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    //const [minTurnover, setMinTurnover] = React.useState<number>(0);
+    const [bonus, setBonus] = React.useState<number>(0);
+
     React.useEffect(() => {
         const fetchBalance = async () => {
     
@@ -110,11 +115,43 @@ function TransactionForm({lng,slug}:TransProps) {
           }
          
         };
+        const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+        const fetchPromotion = async (prefix: string) => {
+     
+          if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken){
+          const promotion = await GetPromotion(userLoginStatus.state.accessToken);
+          
+          if (promotion.Status) {
+            // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
+            setPromotions(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
+           / setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
+           // setPromotions(promotion.Data.Promotions);
+           
+            
+          } else {
+            
+            //router.push(`/${lng}/login`)toast({
+          toast({title: t('unsuccess'),
+            description: promotion.Message,
+            variant: "destructive",
+          });
+             
+          } 
+        } 
+       }
     
     
         fetchBalance();
+        fetchPromotion(userLoginStatus.state.prefix);
         setLoading(false);
        
+         
+        //const lastbonus = promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == user?.pro_status?.toString())?.minSpendType=="deposit"?0:user?.lastproamount
+        //const minTurnoverValue = minTurnover * ((user?.lastdeposit)+lastbonus/100)
+       
+       //setMinTurnover(minTurnover)
+        // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
+
       }, [lng, router]);
    
     const handleSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -202,8 +239,18 @@ function TransactionForm({lng,slug}:TransProps) {
                 <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(turnover || 0)}</h2>
             </div>
             ) }
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
+            
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈ Min Turnover {  (parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend} {currency}</p>
             </div>
+            <div className="mt-2">
+            <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+             
+              {  // Display selected promotion name if available
+                promotions?.name || t('loading...') 
+              }   
+            </p>
+          </div>
             <FormField
                     control={form.control}
                     name="transactionamount"

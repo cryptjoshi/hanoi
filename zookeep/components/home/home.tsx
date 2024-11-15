@@ -217,7 +217,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
      </div>
     
  
- 
+     
       <GameList prefix={prefix} includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
  
       {isLoading ? <div>Loading...</div> : (

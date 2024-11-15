@@ -10,6 +10,7 @@ export interface AuthStore {
     refreshToken: string | null;
     customerCurrency: string | null;
     prefix:string;
+    user:User;
     Signin: (body: User) => Promise<boolean>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
@@ -50,6 +51,7 @@ const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       customerCurrency: "THB",
       prefix:"",
+      user:{username:"",fullname:"",prefix:"",password:""},
       Signin: async (body: User) => {
        // const router = useRouter()
         try {
@@ -70,7 +72,8 @@ const useAuthStore = create<AuthStore>()(
             set({
               isLoggedIn: true,
               accessToken: data?.Token,
-              prefix:body.prefix
+              prefix:body.prefix,
+              user: {username:data.username,fullname:data.fullname,prefix:body.prefix,password:""}
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
@@ -91,7 +94,7 @@ const useAuthStore = create<AuthStore>()(
       },
       Logout: () => {
        // const router = useRouter()
-        set({ isLoggedIn: false, accessToken: null });
+        set({ isLoggedIn: false, accessToken: null,user:{username:"",fullname:"",prefix:"",password:""} });
         document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
        //  router.push("/"); 
         // location.replace("/"); // แนะนำให้ใช้ใน context ที่ปลอดภัย เช่นใน useEffect หรือ handle event

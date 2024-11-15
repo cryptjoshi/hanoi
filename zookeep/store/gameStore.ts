@@ -13,6 +13,7 @@ interface GameStore {
 const useGameStore = create<GameStore>((set) => ({
   gameStatus: null,
   fetchGameStatus: async (prefix: string,token:string) => {
+    set({gameStatus:null})
     try {
       const response = await GetGameStatus(prefix,token)
   

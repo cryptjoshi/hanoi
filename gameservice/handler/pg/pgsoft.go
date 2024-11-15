@@ -63,7 +63,10 @@ type ResponseBalance struct {
 // var PG_API_KEY= "31d3cc58-4e34-4dc4-9c45-b8abe6a1b0d2"
 var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
 var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
-
+var OPERATOR_CODE = "sunshinetest"//"sunshinetest",
+var SECRET_API_KEY = os.Getenv("PG_API_KEY")
+var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
+var PG_PROD_URL = os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
 //http://ambsuperapi.com
 //user : sunshinepgthb
 //pass : Sunshine@688
@@ -143,8 +146,33 @@ func PlaceBet(c *fiber.Ctx) error {
 		"username": strings.ToUpper(request.Username),
 		"balance": decimal.NewFromFloat(0),
 	}
-		var user models.Users
-		database.Database.Where("username = ?", request.Username).First(&user)
+	prefix,perr := handler.GetPrefix(request.Username)
+	if perr != nil {
+			fmt.Println(perr)
+			
+	}
+	var user models.Users
+	db,cnn := database.ConnectToDB(prefix) 
+	if cnn != nil {
+		fmt.Printf("error: %s \n",cnn)
+	}
+		 dberr := db.Debug().Where("username = ?", request.Username).First(&user).Error
+		 if dberr != nil {
+			fmt.Println(dberr)
+			response := fiber.Map{
+				"statusCode": 10002,
+				"id": request.Id,
+				"timestampMillis": request.TimestampMillis +100,
+				"productId": request.ProductID,
+				"currency": request.Currency,
+				"balanceBefore": 0,
+				"balanceAfter": 0,
+				"username": strings.ToUpper(request.Username),
+				"message": "Balance incorrect",
+			}	
+			return c.JSON(response)
+		 }
+	
 		
 		 for _, transaction := range request.Txns {
 			
@@ -221,20 +249,21 @@ func PlaceBet(c *fiber.Ctx) error {
 			} else 
 			{
 				var c_transaction_found models.TransactionSub
-				rowsAffected := database.Database.Debug().Model(&models.TransactionSub{}).Select("id").Where("GameRoundID = ? ",transaction.RoundId).Find(&c_transaction_found).RowsAffected
+				rowsAffected := db.Debug().Model(&models.TransactionSub{}).Select("id").Where("GameRoundID = ? ",transaction.RoundId).Find(&c_transaction_found).RowsAffected
 				fmt.Println(" GameRoundID RowAffected: ",rowsAffected)
 				if rowsAffected == 0 {
-							_err_  := database.Database.Table("TransactionSub").Create(xtransaction).Error
+							_err_  := db.Debug().Model(&models.TransactionSub{}).Create(xtransaction).Error
 							if _err_ != nil {
 								fmt.Println(_err_)
 								//return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "ไม่สามารถแทรกข้อมูลได้"})
 							} 
 							//_err_ := database.Database.Model(&models.TransactionSub{}).Create(xtransaction);
-							fmt.Println(transactionAmount)
+							//fmt.Printf("TransactionAmount %v \n",transactionAmount)
 							updates := map[string]interface{}{
 								"Balance": user.Balance.Add(transactionAmount),
 								}
-							repository.UpdateFieldsUserString(request.Username, updates) 
+
+							repository.UpdateUserFields(db,user.ID, updates) 
 							balanceBeforeFloat, _ := user.Balance.Float64()
 							balanceAfterFloat, _ := user.Balance.Add(transactionAmount).Float64()
 							response := fiber.Map{

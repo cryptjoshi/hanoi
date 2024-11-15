@@ -26,7 +26,9 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//"strings"
+	"encoding/base64"
+    "strings"
+	"encoding/json"
 )
 
 var ctx = context.Background()
@@ -149,6 +151,43 @@ type ResponseBalance struct {
 	BetAmount decimal.Decimal `json:"betamount"`
 	BeforeBalance decimal.Decimal `json:"beforebalance"`
 	Balance decimal.Decimal `json:"balance"`
+}
+func fastPost(url, headstr string, encoded *fiber.Map) (*fasthttp.Response, error) {
+	if encoded == nil {
+		return nil, fmt.Errorf("encoded map cannot be nil")
+	}
+
+	method := "POST"
+
+	// สร้าง request
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.Header.SetMethod(method)
+	req.SetRequestURI(url)
+
+	// ตั้งค่า headers
+	req.Header.Set("Authorization", headstr) // ตั้งค่า Authorization header
+	req.Header.Set("Content-Type", "application/json") // ตั้งค่า Content-Type header
+
+	// แปลง encoded เป็น JSON
+	body, err := json.Marshal(encoded) // แปลงเป็น JSON
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling encoded map: %v", err)
+	}
+	req.SetBody(body) // ตั้งค่า body ของ request
+
+	// สร้าง response
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// ส่ง request
+	client := &fasthttp.Client{}
+	if err := client.Do(req, resp); err != nil {
+		return nil, fmt.Errorf("error making POST request: %v", err)
+	}
+
+	return resp, nil
 }
 func FastPost(url string, referrer string) (*fasthttp.Response, error) {
 	req := fasthttp.AcquireRequest()
@@ -511,6 +550,367 @@ type TransactionRequest struct {
     Balance         decimal.Decimal                  `json:"balance"`
     AfterBalance    string                  `json:"afterBalance"`
 }
+
+func createBasicAuthHeader(operatorCode, secretKey string) string {
+    // Combine the operator code and secret key
+    credentials := fmt.Sprintf("%s:%s", operatorCode, secretKey)
+
+    // Encode the credentials to base64
+    encodedCredentials := base64.StdEncoding.EncodeToString([]byte(credentials))
+
+    // Return the Basic Auth header
+    return "basic " + encodedCredentials
+}
+
+var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
+var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
+
+var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
+var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
+var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
+var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
+var PG_PROD_URL = "https://api.hentory.io" 
+
+
+func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, error) {
+	// Marshal requestData struct เป็น JSON
+	jsonData, err := json.Marshal(bodyData)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	// สร้าง Request และ Response
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	// ตั้งค่า URL, Method, และ Body
+	req.SetRequestURI(url)
+	req.Header.SetMethod("POST")
+	req.Header.SetContentType("application/json")
+	authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+	req.Header.Add("Authorization", authHeader)
+	req.SetBody(jsonData)
+
+	// ส่ง request
+	client := &fasthttp.Client{}
+	if err := client.Do(req, resp); err != nil {
+		return nil, fmt.Errorf("error making POST request: %v", err)
+	}
+
+	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+	fasthttp.ReleaseRequest(req)
+	
+	return resp, nil
+}
+func makeGetRequest(url string) (*fasthttp.Response, error) {
+	// Marshal requestData struct เป็น JSON
+	// jsonData, err := json.Marshal(bodyData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error marshaling JSON: %v", err)
+	// }
+
+	// สร้าง Request และ Response
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	// ตั้งค่า URL, Method, และ Body
+	req.SetRequestURI(url)
+	req.Header.SetMethod("GET")
+	req.Header.SetContentType("application/json")
+	authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+	req.Header.Add("Authorization", authHeader)
+	//req.SetBody(jsonData)
+
+	// ส่ง request
+	client := &fasthttp.Client{}
+	if err := client.Do(req, resp); err != nil {
+		return nil, fmt.Errorf("error making POST request: %v", err)
+	}
+
+	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+	fasthttp.ReleaseRequest(req)
+	
+	return resp, nil
+}
+
+
+
+
+func GetGameList(c *fiber.Ctx) error {
+	type BodyGame struct {
+		ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	}
+
+	type PgRequest struct {
+		Id string `json:"id"`
+		TimestampMillis int `json:"timestampmillis"`
+		ProductID string `json:"productid`
+		Currency string `json:"currency"`
+		Username string `json:"username"`
+		SessionToken string `json:"sessiontoken"`
+		StatusCode  int  `json:"statuscode"`
+		Balance  decimal.Decimal `json:"balance"`
+		//ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	//	Txns []TxnsRequest `json:"txns"`
+	}
+	type CResponse struct {
+		Message string      `json:"message"`
+		Status  bool        `json:"status"`
+		Data    interface{} `json:"data"`  
+	}
+
+	type CEResponse struct {
+		Message interface{}  `json:"message"`
+		Status  bool        `json:"status"`
+		Data    interface{} `json:"data"`  
+	}
+
+	var response CEResponse
+	// bodyRequest := new(BodyGame)
+
+	// if err := c.BodyParser(&bodyRequest); err != nil {
+	// 	fmt.Printf(" %s ", err.Error())
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	// fmt.Printf("Body: %s",bodyRequest.Body)
+	//var tokenString := c.Get("Authorization")[7:]
+	request := new(PgRequest)
+	if err := c.BodyParser(request); err != nil {
+		return c.Status(200).SendString(err.Error())
+	}
+	//var users models.Users
+	//users = ValidateJWTReturn(request.SessionToken);
+
+	//fmt.Printf("users: %v ",users)
+	//fmt.Printf("request: %s ",request.SessionToken)
+
+	// var args = fiber.Map{
+	// 	"username": strings.ToLower(users.Username),//user.data.username,
+	// 	"productId":pg_prod_code,
+	// 	"gameCode": request.ProductID,
+	// 	"isMobileLogin": true,
+	// 	"sessionToken": request.SessionToken,
+	// 	//"betLimit": [],
+	// 	"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
+	// }
+	
+	
+	
+	resp,err := makeGetRequest(PG_API_URL+"/seamless/games?productId=PGSOFT2")		
+	if err != nil {
+		log.Fatalf("Error making POST request: %v", err)
+	}
+	resultBytes := resp.Body()
+	resultString := string(resultBytes)
+	// แสดงผล string ที่ได้
+	//fmt.Println("Response body as string:", resultString)
+
+	
+
+	err = json.Unmarshal([]byte(resultString), &response)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return err
+	}
+
+	//url := fmt.Sprintf(PG_PROD_URL,"/seamless/login")
+// 	fmt.Printf("args % v \n",args)
+// 	c.Append("content-type", "text/javascript")
+// 	//OPERATOR_CODE := "your_operator_code"
+//     //SECRET_KEY := "your_secret_key"
+// 	c.Append("maxBodyLength","Infinity")
+//     authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+//     fmt.Printf("authheader: %s \n",authHeader)
+// 	c.Append("Authorization",authHeader )
+
+// 	headers := c.Request().Header
+
+// 	var headerString string
+// 	headers.VisitAll(func(key, value []byte) {
+// 		headerString += string(key) + ": " + string(value) + "\n"
+// 	})
+
+// //Basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
+// //basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
+
+// 	resp, err := fastPost(PG_API_URL+"/seamless/login", headerString,&args)
+// 	fmt.Println(PG_API_URL+"/seamless/login")
+// 	fmt.Printf("err: %v ",err)
+// 	if err != nil {
+// 		response := fiber.Map{
+// 			"Status":  false,
+// 			"Message": err.Error(),
+// 		}
+// 		return c.JSON(response)
+// 	}
+	// const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
+	// {
+	// 	method: 'POST',
+	// 	maxBodyLength: Infinity,
+	// 	body: JSON.stringify(args),
+	// 	headers: {'Content-Type': 'application/json','Authorization': 'basic ' + new Buffer.from(`${OPERATOR_CODE}:${SECRET_KEY}`).toString('base64')}
+	// })
+
+
+   // logger.info('args:'+JSON.stringify(args))
+	//const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
+	respon := fiber.Map{
+		"Status":  true,
+		"Message": response.Message,
+		"Data": response.Data,
+	}
+	return c.JSON(respon)
+}
+
+
+func LaunchGame(c *fiber.Ctx) error {
+	type BodyGame struct {
+		ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	}
+
+	type PgRequest struct {
+		Id string `json:"id"`
+		TimestampMillis int `json:"timestampmillis"`
+		ProductID string `json:"productid`
+		Currency string `json:"currency"`
+		Username string `json:"username"`
+		SessionToken string `json:"sessiontoken"`
+		StatusCode  int  `json:"statuscode"`
+		Balance  decimal.Decimal `json:"balance"`
+		//ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	//	Txns []TxnsRequest `json:"txns"`
+	}
+	type CResponse struct {
+		Message string      `json:"message"`
+		Status  bool        `json:"status"`
+		Data    interface{} `json:"data"`  
+	}
+
+	var response CResponse
+	// bodyRequest := new(BodyGame)
+
+	// if err := c.BodyParser(&bodyRequest); err != nil {
+	// 	fmt.Printf(" %s ", err.Error())
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	// fmt.Printf("Body: %s",bodyRequest.Body)
+	//var tokenString := c.Get("Authorization")[7:]
+	request := new(PgRequest)
+	if err := c.BodyParser(request); err != nil {
+		return c.Status(200).SendString(err.Error())
+	}
+	var users models.Users
+	users = ValidateJWTReturn(request.SessionToken);
+
+	//fmt.Printf("users: %v ",users)
+	//fmt.Printf("request: %s ",request.SessionToken)
+
+	var args = fiber.Map{
+		"username": strings.ToLower(users.Username),//user.data.username,
+		"productId":pg_prod_code,
+		"gameCode": request.ProductID,
+		"isMobileLogin": true,
+		"sessionToken": request.SessionToken,
+		//"betLimit": [],
+		"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
+	}
+	
+	//fmt.Printf(" args : %s ",args)
+	
+	resp,err := makePostRequest(PG_API_URL+"/seamless/login",args)		
+	if err != nil {
+		log.Fatalf("Error making POST request: %v", err)
+	}
+	resultBytes := resp.Body()
+	resultString := string(resultBytes)
+	// แสดงผล string ที่ได้
+	fmt.Println("Response body as string:", resultString)
+
+	err = json.Unmarshal([]byte(resultString), &response)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return err
+	}
+
+	//url := fmt.Sprintf(PG_PROD_URL,"/seamless/login")
+// 	fmt.Printf("args % v \n",args)
+// 	c.Append("content-type", "text/javascript")
+// 	//OPERATOR_CODE := "your_operator_code"
+//     //SECRET_KEY := "your_secret_key"
+// 	c.Append("maxBodyLength","Infinity")
+//     authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+//     fmt.Printf("authheader: %s \n",authHeader)
+// 	c.Append("Authorization",authHeader )
+
+// 	headers := c.Request().Header
+
+// 	var headerString string
+// 	headers.VisitAll(func(key, value []byte) {
+// 		headerString += string(key) + ": " + string(value) + "\n"
+// 	})
+
+// //Basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
+// //basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
+
+// 	resp, err := fastPost(PG_API_URL+"/seamless/login", headerString,&args)
+// 	fmt.Println(PG_API_URL+"/seamless/login")
+// 	fmt.Printf("err: %v ",err)
+// 	if err != nil {
+// 		response := fiber.Map{
+// 			"Status":  false,
+// 			"Message": err.Error(),
+// 		}
+// 		return c.JSON(response)
+// 	}
+	// const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
+	// {
+	// 	method: 'POST',
+	// 	maxBodyLength: Infinity,
+	// 	body: JSON.stringify(args),
+	// 	headers: {'Content-Type': 'application/json','Authorization': 'basic ' + new Buffer.from(`${OPERATOR_CODE}:${SECRET_KEY}`).toString('base64')}
+	// })
+
+
+   // logger.info('args:'+JSON.stringify(args))
+	//const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
+	respon := fiber.Map{
+		"Status":  true,
+		"Message": response.Message,
+		"Data": response.Data,
+	}
+	return c.JSON(respon)
+}
+
 func AddTransactions(c *fiber.Ctx) error {
 
  
@@ -580,7 +980,7 @@ func AddTransactions(c *fiber.Ctx) error {
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = transactionRequest.Body.Balance
 
-	fmt.Println(transactionsub)
+	//fmt.Println(transactionsub)
 
 	result := database.Database.Debug().Create(&transactionsub); 
 	//fmt.Println(result)

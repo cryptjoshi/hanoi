@@ -186,18 +186,22 @@ export const GetGameByType = async (token:string,id:string) =>{
 return response.json()
 }
 
-export const GetGameByProvide = async (token:string,id:string) =>{
+
+
+export const GetGameByProvide = async (token:string,provider:string,body:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4007/callback/pgsoft/gamelist", { method: 'POST',
-    headers: {   
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +  token
-      },
-      body: JSON.stringify({"id":id})
-})
-return response.json()
-}
+ 
+    const response = await fetch(`http://152.42.185.164:4007/callback/${provider}/gamelist`, { method: 'POST',
+      headers: {   
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' +  token
+        },
+        body: JSON.stringify(body)
+  })
+  return response.json()
+  }
+
 
 export const GetGameById = async (prefix:string,id:number) =>{
  
@@ -211,14 +215,14 @@ export const GetGameById = async (prefix:string,id:number) =>{
 return response.json()
 }
 
-export const getGameUrl = async (token:string,ProductID:string,username:string,currency:string) => {
+export const getGameUrl = async (url:string,data:any)=>{ //token:string,ProductID:string,username:string,currency:string) => {
 
-  const data  = {  "currency": currency, "productId": ProductID, "username": username, "sessionToken": token }
-  const response = await fetch("http://152.42.185.164:4007/api/v1/launchgame", { method: 'POST',
+  //const data  = {  "currency": currency, "productId": ProductID, "username": username, "sessionToken": token }
+  const response = await fetch(url, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +  token
+      'Authorization': 'Bearer ' +  data.sessionToken
       },
       body: JSON.stringify(data)
 })

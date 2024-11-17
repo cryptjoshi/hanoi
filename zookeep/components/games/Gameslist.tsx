@@ -11,26 +11,42 @@ import useAuthStore from "@/store/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 
-export default function GamesList({ id,lng }: { id:string,lng:string }) {
+export default function GamesList({ product,id,lng }: { product:string,id:string,lng:string }) {
    //const { gameStatus, fetchGameStatus } = useGameStore()
   const {t} = useTranslation(lng,'translation',undefined);
-  const [gameid,setGameId] =useState(id)
+  //const [gameid,setGameId] =useState(id)
   const router = useRouter()
   const [gamelist,setGameList] = useState<any[]>([{}])
  
   const {accessToken,user,customerCurrency} = useAuthStore()
-
+  user
   if(accessToken){
     useEffect(()=>{
         const fetchgame = async (id:string) =>{
-            const response = await GetGameByProvide(accessToken,id)
-           //console.log(response)
+            let provider = "pg"
+            if(id =='9999')
+              provider = "gc"
+            else if(id =="8888"){
+              provider = "pgsoft"
+            } else {
+              provider = "ef"
+            }
+            const body = {
+              "ProductID": id,
+              "GameType": product,
+              "LanguageCode": "4",
+              "Platform": "0"
+            }
+            
+            const response = await GetGameByProvide(accessToken,provider,body)
+           // console.log(response)
              if(response.Status){
                  setGameList(response.Data?.games)
              } else {
 
              }
         }
+      //  console.log(product)
         fetchgame(id)
     },[])
   } else {
@@ -43,14 +59,35 @@ const openInNewTab = (url:string) => {
   const newWindow = window.open(url, '_blank', 'noopener,noreferrer')
   if (newWindow) newWindow.opener = null
 }
+   let url = "";
+   let data
    const playgame = (code:string) =>{
-    getGameUrl(accessToken || "",code,user.username,customerCurrency || "USD").then((gameurl)=>{
-    if(gameurl.Status){
-        //console.log(gameurl.Data.url)
-     //   window.open(gameurl.Data.url,'_blank','noopener,noreferrer')
-       openInNewTab(gameurl.Data.url)
-    }   
-   })
+    //console.log("product:"+product+"id:"+id)
+    switch(id){
+      case "8888":
+         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken }
+        getGameUrl("http://152.42.185.164:4007/api/v1/pg/launchgame",data).then((gameurl)=>{
+        if(gameurl.Status)
+         // url=gameurl.Data.url
+        openInNewTab(gameurl.Data.url)
+        })
+      
+     break;
+     case "9999":
+      break;
+      default:
+         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username, "sessionToken": accessToken }
+       // console.log(data)
+         getGameUrl("http://152.42.185.164:4007/api/v1/launchgame",data).then((gameurl)=>{
+          if(gameurl.Status)
+           // url=gameurl.Data.url
+          openInNewTab(gameurl.Data.url)
+          })
+
+        break;
+    } 
+  
+   
   }
 
   //useEffect(() => {
@@ -60,23 +97,23 @@ const openInNewTab = (url:string) => {
   //href={`/${lng}/games/list/${id}/play/${item.code}`}
 
   if (!gamelist) {
-    return <div>Loading game status...</div>
+    return <div>Game Maintainance status...</div>
   }
 
 
     return (
         <div className="grid grid-cols-4 gap-2 sm:gap-4 p-4 sm:p-6">
         {gamelist.map((item: any, index: any) => (
-           <Link key={index} onClick={()=>playgame(item.code)} href="">
+           <Link key={index} onClick={()=>playgame(item.code || item.GameCode)} href="">
          <div  className="flex flex-col items-center">
           
            <Avatar>
-            <AvatarImage src={item.img} />
-            <AvatarFallback>{item.name}</AvatarFallback>
+            <AvatarImage src={item.img || item.ImageUrl} />
+            <AvatarFallback>{item.name || item.GameName}</AvatarFallback>
           </Avatar>
         
           
-           <span className="text-[10px] sm:text-xs text-center" >{`${item.name|| item.productCode}`}</span>
+           <span className="text-[10px] sm:text-xs text-center" >{`${item.name || item.GameName}`}</span>
           
          </div>
          </Link>

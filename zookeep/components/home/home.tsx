@@ -52,8 +52,8 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
 
     const accepted = async (promotion:Promotion) => {
      
-      console.log(token,prefix)
-      console.log(promotion)
+      //console.log(token,prefix)
+      //console.log(promotion)
       
       if(token && prefix!=""){
      

@@ -2,14 +2,14 @@
 import { GetGameByProvide, getGameUrl } from "@/actions"
 import { useTranslation } from "@/app/i18n/client"
 import { ContentLayout } from "@/components/admin-panel/content-layout"
-import GameList from "@/components/games/Gamelist"
+import GamesList from "@/components/games/Gameslist"
 import {Options} from "@/components/games/options"
 import useAuthStore from "@/store/auth"
 import { useEffect } from "react"
 //import { Route } from "lucide-react"
 
 
-export default  function GamePage({ params: { lng,product } }: { params: { lng: string,product:string } }) {
+export default  function GamePage({ params: { lng,id,product } }: { params: { lng: string,id:string,product:string } }) {
 
    
 
@@ -48,7 +48,7 @@ export default  function GamePage({ params: { lng,product } }: { params: { lng: 
         <ContentLayout title="Games">
         <div>
         <h1>{`${t("menu.games")} No. ${product}`}</h1>
-            <GameList lng={lng}  id={product} />
+            <GamesList lng={lng} product={product} id={id} />
         </div>
         </ContentLayout>
     )

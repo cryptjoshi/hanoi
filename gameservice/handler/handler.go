@@ -20,6 +20,7 @@ import (
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"pkd/database"
 	"pkd/repository"
+	"pkd/common" 
 	"log"
 	"net"
 	"net/http"
@@ -562,14 +563,14 @@ func createBasicAuthHeader(operatorCode, secretKey string) string {
     return "basic " + encodedCredentials
 }
 
-var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
-var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
+// var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
+// var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
 
-var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
-var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
-var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
-var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
-var PG_PROD_URL = "https://api.hentory.io" 
+// var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
+// var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
+// var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
+// var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
+// var PG_PROD_URL = "https://api.hentory.io" 
 
 
 func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, error) {
@@ -587,7 +588,7 @@ func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, erro
 	req.SetRequestURI(url)
 	req.Header.SetMethod("POST")
 	req.Header.SetContentType("application/json")
-	authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+	authHeader := createBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
 	req.Header.Add("Authorization", authHeader)
 	req.SetBody(jsonData)
 
@@ -617,7 +618,7 @@ func makeGetRequest(url string) (*fasthttp.Response, error) {
 	req.SetRequestURI(url)
 	req.Header.SetMethod("GET")
 	req.Header.SetContentType("application/json")
-	authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
+	authHeader := createBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
 	req.Header.Add("Authorization", authHeader)
 	//req.SetBody(jsonData)
 
@@ -711,7 +712,7 @@ func GetGameList(c *fiber.Ctx) error {
 	
 	
 	
-	resp,err := makeGetRequest(PG_API_URL+"/seamless/games?productId=PGSOFT2")		
+	resp,err := makeGetRequest(common.PG_API_URL+"/seamless/games?productId=PGSOFT2")		
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
@@ -729,46 +730,7 @@ func GetGameList(c *fiber.Ctx) error {
 	}
 
 	//url := fmt.Sprintf(PG_PROD_URL,"/seamless/login")
-// 	fmt.Printf("args % v \n",args)
-// 	c.Append("content-type", "text/javascript")
-// 	//OPERATOR_CODE := "your_operator_code"
-//     //SECRET_KEY := "your_secret_key"
-// 	c.Append("maxBodyLength","Infinity")
-//     authHeader := createBasicAuthHeader(OPERATOR_CODE, SECRET_API_KEY)
-//     fmt.Printf("authheader: %s \n",authHeader)
-// 	c.Append("Authorization",authHeader )
 
-// 	headers := c.Request().Header
-
-// 	var headerString string
-// 	headers.VisitAll(func(key, value []byte) {
-// 		headerString += string(key) + ": " + string(value) + "\n"
-// 	})
-
-// //Basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
-// //basic c3Vuc2hpbmVwZ3RoYjo5ZGM4NTdmNC0yMjI1LTQ1ZWYtYmYwZi02NjViY2Y3ZDRhMWI=
-
-// 	resp, err := fastPost(PG_API_URL+"/seamless/login", headerString,&args)
-// 	fmt.Println(PG_API_URL+"/seamless/login")
-// 	fmt.Printf("err: %v ",err)
-// 	if err != nil {
-// 		response := fiber.Map{
-// 			"Status":  false,
-// 			"Message": err.Error(),
-// 		}
-// 		return c.JSON(response)
-// 	}
-	// const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
-	// {
-	// 	method: 'POST',
-	// 	maxBodyLength: Infinity,
-	// 	body: JSON.stringify(args),
-	// 	headers: {'Content-Type': 'application/json','Authorization': 'basic ' + new Buffer.from(`${OPERATOR_CODE}:${SECRET_KEY}`).toString('base64')}
-	// })
-
-
-   // logger.info('args:'+JSON.stringify(args))
-	//const gameurl = await fetch(`${PG_PROD_URL}/seamless/login`,
 	respon := fiber.Map{
 		"Status":  true,
 		"Message": response.Message,
@@ -834,10 +796,21 @@ func LaunchGame(c *fiber.Ctx) error {
 
 	//fmt.Printf("users: %v ",users)
 	//fmt.Printf("request: %s ",request.SessionToken)
-
+	// efargs = {
+	// 	"OperatorCode": OPERATOR_CODE,
+	// 	"MemberName": req.body.username,
+	// 	"Password":   response.data.uid,
+	// 	"ProductID": ProductID,
+	// 	"GameType": GameType,
+	// 	"GameID": GameID,
+	// 	"LanguageCode": LanguageCode,
+	// 	"Platform": Platform,
+	// 	"Sign": hashSignature("LaunchGame",RequestTime),
+	// 	"RequestTime": RequestTime
+	// 	}
 	var args = fiber.Map{
 		"username": strings.ToLower(users.Username),//user.data.username,
-		"productId":pg_prod_code,
+		"productId":common.PG_PROD_CODE,
 		"gameCode": request.ProductID,
 		"isMobileLogin": true,
 		"sessionToken": request.SessionToken,
@@ -847,7 +820,7 @@ func LaunchGame(c *fiber.Ctx) error {
 	
 	//fmt.Printf(" args : %s ",args)
 	
-	resp,err := makePostRequest(PG_API_URL+"/seamless/login",args)		
+	resp,err := makePostRequest(common.PG_API_URL+"/seamless/login",args)		
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}

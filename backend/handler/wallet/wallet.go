@@ -543,7 +543,7 @@ func AddStatement(c *fiber.Ctx) error {
 		  }
 		 
 		} else {
-			if users.Balance.IsZero() == false {
+			if users.Balance.LessThanOrEqual(decimal.Zero) == false {
 				
 				response := fiber.Map{
 					"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
@@ -622,7 +622,7 @@ func AddStatement(c *fiber.Ctx) error {
 	if users.Balance.LessThan(deposit.Abs()) && deposit.LessThan(decimal.Zero) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"Status": false,
-			"Message": fmt.Sprintf("ยอดคงเหลือไม่สามารถถอนเงินได้ %v %v !",users.Balance,users.Currency),
+			"Message": fmt.Sprintf("ยอดคงเหลือไม่พอ ไม่สามารถถอนเงินได้ %v %v !",users.Balance,users.Currency),
 			"Data": fiber.Map{
 				"id": -1,
 			}})

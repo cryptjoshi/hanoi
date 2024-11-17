@@ -982,11 +982,16 @@ func UpdateUserPro(c *fiber.Ctx) error {
 	
 
 		} else {
+			//fmt.Println(pro_setting["MinTurnover"])
 			// Handle the case where the assertion fails
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"Message": "Invalid type for MinTurnover",
-				"Status":  false,
-			})
+			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			// 	"Message": "Invalid type for MinTurnover",
+			// 	"Status":  false,
+			// })
+			updates = map[string]interface{}{
+				"MinTurnover": pro_setting["MinTurnover"],
+				"ProStatus": proStatus,
+			}
 		}
 		if pro_setting["Type"] == "first" {
 

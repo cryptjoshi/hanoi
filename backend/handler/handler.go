@@ -1425,7 +1425,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	
 	
 
-	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+body.ID+"%").Scan(&games).Error
+	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+strings.Replace(body.ID,"%20","%",-1)+"%").Scan(&games).Error
 
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

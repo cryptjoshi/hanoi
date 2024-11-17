@@ -791,13 +791,14 @@ type ProBody struct  {
 	SpecificTime       string              `json:"specificTime"`
 	PaymentMethod      string              `json:"paymentMethod"`
 	MinDept            decimal.NullDecimal `json:"minDept"`
-	MinSpend           decimal.NullDecimal `json:"minSpend"`
+	MinSpend           string              `json:"minSpend"`
 	MaxSpend           decimal.NullDecimal `json:"maxSpend"`
 	TermsAndConditions string              `json:"termsAndConditions"`
 	Status             int                 `json:"status"`
 	Includegames       string              `json:"includegames"`
 	Excludegames       string              `json:"excludegames"`
 	Example            string              `json:"example"`
+	MinSpendType       string              `json:"minSpendType"`
 }
 type promotiondata struct {
 	Prefix string `json:"prefix"`
@@ -851,7 +852,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
 		MinDept:            data.Body.MinDept.Decimal,
-		MinSpend:           data.Body.MinSpend.Decimal,
+		MinSpend:           data.Body.MinSpend,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
@@ -910,7 +911,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 		fmt.Println(_err)
 		response := fiber.Map{
 			"Status":  false,
-			"Message": "โทเคนไม่ถูกต��อง!!",
+			"Message": "โทเคนไม่ถูกต้อง!!",
 		}
 		return c.JSON(response)
 	}
@@ -960,7 +961,7 @@ func GetAllPromotion(c *fiber.Ctx) error {
 	if err != nil {
 
 		response := fiber.Map{
-			"Message": "มีข้อผ���ดพลาดเกิดขึ้น!!",
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
 			"Status":  false,
 		}
 		return c.JSON(response)
@@ -1050,13 +1051,14 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		SpecificTime:       data.Body.SpecificTime,
 		PaymentMethod:      data.Body.PaymentMethod,
 		MinDept:            data.Body.MinDept.Decimal,
-		MinSpend:           data.Body.MinSpend.Decimal,
+		MinSpend:           data.Body.MinSpend,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
+		MinSpendType:       data.Body.MinSpendType,
 	}
 
 	// var prefixs = struct {
@@ -1423,7 +1425,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	
 	
 
-	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+body.ID+"%").Scan(&games).Error
+	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+strings.Replace(body.ID,"%20","%",-1)+"%").Scan(&games).Error
 
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -2246,7 +2248,7 @@ func AddTransactions(c *fiber.Ctx) error {
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = transactionRequest.Body.Balance
 
-	fmt.Println(transactionsub)
+	//fmt.Println(transactionsub)
 
 	result := db.Debug().Create(&transactionsub); 
 	//fmt.Println(result)
@@ -2288,4 +2290,78 @@ func AddTransactions(c *fiber.Ctx) error {
 	}
  
 	return c.JSON(response)
+}
+func GetAllTransaction(c *fiber.Ctx) error {
+
+	// type bodyRequest struct {
+	// 	Body TransactionRequest
+	// }
+	
+	//fmt.Println("transactionsub:",transactionsub)
+	//Body := make(map[string]interface{})
+	// transactionRequest := new(bodyRequest)
+
+	// if err := c.BodyParser(&transactionRequest); err != nil {
+	// 	fmt.Printf(" %s ", err.Error())
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	db, err := GetDBFromContext(c)
+    if err != nil {
+		fmt.Println(err)
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "Message": "Database connection error",
+            "Status":  false,
+        })
+    }
+
+	//fmt.Printf("Body: %s",transactionRequest.Body)
+
+	
+	// transactionRequest := new(TransactionRequest)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "กรุณาตรวจสอบข้อมูลอีกครั้ง!",
+	// 		"Data": map[string]interface{}{
+	// 			"id": -1,
+	// 		},
+	// 	})
+	// }
+
+	transactionsub := []models.TransactionSub{}
+
+
+	var users models.Users
+    if err_ := db.Where("ID = ? ", c.Locals("ID")).First(&users).Error; err_ != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่พบข้อมูล",
+			"Data":map[string]interface{}{
+				"id": -1,
+			},
+    	})
+	}
+
+	err_ := db.Debug().Where("membername = ?", users.Username).Find(&transactionsub).Error
+	if err_ != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่พบข้อมูล",
+			"Data":map[string]interface{}{
+				"id": -1,
+			},
+    	})
+	} else {
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"Status": true,
+			"Message": "สำเร็จ",
+			"Data": transactionsub,
+		})
+	}
 }

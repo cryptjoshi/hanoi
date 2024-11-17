@@ -34,12 +34,15 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/callback/Seamless/BuyOut",ef.BuyOut)
 	app.Post("/callback/Seamless/PushBet",ef.PushBet)
 	app.Post("/callback/Seamless/MobileLogin",ef.MobileLogin)
+	app.Post("/callback/ef/gamelist",ef.GetGameList)
 	   
 
 	// PGSOFT
 	app.Get("/callback/pgsoft",pg.Index)
 	app.Post("/callback/pgsoft/checkBalance",pg.GetBalance)
 	app.Post("/callback/pgsoft/settleBets",pg.PlaceBet)
+	app.Post("/callback/pgsoft/gamelist",handler.GetGameList)
+	
 	
 	
 	// GCLUB
@@ -93,6 +96,8 @@ func SetupRoutes(app *fiber.App) {
 	// //Transactions
 	// //app.Get("/api/transaction/all",handler.GetAllTransaction)
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
+	app.Post("/api/v1/pg/launchgame",pg.LaunchGame)
+	app.Post("/api/v1/launchgame",handler.LaunchGame)
 	app.Post("/api/v1/transaction/add",handler.AddTransactions)
 
 

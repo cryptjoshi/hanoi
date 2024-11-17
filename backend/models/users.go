@@ -47,6 +47,9 @@ type Users struct {
 	TempSecret       string    `gorm:"type:varchar(50)";gorm:"column:temp_secret"`
 	Secret           string    `gorm:"type:text";gorm:"column:secret"`
 	OtpAuthUrl       string    `gorm:"type:text";gorm:"column:otpAuthUrl"`
+	LastProamount      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastproamount;default:0"`
+	LastDeposit      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastdeposit;default:0"`
+	LastWithdraw     decimal.Decimal   `gorm:"type:decimal(10,2);column:lastwithdraw;default:0"`
 }
 
 func (m *Users) TableName() string {

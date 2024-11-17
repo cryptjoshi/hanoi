@@ -29,13 +29,14 @@ func loadDatabase() {
 func DropTable () {
 
 	database.Database.Migrator().DropTable(&models.TransactionSub{})
-	database.Database.Migrator().DropTable(&models.BuyInOut{})
+	//database.Database.Migrator().DropTable(&models.BuyInOut{})
 
 }
 
 func migrateNormal() {
 	
-	if err := database.Database.AutoMigrate(&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},&models.BankStatement{},&models.BuyInOut{}); err != nil {
+	//if err := database.Database.AutoMigrate(&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},&models.BankStatement{},&models.BuyInOut{}); err != nil {
+	if err := database.Database.AutoMigrate(&models.TransactionSub{}); err != nil {
 		handleError(err)
 	}
 	 
@@ -64,9 +65,9 @@ func main() {
 
 	//rabbitmq.Init()
 	
-	 loadDatabase()
-     //DropTable()
-	// migrateNormal()
+	//loadDatabase()
+    // DropTable()
+	//migrateNormal()
 	//  migrateAdmin()
 
 	app.Use(logger.New())

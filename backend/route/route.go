@@ -64,6 +64,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
 	app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
 	app.Post("/users/info",jwt.JwtMiddleware,users.GetUser)
+	app.Post("/users/info/username",users.GetUserByUsername)
 	app.Post("/users/statement",jwt.JwtMiddleware,users.GetUserStatement)
 	app.Post("/users/transactions",jwt.JwtMiddleware,users.GetUserTransaction)
 	app.Post("/users/update",jwt.JwtMiddleware,users.UpdateUser)
@@ -137,6 +138,7 @@ func SetupRoutes(app fiber.Router) {
 	// app.Post("/transaction/add",handler.AddTransactions)
 	// app.Post("/transaction/update",handler.UpdateTransactions)
 	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)
+	app.Post("/transaction/all",jwt.JwtMiddleware,handler.GetAllTransaction)
 	// dashboard
 	// app.Post("/api/bank/statement",handler.GetBankStatement)
 	// app.Post("/api/first/statement",handler.GetFirstUsers)

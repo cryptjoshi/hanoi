@@ -81,7 +81,7 @@ function TransactionForm({lng,slug}:TransProps) {
           if (userLoginStatus.state) {
                     if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
             const user = await GetUserInfo(userLoginStatus.state.accessToken);
-            console.log(user)
+          //  console.log(user)
             if(user.Status){
               setBalance(user.Data.balance);
               setUser(user.Data);

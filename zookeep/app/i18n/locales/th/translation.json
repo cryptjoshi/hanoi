@@ -322,7 +322,23 @@
         "beforeBalance": "ยอดเงินก่อนทำรายการ",
         "transactionAmount": "จำนวนเงินทำรายการ",
         "proAmount": "ยอดเงินสินเชื่อ",
-        "balance": "ยอดเงินสุทธิ"
+        "balance": "ยอดเงินสุทธิ",
+        "deposit": "ฝาก",
+        "withdraw": "ถอน"
+    },
+    "transaction": {
+        "transaction": "ทำรายการ",
+        "transactionDescription": "รายละเอียดทำรายการ",
+        "bet": "พนัน",
+        "result": "ผลการพนัน",
+        "Status": "สถานะ",
+        "betamount": "จำนวนเงินพนัน",
+        "transactionAmount": "จำนวนเงินทำรายการ",
+        "beforeBalance": "ยอดเงินก่อนทำรายการ",
+        "gameprovide": "เกมส์ที่ให้บริการ",
+        "transactionDate": "วันที่ทำรายการ",
+        "failed": "ล้มเหลว",
+        "success": "สำเร็จ"
     },
     "common": {
         "mon": "จันทร์",

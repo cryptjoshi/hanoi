@@ -7,6 +7,9 @@ export default async function GamePage({ params: { lng,id } }: { params: { lng: 
 
     const {t} = await useTranslation(lng,"translation",undefined)
 
+    
+
+
     return (
         <ContentLayout title="Games">
         <div>
@@ -15,7 +18,8 @@ export default async function GamePage({ params: { lng,id } }: { params: { lng: 
              <Options lng={lng} id={id}/>
              ) : (
              <GameList lng={lng} id={id}/>
-             )}
+             )} 
+              
         </div>
         </ContentLayout>
     )

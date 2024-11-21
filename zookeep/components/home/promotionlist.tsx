@@ -37,37 +37,37 @@ export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: Pr
   const { toast } = useToast();
   const { accessToken } = useAuthStore()
 
-  const handleAccept =  (item: Promotion) => {
-    const acceptPromotion = async () => {
+//   const handleAccept =  (item: Promotion) => {
+//     const acceptPromotion = async () => {
  
-    if(accessToken && prefix!=""){
-    const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
-    if(res.Status){
-    toast({
-      title: t('common.success'),
-      description: t('common.promotionAccept'),
-      variant: "default",
-    })
-    onSelectPromotion(item);
-  } else {
-    toast({
-      title: t('common.unsuccess'),
-      description: res.Message,
-      variant: "destructive",
-    })
-   // router.push(`/${lng}/login`);
-  }
-} else {
-  toast({
-    title: t('common.unsuccess'),
-    description: t('common.loginFirst'),
-    variant: "destructive",
-  })
- // router.push(`/${lng}/login`);
-}
-}
-  acceptPromotion()
-}
+//     if(accessToken && prefix!=""){
+//     const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
+//     if(res.Status){
+//     toast({
+//       title: t('common.success'),
+//       description: t('common.promotionAccept'),
+//       variant: "default",
+//     })
+//     onSelectPromotion(item);
+//   } else {
+//     toast({
+//       title: t('common.unsuccess'),
+//       description: res.Message,
+//       variant: "destructive",
+//     })
+//    // router.push(`/${lng}/login`);
+//   }
+// } else {
+//   toast({
+//     title: t('common.unsuccess'),
+//     description: t('common.loginFirst'),
+//     variant: "destructive",
+//   })
+//  // router.push(`/${lng}/login`);
+// }
+// }
+//   acceptPromotion()
+// }
 
 
   if (!promotions || promotions.length === 0) {

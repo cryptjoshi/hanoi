@@ -179,7 +179,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                 (priceDirection === 'up' && finalClosePrice > startPrice) ||
                 (priceDirection === 'down' && finalClosePrice < startPrice);
             
-            const winAmount = isCorrect ? betAmount * 2 : 0;
+            const winAmount = isCorrect ? betAmount * 2:0;
 
             if (isCorrect) {
                 setBetResult('win'); // ตั้งค่าเป็น 'win' ถ้าชนะ
@@ -552,9 +552,6 @@ export function Options({ lng, data }: { lng: string; data: any }) {
         );
     };
 
-   
-
-
     const memoizedChart = useMemo(() => (
         <ChartComponent 
             data={initialData}
@@ -567,7 +564,6 @@ export function Options({ lng, data }: { lng: string; data: any }) {
             websocketRef={websocketRef}
         />
     ), [initialData,isProcessingBet]);
-
 
     function handleClearLeverag(event: any): void {
         //throw new Error('Function not implemented.');
@@ -636,7 +632,7 @@ export function Options({ lng, data }: { lng: string; data: any }) {
                 </div>
             <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                {[5, 10, 15, 20, 25].map((leverage) => (
+                {[50, 100, 150, 200, 250].map((leverage) => (
                              <button
                              key={leverage}
                              onClick={() => handleLeverageClick(leverage)}

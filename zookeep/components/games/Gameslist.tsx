@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { GetGameByProvide, getGameUrl } from "@/actions";
 import useAuthStore from "@/store/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
+import { useToast } from "@/hooks/use-toast"
 
 export default function GamesList({ product,id,lng }: { product:string,id:string,lng:string }) {
    //const { gameStatus, fetchGameStatus } = useGameStore()
@@ -17,7 +17,7 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
   //const [gameid,setGameId] =useState(id)
   const router = useRouter()
   const [gamelist,setGameList] = useState<any[]>([{}])
- 
+  const {toast} = useToast()
   const {accessToken,user,customerCurrency} = useAuthStore()
   user
   if(accessToken){
@@ -31,6 +31,7 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
             } else {
               provider = "ef"
             }
+            
             const body = {
               "ProductID": id,
               "GameType": product,
@@ -39,7 +40,7 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
             }
             
             const response = await GetGameByProvide(accessToken,provider,body)
-           // console.log(response)
+          
              if(response.Status){
                  setGameList(response.Data?.games)
              } else {
@@ -67,21 +68,46 @@ const openInNewTab = (url:string) => {
       case "8888":
          data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken }
         getGameUrl("http://152.42.185.164:4007/api/v1/pg/launchgame",data).then((gameurl)=>{
-        if(gameurl.Status)
+        if(gameurl.Status){
          // url=gameurl.Data.url
         openInNewTab(gameurl.Data.url)
+        }else {
+          toast({
+            title: t("common.error"),
+            description: t("common.error"),
+            variant: "destructive",
+          });
+        }
         })
       
      break;
      case "9999":
       break;
       default:
-         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username, "sessionToken": accessToken }
-       // console.log(data)
-         getGameUrl("http://152.42.185.164:4007/api/v1/launchgame",data).then((gameurl)=>{
-          if(gameurl.Status)
+       
+        
+     
+         data  = {  "currency": customerCurrency || "USD", "username": user.username,  
+         "ProductID": id,
+         "GameType": product,
+         "LanguageCode": "4",
+         "Platform": "1",
+         "sessionToken": accessToken
+        }
+
+         getGameUrl("http://152.42.185.164:4007/api/v1/ef/launchgame",data).then((gameurl)=>{
+          
+          if(gameurl.Data.errorcode == "0"){
            // url=gameurl.Data.url
+         
           openInNewTab(gameurl.Data.url)
+          }else{
+            toast({
+              title: t("common.error"),
+              description: t("common.error"),
+              variant: "destructive",
+            });
+          }
           })
 
         break;
@@ -104,7 +130,8 @@ const openInNewTab = (url:string) => {
     return (
         <div className="grid grid-cols-4 gap-2 sm:gap-4 p-4 sm:p-6">
         {gamelist.map((item: any, index: any) => (
-           <Link key={index} onClick={()=>playgame(item.code || item.GameCode)} href="">
+           <div key={index} onClick={()=>playgame(item.code || item.GameCode)}
+           className="cursor-pointer hover:opacity-80 transition-opacity"> {/* เพิ่ม hover effect */}
          <div  className="flex flex-col items-center">
           
            <Avatar>
@@ -116,7 +143,7 @@ const openInNewTab = (url:string) => {
            <span className="text-[10px] sm:text-xs text-center" >{`${item.name || item.GameName}`}</span>
           
          </div>
-         </Link>
+         </div>
        ))}
      </div>
     )

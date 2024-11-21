@@ -138,36 +138,43 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-       // console.log(promotion.Data)
-        const filtered = promotion.Data.Promotions.filter((promo:any) => promo.ID.toString() !== user?.pro_status?.toString());
-       
-        setPromotions(promotion.Data.Promotions);
-        
-        // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
-        if (filtered.length === 0 ) {
-          setFilteredPromotions([{
-            ID: 'default',
-            name: t('defaultPromotion'),
-            description: t('noAvailablePromotions'),
-            image: '/path/to/default/image.jpg',
-            disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
-            // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
-          }]);
-        } else {
          
-            if(user?.pro_status=="" || user?.pro_status==null || user?.pro_status=="0")
-            setFilteredPromotions(filtered);
-            else
-            setFilteredPromotions([{
-              ID: 'default',
-              name: t('defaultPromotion'),
-              description: t('noAvailablePromotions'),
-              image: '/path/to/default/image.jpg',
-              disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
-              // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
-            }]);
+        //console.log(user)
+        const filtered = promotion.Data.Promotions.filter((promo:any) => 
+          //{
+            //console.log(promo.ID.toString(), user?.pro_status?.toString())
+            (1*promo.ID)-(1*user?.pro_status) != 0 
+          //}
+        );
         
-        }
+        setPromotions(promotion.Data.Promotions);
+        setFilteredPromotions(promotion.Data.Promotions);
+        // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
+         
+        // if (filtered.length === 0 ) {
+        //   setFilteredPromotions([{
+        //     ID: 'default',
+        //     name: t('defaultPromotion'),
+        //     description: t('noAvailablePromotions'),
+        //     image: '/path/to/default/image.jpg',
+        //     disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
+        //     // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
+        //   }]);
+        // } else {
+        //     console.log(user?.pro_status)
+        //     if(user?.pro_status=="" || user?.pro_status==null || user?.pro_status=="0")
+        //     setFilteredPromotions(filtered);
+        //     else
+        //     setFilteredPromotions([{
+        //       ID: 'default',
+        //       name: t('defaultPromotion'),
+        //       description: t('noAvailablePromotions'),
+        //       image: '/path/to/default/image.jpg',
+        //       disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
+        //       // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
+        //     }]);
+        
+        // }
       } else {
         
         //router.push(`/${lng}/login`)toast({
@@ -205,7 +212,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
              
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :  promotions.find(promo => promo.ID.toString() == user?.pro_status.toString())?.name || t('noPromotion')  // Changed ID to id and added fallback text
+                :  promotions.find(promo => promo.ID.toString() == user?.pro_status.toString() && promo.Status==1)?.name || t('noPromotion')  // Changed ID to id and added fallback text
               }   
             </p>
           </div>

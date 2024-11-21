@@ -218,6 +218,7 @@ return response.json()
 export const getGameUrl = async (url:string,data:any)=>{ //token:string,ProductID:string,username:string,currency:string) => {
 
   //const data  = {  "currency": currency, "productId": ProductID, "username": username, "sessionToken": token }
+  console.log(data)
   const response = await fetch(url, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -379,7 +380,7 @@ export const UpdateUserPromotion = async (token:string,body:any) =>{
     return response.json()
 }
 export const UpdateUser = async (token:string,body:any) =>{
- console.log(JSON.stringify(body))
+ //console.log(JSON.stringify(body))
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -391,8 +392,8 @@ export const UpdateUser = async (token:string,body:any) =>{
     return response.json()
 }
 
-export const AddStatement = async (token:string,body:any)=>{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/statement/add", { method: 'POST',
+export const Deposit = async (token:string,body:any)=>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/statement/deposit", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -403,6 +404,18 @@ export const AddStatement = async (token:string,body:any)=>{
     return response.json()
 }
 
+
+export const Withdraw = async (token:string,body:any)=>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/statement/withdraw", { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify(body)
+    })
+    return response.json()
+}
 
 export const createTransaction = async (accessToken:string,body:any) =>{
  

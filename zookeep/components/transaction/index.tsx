@@ -10,7 +10,7 @@ import { formatNumber } from '@/lib/utils';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddStatement, GetPromotion, GetUserInfo } from '@/actions';
+import { Deposit, GetPromotion, GetUserInfo, Withdraw } from '@/actions';
 import type { User } from '@/store/auth';
 import useAuthStore from '@/store/auth';
  import { useRouter } from 'next/navigation';
@@ -86,7 +86,7 @@ function TransactionForm({lng,slug}:TransProps) {
           if (userLoginStatus.state) {
                     if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
             const user = await GetUserInfo(userLoginStatus.state.accessToken);
-          //  console.log(user)
+          
             if(user.Status){
               setBalance(user.Data.balance);
               setUser(user.Data);
@@ -124,7 +124,7 @@ function TransactionForm({lng,slug}:TransProps) {
           if (promotion.Status) {
             // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
             setPromotions(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
-           / setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
+            setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
            // setPromotions(promotion.Data.Promotions);
            
             
@@ -190,10 +190,9 @@ function TransactionForm({lng,slug}:TransProps) {
 
              if(accessToken){
 
-                const response = await AddStatement(accessToken,formattedValues)
-             //console.log(response)
+                const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
+                //console.log(response)
                 if(response.Status){
-
                     toast({
                         title: t("promotion.edit.success"),
                         description: response.Message,
@@ -235,19 +234,22 @@ function TransactionForm({lng,slug}:TransProps) {
             <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
             { slug === "withdraw" && (
               <div>
-                <p className="text-xs sm:text-sm text-muted-foreground">{t('your_turnover')}</p>
-                <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(turnover || 0)}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">{ promotions?.turntype=="turncredit"?t('your_credit'):t('your_turnover')}</p>
+                <h2 className="text-xl sm:text-2xl font-bold mt-1">{promotions?.turntype=="turncredit"?formatNumber(user?.pro_balance):formatNumber(turnover || 0)}</h2>
             </div>
             ) }
-            
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈ Min Turnover {  (parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend} {currency}</p>
+            {promotions?.turntype=="turnover"? (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1"> {  promotions ? `≈ Min Turnover ${(parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend}  ${currency}`:''}</p>
+            ):(
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1"> {  promotions ? `≈ Min Credit ${parseFloat(promotions?.MinCredit)}  ${currency}`:''}</p>
+            )}
             </div>
             <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
              
               {  // Display selected promotion name if available
-                promotions?.name || t('loading...') 
+                promotions?.name || t('No Promotion') 
               }   
             </p>
           </div>
@@ -265,10 +267,11 @@ function TransactionForm({lng,slug}:TransProps) {
                     )}
                 />
                
-                <FormField 
+                {/* <FormField 
                     control={form.control}
                     name="transactionType"
-                    render={({field})=>{
+                      render={({field})=>{
+                        return (
                         <FormItem>
                             <FormLabel>
                             {t('transactionType')}
@@ -289,8 +292,9 @@ function TransactionForm({lng,slug}:TransProps) {
                                 </Select>
                             </FormControl>
                         </FormItem>
+                        )
                     }}
-                />
+                /> */}
                    <Button type="submit" onClick={async () => {
               const result = await form.trigger();
               if (!result) {

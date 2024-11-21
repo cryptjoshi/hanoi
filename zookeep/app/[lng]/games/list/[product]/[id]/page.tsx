@@ -37,9 +37,9 @@ export default  function GamePage({ params: { lng,id,product } }: { params: { ln
             //  //   window.open(gameurl.Data.url,'_blank','noopener,noreferrer')
             //    openInNewTab(gameurl.Data.url)
             // }   
-        
+            console.log(product)
         }
-      //  fetchData()
+        fetchData()
         
     },[])
 

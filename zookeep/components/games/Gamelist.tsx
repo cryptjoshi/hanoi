@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { GetGameByType } from "@/actions";
 import useAuthStore from "@/store/auth";
 
-export default function GameList({ id,lng }: { id:string,lng:string }) {
+export default function  GameList({ id,lng }: { id:string,lng:string }) {
    //const { gameStatus, fetchGameStatus } = useGameStore()
   const {t} = useTranslation(lng,'translation',undefined);
   const [gameid,setGameId] =useState(id)
@@ -21,7 +21,7 @@ export default function GameList({ id,lng }: { id:string,lng:string }) {
     useEffect(()=>{
         const fetchgame = async (id:string) =>{
             const response = await GetGameByType(accessToken,id)
-           // console.log(response)
+            console.log(response)
             if(response.Status){
                 setGameList(response.Data)
             } else {

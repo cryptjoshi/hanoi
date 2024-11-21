@@ -4,11 +4,39 @@ import (
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"time"
+	"fmt"
 )
 
+type TransactionSubInterface interface {
+    BeforeCreate(*gorm.DB) error
+    BeforeUpdate(*gorm.DB) error
+}
+var _ TransactionSubInterface = (*TransactionSub)(nil)
+
+func (t *TransactionSub) BeforeCreate(tx *gorm.DB) error {
+    loc, err := time.LoadLocation("Asia/Bangkok")
+    if err != nil {
+        return fmt.Errorf("error loading timezone: %v", err)
+    }
+    now := time.Now().In(loc)
+    t.CreatedAt = now
+    t.UpdatedAt = now
+    fmt.Printf("BeforeCreate called: %v\n", now) // เพิ่ม log เพื่อตรวจสอบการทำงาน
+    return nil
+}
+
+func (t *TransactionSub) BeforeUpdate(tx *gorm.DB) error {
+    loc, err := time.LoadLocation("Asia/Bangkok")
+    if err != nil {
+        return fmt.Errorf("error loading timezone: %v", err)
+    }
+    t.UpdatedAt = time.Now().In(loc)
+    fmt.Printf("BeforeUpdate called: %v\n", t.UpdatedAt) // เพิ่ม log เพื่อตรวจสอบการทำงาน
+    return nil
+}
 
 type TransactionSub struct {
-	gorm.Model
+	//gorm.Model
 	ID                int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	MemberID          int       `gorm:"type:varchar(100);column:MemberID"`
 	MemberName        string    `gorm:"type:varchar(255);column:MemberName"`
@@ -40,9 +68,6 @@ type TransactionSub struct {
 	JPBet             decimal.Decimal       `gorm:"column:JPBet"`
 	AfterBalance      decimal.Decimal    `gorm:"column:AfterBalance"`
 	MessageID         string    `gorm:"type:varchar(255);column:MessageID"`
-	// CreatedAt         string `gorm:"column:createdAt;NOT NULL"`
-	// UpdatedAt         string `gorm:"column:updatedAt;NOT NULL"`
-	// DeletedAt         string `gorm:"column:deletedAt"`
 	TransactionID     string    `gorm:"type:varchar(255);column:TransactionID"`
 	IsEndRound        int       `gorm:"column:IsEndRound"`
 	IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
@@ -52,48 +77,13 @@ type TransactionSub struct {
 	GameNumber        string    `gorm:"type:varchar(20);column:GameNumber"`
 	Prefix			  string    `gorm:"column:Prefix"`
 	TurnOver		  decimal.Decimal    `gorm:"column:TurnOver"`
- 
- 
-	// ID                int       `gorm:"column:id;NOT NULL"`
-	// MemberID          int       `gorm:"column:MemberID" json:"member_id"`
-	// MemberName        string    `gorm:"type:varchar(255)" gorm:"column:MemberName"`
-	// CurrencyID        int       `gorm:"column:CurrencyID"`
-	// TransactionAmount decimal.Decimal    `gorm:"column:TransactionAmount"`
-	// Status            int       `gorm:"column:Status"`
-	// BeforeBalance     decimal.Decimal    `gorm:"column:BeforeBalance"`
-	// Balance           decimal.Decimal    `gorm:"column:Balance"`
-	// Sign              string    `gorm:"type:text";gorm:"column:Sign"`
-	// RequestTime       string    `gorm:"type:varchar(50)";gorm:"column:RequestTime"`
-	// OperatorCode      string    `gorm:"type:varchar(50)";gorm:"column:OperatorCode"`
-	// OperatorID        int       `gorm:"column:OperatorID"`
-	// ProductID         int64     `gorm:"column:ProductID"`
-	// ProviderID        int       `gorm:"column:ProviderID"`
-	// ProviderLineID    int       `gorm:"column:ProviderLineID"`
-	// WagerID           int64     `gorm:"column:WagerID"`
-	// GameType          int       `gorm:"column:GameType"`
-	// GameID            string    `gorm:"type:varchar(255)";gorm:"column:GameID"`
-	// GameCode          string    `gorm:"column:GameCode" json:"game_code"`
-	// GameRoundID       string    `gorm:"type:varchar(255)";gorm:"column:GameRoundID"`
-	// ValidBetAmount    decimal.Decimal    `gorm:"column:ValidBetAmount"`
-	// BetAmount         decimal.Decimal    `gorm:"column:BetAmount"`
-	// PayoutAmount      decimal.Decimal    `gorm:"column:PayoutAmount"`
-	// PayoutDetail      string    `gorm:"type:text";gorm:"column:PayoutDetail"`
-	// CommissionAmount  decimal.Decimal    `gorm:"column:CommissionAmount"`
-	// JackpotAmount     decimal.Decimal    `gorm:"column:JackpotAmount"`
-	// SettlementDate    string `gorm:"column:SettlementDate"`
-	// JPBet             decimal.Decimal       `gorm:"column:JPBet"`
-	// AfterBalance      decimal.Decimal    `gorm:"column:AfterBalance"`
-	// MessageID         string    `gorm:"type:varchar(255)";gorm:"column:MessageID"`
-	// CreatedAt       time.Time `gorm:"autoCreateTime"` // สร้างเวลาทันที
-	// UpdatedAt       time.Time `gorm:"autoUpdateTime"` // อัปเดตเวลาทุกครั้งที่มีการเปลี่ยนแปลง
-	// DeletedAt         string `gorm:"column:deletedAt"`
-	// TransactionID     string    `gorm:"type:varchar(255)";gorm:"column:TransactionID"`
-	// IsEndRound        int       `gorm:"column:IsEndRound"`
-	// IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
-	// IsFeature         int       `gorm:"column:IsFeature"`
-	// IsAction          string    `gorm:"type:varchar(50)";gorm:"column:IsAction"`
-	// GameProvide       string    `gorm:"type:varchar(255)";gorm:"column:GameProvide"`
-	// GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
+ 	ProID			  string    `gorm:"column:ProID"`
+	AffiliateID      string          `gorm:"type:varchar(50);column:affiliate_id"`         // รหัส Affiliated ที่เชื่อมโยง
+	AffiliateTurnover decimal.Decimal `gorm:"type:decimal(15,2);column:affiliate_turnover;default:0"` // Turnover ที่เกิดจาก Affiliate
+	PartnerID int `gorm:"column:partner_id"` // บันทึก partner ที่เกี่ยวข้องกับ transaction
+	CreatedAt         time.Time       `gorm:"column:created_at;type:timestamp;not null"`
+	UpdatedAt         time.Time       `gorm:"column:updated_at;type:timestamp;not null"`
+	DeletedAt         gorm.DeletedAt  `gorm:"column:deleted_at;type:timestamp null"`
 }
 
 func (m *TransactionSub) TableName() string {
@@ -191,3 +181,4 @@ type SwaggerTransactionSub struct {
 	GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
 	Prefix			  string    `gorm:"column:Prefix"`
 }
+

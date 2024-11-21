@@ -8,7 +8,7 @@ import (
 
 
 type TransactionSub struct {
-	gorm.Model
+	//gorm.Model
 	ID                int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	MemberID          int       `gorm:"type:varchar(100);column:MemberID"`
 	MemberName        string    `gorm:"type:varchar(255);column:MemberName"`
@@ -38,9 +38,9 @@ type TransactionSub struct {
 	JPBet             decimal.Decimal       `gorm:"column:JPBet"`
 	AfterBalance      decimal.Decimal    `gorm:"column:AfterBalance"`
 	MessageID         string    `gorm:"type:varchar(255);column:MessageID"`
-	// CreatedAt         string `gorm:"column:createdAt;NOT NULL"`
-	// UpdatedAt         string `gorm:"column:updatedAt;NOT NULL"`
-	// DeletedAt         string `gorm:"column:deletedAt"`
+	CreatedAt         time.Time       `gorm:"column:created_at;type:timestamp;not null"`
+	UpdatedAt         time.Time       `gorm:"column:updated_at;type:timestamp;not null"`
+	DeletedAt         gorm.DeletedAt  `gorm:"column:deleted_at;type:timestamp null"`
 	TransactionID     string    `gorm:"type:varchar(255);column:TransactionID"`
 	IsEndRound        int       `gorm:"column:IsEndRound"`
 	IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
@@ -49,6 +49,11 @@ type TransactionSub struct {
 	GameProvide       string    `gorm:"type:varchar(255);column:GameProvide"`
 	GameNumber        string    `gorm:"type:varchar(20);column:GameNumber"`
 	Prefix			  string    `gorm:"column:Prefix"`
+	TurnOver		  decimal.Decimal    `gorm:"column:TurnOver"`
+ 	ProID			  string    `gorm:"column:ProID"`
+	AffiliateID      string          `gorm:"type:varchar(50);column:affiliate_id"`         // รหัส Affiliated ที่เชื่อมโยง
+	AffiliateTurnover decimal.Decimal `gorm:"type:decimal(15,2);column:affiliate_turnover;default:0"` // Turnover ที่เกิดจาก Affiliate
+	PartnerID int `gorm:"column:partner_id"` // บันทึก partner ที่เกี่ยวข้องกับ transaction
 }
 
 func (m *TransactionSub) TableName() string {
@@ -145,4 +150,24 @@ type SwaggerTransactionSub struct {
 	GameProvide       string    `gorm:"type:varchar(255)";gorm:"column:GameProvide"`
 	GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
 	Prefix			  string    `gorm:"column:Prefix"`
+}
+
+func (t *TransactionSub) BeforeCreate(tx *gorm.DB) error {
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return err
+	}
+	t.CreatedAt = time.Now().In(loc)
+	t.UpdatedAt = time.Now().In(loc)
+	return nil
+}
+
+// BeforeUpdate จะทำงานก่อนที่จะอัพเดทข้อมูล
+func (t *TransactionSub) BeforeUpdate(tx *gorm.DB) error {
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return err
+	}
+	t.UpdatedAt = time.Now().In(loc)
+	return nil
 }

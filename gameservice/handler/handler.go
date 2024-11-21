@@ -952,6 +952,8 @@ func AddTransactions(c *fiber.Ctx) error {
 	transactionsub.PayoutAmount = transactionRequest.Body.PayoutAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = transactionRequest.Body.Balance
+	transactionsub.ProID = users.ProStatus
+ 
 
 	//fmt.Println(transactionsub)
 

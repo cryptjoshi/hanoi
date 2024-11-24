@@ -89,17 +89,20 @@ func ValidateJWTReturn(tokenString string) models.Users {
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
         return jwtKey, nil
     })
+
+
+	//fmt.Printf("claims: %s ",claims)
 	username := claims.Username
 	 
 	prefix,_ := GetPrefix(username) //username[:3] // Extract prefix
-
+ 
 	// Connect to the database based on the prefix
 	db, err := database.ConnectToDB(prefix)
 	//checkerFromRequest := claims.Checker
 	var user models.Users
 	//fmt.Println(err)
 	if err==nil {
-		db.Select("id,username,balance,Token").Where("username = ?", username).First(&user)
+		db.Select("id,username,password,balance,Token").Where("username = ?", username).First(&user)
 	}
 
 	 

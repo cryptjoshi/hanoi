@@ -69,6 +69,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/users/transactions",jwt.JwtMiddleware,users.GetUserTransaction)
 	app.Post("/users/update",jwt.JwtMiddleware,users.UpdateUser)
 	app.Post("/users/update/pro",jwt.JwtMiddleware,users.UpdateUserPro)
+	
     
 	app.Post("/db/create",handler.CreateDatabase)
 	app.Post("/db/register",handler.Register)
@@ -134,7 +135,8 @@ func SetupRoutes(app fiber.Router) {
 	// app.Post("/wallet/deposit",wallet.AddStatement)
 	app.Post("/statement/all",jwt.JwtMiddleware,wallet.GetStatement)
 	app.Post("/statement/update", wallet.UpdateStatement)
-	app.Post("/statement/add",jwt.JwtMiddleware, wallet.AddStatement)
+	app.Post("/statement/withdraw",jwt.JwtMiddleware, wallet.Withdraw)
+	app.Post("/statement/deposit",jwt.JwtMiddleware, wallet.Deposit)
 	// app.Post("/transaction/add",handler.AddTransactions)
 	// app.Post("/transaction/update",handler.UpdateTransactions)
 	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)

@@ -10,10 +10,12 @@ import
 	"github.com/valyala/fasthttp"
 	"crypto/md5"
 	"encoding/hex"
-	"os"
+	//"os"
 	"encoding/json"
 	"time"
 	"log"
+	"pkd/common"
+	"pkd/handler"
 	//"strconv"
 	//"repository"
 	"strings"
@@ -75,18 +77,18 @@ type ResponseBalance struct {
 }
 // ฟังก์ชันตัวอย่างใน efinity.go
 //const EF_SECRET_KEY="456Ayb" //product
-var EF_SECRET_KEY="1g1bb3" //stagging
-var OPERATOR_CODE = os.Getenv("EF_OPERATOR")
+//var EF_SECRET_KEY="1g1bb3" //stagging
+//var OPERATOR_CODE = os.Getenv("EF_OPERATOR")
 
 //var EF_API_URL = os.Getenv("INFINITY_STAG_URL") //"https://swmd.6633663.com/"
 //var OPERATOR_CODE = os.Getenv("INFINITY_OPERATOR_CODE") || "E293"
-var INFINITY_PROD_URL  = os.Getenv("INFINITY_PROD_URL") // "https://prod_md.9977997.com"
-var INFINITY_STAG_URL = "https://swmd.6633663.com"  //os.Getenv("INFINITY_STAG_URL") // "https://stag_md.9977997.com"
+//var INFINITY_PROD_URL  = os.Getenv("INFINITY_PROD_URL") // "https://prod_md.9977997.com"
+//var INFINITY_STAG_URL = "https://swmd.6633663.com"  //os.Getenv("INFINITY_STAG_URL") // "https://stag_md.9977997.com"
 //var DEVELOPMENT_SECRET_KEY = os.Getenv("DEVELOPMENT_SECRET_KEY")    || "1g1bb3"  //staging
 //var PRODUCTION_SECRET_KEY= os.Getenv("PRODUCTION_SECRET_KEY")  || "456Ayb" //product
 
-var USER_FIX = os.Getenv("USER_FIX") 
-var PASS_FIX = os.Getenv("PASS_FIX") 
+//var USER_FIX = os.Getenv("USER_FIX") 
+//var PASS_FIX = os.Getenv("PASS_FIX") 
 
 func parseTime(layout, value string) (time.Time, error) {
     return time.Parse(layout, value)
@@ -114,10 +116,10 @@ func CheckSign(Signature string,methodName string,requestTime string) bool {
 	//requestTime := "2024-09-15T12:00:00Z"
 	//methodName := "MethodName"
 	
-	secretKey := EF_SECRET_KEY
+	secretKey := common.EF_SECRET_KEY
 
 	// สร้างข้อมูลที่ต้องใช้ hash
-	data := OPERATOR_CODE + requestTime + strings.ToLower(methodName) + secretKey
+	data := common.EF_OPERATOR_CODE + requestTime + strings.ToLower(methodName) + secretKey
 
 	 
 	// สร้าง MD5 hash
@@ -213,6 +215,7 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 	transactionsub.BetAmount = transactionsub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
+	transactionsub.ProID = users.ProStatus
 	
 	result := database.Database.Create(&transactionsub); 
 	//fmt.Println(result)
@@ -285,7 +288,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 	//transactionsub.BetAmount = transactionsub.BetAmount
 	transaction.BeforeBalance = users.Balance
 	transaction.Balance = users.Balance.Add(transaction.TransactionAmount)
-	
+	transaction.ProID = users.ProStatus
 	result := database.Database.Create(&transaction); 
 	
 	
@@ -351,14 +354,14 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 			},
     	}
 	}
-
+	//fmt.Printf("ProID : %v \n",users)
     transactionsub.GameProvide = "EFINITY"
     transactionsub.MemberName = membername
 	transactionsub.ProductID = transactionsub.ProductID
 	transactionsub.BetAmount = transactionsub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	
+	transactionsub.ProID = users.ProStatus
 	result := database.Database.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
@@ -1134,8 +1137,6 @@ func BuyOut(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
-
 func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, error) {
 	// Marshal requestData struct เป็น JSON
 	jsonData, err := json.Marshal(bodyData)
@@ -1196,19 +1197,14 @@ func makeGetRequest(url string) (*fasthttp.Response, error) {
 	
 	return resp, nil
 }
-
-
-
-
 func hashSignature(MethodName string,requestTime string) string {
 
 	hash := md5.New()
-    hash.Write([]byte(OPERATOR_CODE + requestTime + strings.ToLower(MethodName) + EF_SECRET_KEY))
+    hash.Write([]byte(common.EF_OPERATOR_CODE + requestTime + strings.ToLower(MethodName) + common.EF_SECRET_KEY))
 	md5Hash := hex.EncodeToString(hash.Sum(nil))
 
 	return md5Hash
 }
-
 func GetGameList(c *fiber.Ctx) error {
 	type BodyGame struct {
 		ProductID string  `json:"productid"`
@@ -1285,9 +1281,9 @@ func GetGameList(c *fiber.Ctx) error {
 	// }
 	var RequestTime = time.Now().Format("20060102150405")
 	var args = fiber.Map{
-		"OperatorCode": OPERATOR_CODE,
-		"MemberName": USER_FIX,//req.body.username,
-		"Password":   PASS_FIX,//user.data.uid,
+		"OperatorCode": common.EF_OPERATOR_CODE,
+		"MemberName": common.USER_FIX,//req.body.username,
+		"Password":   common.PASS_FIX,//user.data.uid,
 		"ProductID": request.ProductID,
 		"GameType": request.GameType,
 		"LanguageCode": request.LanguageCode,
@@ -1295,15 +1291,15 @@ func GetGameList(c *fiber.Ctx) error {
 		"Sign": hashSignature("LaunchGame",RequestTime),
 		"RequestTime": RequestTime,
 		}
-	//fmt.Printf(" %v",request )
-	resp,err := makePostRequest(INFINITY_STAG_URL+"/Seamless/GetGameList",args)		
+	
+	resp,err := makePostRequest(common.INFINITY_PROD_URL+"/Seamless/GetGameList",args)		
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
 	}
 	resultBytes := resp.Body()
 	resultString := string(resultBytes)
 	// แสดงผล string ที่ได้
-	fmt.Println("Response body as string:", resultString)
+	//fmt.Println("Response body as string:", resultString)
 
 	
 
@@ -1321,6 +1317,209 @@ func GetGameList(c *fiber.Ctx) error {
 		"Data": fiber.Map{
 			"games":response.ProviderGames,
 		},
+	}
+	return c.JSON(respon)
+}
+
+
+// var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
+// var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
+
+// var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
+// var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
+// var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
+// var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
+// var PG_PROD_URL = "https://api.hentory.io" 
+
+
+// func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, error) {
+// 	// Marshal requestData struct เป็น JSON
+// 	jsonData, err := json.Marshal(bodyData)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
+// 	}
+
+// 	// สร้าง Request และ Response
+// 	req := fasthttp.AcquireRequest()
+// 	resp := fasthttp.AcquireResponse()
+
+// 	// ตั้งค่า URL, Method, และ Body
+// 	req.SetRequestURI(url)
+// 	req.Header.SetMethod("POST")
+// 	req.Header.SetContentType("application/json")
+// 	authHeader := common.CreateBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
+// 	req.Header.Add("Authorization", authHeader)
+// 	req.SetBody(jsonData)
+
+// 	// ส่ง request
+// 	client := &fasthttp.Client{}
+// 	if err := client.Do(req, resp); err != nil {
+// 		return nil, fmt.Errorf("error making POST request: %v", err)
+// 	}
+
+// 	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+// 	fasthttp.ReleaseRequest(req)
+	
+// 	return resp, nil
+// }
+// func makeGetRequest(url string) (*fasthttp.Response, error) {
+// 	// Marshal requestData struct เป็น JSON
+// 	// jsonData, err := json.Marshal(bodyData)
+// 	// if err != nil {
+// 	// 	return nil, fmt.Errorf("error marshaling JSON: %v", err)
+// 	// }
+
+// 	// สร้าง Request และ Response
+// 	req := fasthttp.AcquireRequest()
+// 	resp := fasthttp.AcquireResponse()
+
+// 	// ตั้งค่า URL, Method, และ Body
+// 	req.SetRequestURI(url)
+// 	req.Header.SetMethod("GET")
+// 	req.Header.SetContentType("application/json")
+// 	authHeader := common.CreateBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
+// 	req.Header.Add("Authorization", authHeader)
+// 	//req.SetBody(jsonData)
+
+// 	// ส่ง request
+// 	client := &fasthttp.Client{}
+// 	if err := client.Do(req, resp); err != nil {
+// 		return nil, fmt.Errorf("error making POST request: %v", err)
+// 	}
+
+// 	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+// 	fasthttp.ReleaseRequest(req)
+	
+// 	return resp, nil
+// }
+
+func LaunchGame(c *fiber.Ctx) error {
+	type BodyGame struct {
+		ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	}
+
+	type EfRequest struct {
+		Id string `json:"id"`
+		TimestampMillis int `json:"timestampmillis"`
+		ProductID string `json:"productid`
+		Currency string `json:"currency"`
+		Username string `json:"username"`
+		SessionToken string `json:"sessiontoken"`
+		StatusCode  int  `json:"statuscode"`
+		Balance  decimal.Decimal `json:"balance"`
+		//ProductID string  `json:"productid"`
+		LanguageCode string `json:"languagecode"`
+		Platform string `json:"platform"`
+		GameID string `json:"gameid"`
+		GameType string `json:"gametype"`
+		callbackUrl string `json:"callbackurl"`
+	//	Txns []TxnsRequest `json:"txns"`
+	}
+	type CResponse struct {
+		// ErrorMessage string `json:"message"`
+		// Status  bool        `json:"status"`
+		Url    string `json:"url"`
+		ErrorCode int `json:"errorcode"`
+		ErrorMessage interface{} `json:"errormessage"`
+	}
+
+	var response CResponse
+	// bodyRequest := new(BodyGame)
+
+	// if err := c.BodyParser(&bodyRequest); err != nil {
+	// 	fmt.Printf(" %s ", err.Error())
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	// fmt.Printf("Body: %s",bodyRequest.Body)
+	//var tokenString := c.Get("Authorization")[7:]
+	request := new(EfRequest)
+	if err := c.BodyParser(request); err != nil {
+		respon := fiber.Map{
+			"Status":  false,
+			"Message": "BodyParser Error",
+			"Data": response,
+		}
+		return c.JSON(respon)
+	}
+	var users models.Users
+	users = handler.ValidateJWTReturn(request.SessionToken);
+
+	//fmt.Printf("users: %s ",users)
+	//fmt.Printf("request: %s ",request.SessionToken)
+	var RequestTime = time.Now().Format("20060102150405")
+	// var args = fiber.Map{
+	// 	"OperatorCode": common.EF_OPERATOR_CODE,
+	// 	"MemberName": common.USER_FIX,//req.body.username,
+	// 	"Password":   common.PASS_FIX,//user.data.uid,
+	// 	"ProductID": request.ProductID,
+	// 	"GameType": request.GameType,
+	// 	"LanguageCode": request.LanguageCode,
+	// 	"Platform": request.Platform,
+	// 	"Sign": hashSignature("LaunchGame",RequestTime),
+	// 	"RequestTime": RequestTime,
+	// 	}
+	var  args = fiber.Map{
+		"OperatorCode": common.EF_OPERATOR_CODE,
+		"MemberName": users.Username,
+		"Password":   users.Password,
+		"ProductID": request.ProductID,
+		"GameType": request.GameType,
+		"GameID": request.GameID,
+		"LanguageCode": request.LanguageCode,
+		"Platform": request.Platform,
+		"Sign": hashSignature("LaunchGame",RequestTime),
+		"RequestTime": RequestTime,
+		}
+	// var args = fiber.Map{
+	// 	"username": strings.ToLower(users.Username),//user.data.username,
+	// 	"productId":common.PG_PROD_CODE,
+	// 	"gameCode": request.ProductID,
+	// 	"isMobileLogin": true,
+	// 	"sessionToken": request.SessionToken,
+	// 	//"betLimit": [],
+	// 	"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
+	// }
+	
+	 
+	
+	resp,err := makePostRequest(common.INFINITY_PROD_URL+"/Seamless/LaunchGame",args)		
+	if err != nil {
+		respon := fiber.Map{
+			"Status":  false,
+			"Message": "RequestError",
+			"Data": response,
+		}
+		return c.JSON(respon)
+	}
+	resultBytes := resp.Body()
+	resultString := string(resultBytes)
+	// แสดงผล string ที่ได้
+	//fmt.Println("Response body as string:", resultString)
+
+	err = json.Unmarshal([]byte(resultString), &response)
+	if err != nil {
+		respon := fiber.Map{
+			"Status":  false,
+			"Message": "Unmarshalling Error",
+			"Data": response,
+		}
+		return c.JSON(respon)
+	}
+
+	respon := fiber.Map{
+		"Status":  true,
+		"Message": "Success",
+		"Data": response,
 	}
 	return c.JSON(respon)
 }

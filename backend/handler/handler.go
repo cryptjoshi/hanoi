@@ -799,6 +799,9 @@ type ProBody struct  {
 	Excludegames       string              `json:"excludegames"`
 	Example            string              `json:"example"`
 	MinSpendType       string              `json:"minSpendType"`
+	MinCredit          string              `json:"minCredit`
+	TurnType           string              `json:"TurnType`
+	ZeroBalance        int                 `json:"zeroBalance"`
 }
 type promotiondata struct {
 	Prefix string `json:"prefix"`
@@ -859,6 +862,10 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Includegames:       data.Body.Includegames,
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
+		MinSpendType:       data.Body.MinSpendType,
+		MinCredit:          data.Body.MinCredit,
+		TurnType:           data.Body.TurnType,
+		ZeroBalance:        data.Body.ZeroBalance,
 	//	Firstdeposit:       data.Body.Firstdeposit,
 	}
 
@@ -1059,6 +1066,9 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
 		MinSpendType:       data.Body.MinSpendType,
+		MinCredit:          data.Body.MinCredit,
+		TurnType:           data.Body.TurnType,
+		ZeroBalance:        data.Body.ZeroBalance,
 	}
 
 	// var prefixs = struct {

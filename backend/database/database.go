@@ -37,7 +37,7 @@ var (
 	mutex         sync.Mutex
 )
 
-const baseDSN = "web:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+const baseDSN = "web:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FBangkok"
 
 // const baseDSN = "root:1688XdAs@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"
 func handleError(err error) {
@@ -76,6 +76,13 @@ func migrateNormal(db *gorm.DB) {
 	}
 	 
 	fmt.Println("Migrations Normal Tables executed successfully")
+}
+
+func migrationPromotion(db *gorm.DB){
+	if err := db.AutoMigrate(&models.Users{});err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	fmt.Println("Migrations Promotion Tables executed successfully")
 }
 
 type Setting struct {
@@ -124,6 +131,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// Check if the connection already exists
 	if db, exists := dbConnections[dbName]; exists {
+	//	migrationPromotion(db)
 		return db, nil
 	}
 
@@ -153,20 +161,20 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// Create the DSN for the selected database
 	dsn := fmt.Sprintf(baseDSN, dbName)
-	fmt.Println(dsn)
+	//fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		SkipDefaultTransaction:                   true,
 		PrepareStmt:                              true,
 	})
-
+	//migrationPromotion(db)
 	if err == nil {
 		dbConnections[dbName] = db // Store the connection in the map
 		fmt.Println("Successfully connected to DB:", dbName)
 	} else {
 		return nil, err // Return the error if connection fails
 	}
-	migrateNormal(db)
+	//migrateNormal(db)
 	return db, nil
 }
 

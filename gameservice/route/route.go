@@ -97,6 +97,8 @@ func SetupRoutes(app *fiber.App) {
 	// //app.Get("/api/transaction/all",handler.GetAllTransaction)
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
 	app.Post("/api/v1/pg/launchgame",pg.LaunchGame)
+	app.Post("/api/v1/ef/launchgame",ef.LaunchGame)
+	// app.Post("/api/v1/gc/launchgame",gc.LaunchGame)
 	app.Post("/api/v1/launchgame",handler.LaunchGame)
 	app.Post("/api/v1/transaction/add",handler.AddTransactions)
 

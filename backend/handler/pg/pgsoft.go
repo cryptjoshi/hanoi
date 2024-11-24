@@ -145,7 +145,7 @@ func PlaceBet(c *fiber.Ctx) error {
 		var user models.Users
 		db, _ := database.ConnectToDB(request.Username)
 		db.Where("username = ?", request.Username).First(&user)
-		
+		fmt.Printf("user: %v",user)
 		 for _, transaction := range request.Txns {
 			
 			transactionAmount := func(betamount decimal.Decimal,payoutamount decimal.Decimal,status string,feature bool) decimal.Decimal {
@@ -200,6 +200,7 @@ func PlaceBet(c *fiber.Ctx) error {
 				"GameProvide": "PGSOFT",
 				"BeforeBalance":user.Balance,
 				"Balance":user.Balance.Add(transactionAmount),
+				"ProID":user.ProStatus,
 			  } 
 
 			
@@ -235,6 +236,7 @@ func PlaceBet(c *fiber.Ctx) error {
 							fmt.Println(transactionAmount)
 							updates := map[string]interface{}{
 								"Balance": user.Balance.Add(transactionAmount),
+								"ProID":user.ProStatus,
 								}
 							repository.UpdateFieldsUserString(db,request.Username, updates) 
 							balanceBeforeFloat, _ := user.Balance.Float64()

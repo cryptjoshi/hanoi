@@ -152,9 +152,9 @@ func PlaceBet(c *fiber.Ctx) error {
 	if cnn != nil {
 		fmt.Printf("error: %s \n",cnn)
 	}
-		 dberr := db.Debug().Where("username = ?", request.Username).First(&user).Error
+		 dberr := db.Debug().Select("id,balance,pro_status as ProStatus").Where("username = ?", request.Username).First(&user).Error
 		 if dberr != nil {
-			fmt.Println(dberr)
+		 
 			response := fiber.Map{
 				"statusCode": 10002,
 				"id": request.Id,
@@ -169,7 +169,7 @@ func PlaceBet(c *fiber.Ctx) error {
 			return c.JSON(response)
 		 }
 	
-		
+	 
 		 for _, transaction := range request.Txns {
 			
 			transactionAmount := func(betamount decimal.Decimal,payoutamount decimal.Decimal,status string,feature bool) decimal.Decimal {
@@ -184,7 +184,7 @@ func PlaceBet(c *fiber.Ctx) error {
 
 			// fmt.Printf(" IsFeatureBuy: %s ",transaction.IsFeatureBuy)
 			
-			
+			//fmt.Printf("ProID : %v \n",user)
 			xtransaction := map[string]interface{}{
 				"MemberID" : user.ID,
 				"MemberName":strings.ToUpper(request.Username),
@@ -224,6 +224,7 @@ func PlaceBet(c *fiber.Ctx) error {
 				"GameProvide": "PGSOFT",
 				"BeforeBalance":user.Balance,
 				"Balance":user.Balance.Add(transactionAmount),
+				"ProID":user.ProStatus,
 			  } 
 
 			
@@ -247,6 +248,32 @@ func PlaceBet(c *fiber.Ctx) error {
 				var c_transaction_found models.TransactionSub
 				rowsAffected := db.Debug().Model(&models.TransactionSub{}).Select("id").Where("GameRoundID = ? ",transaction.RoundId).Find(&c_transaction_found).RowsAffected
 				fmt.Println(" GameRoundID RowAffected: ",rowsAffected)
+				//fmt.Printf("xtransaction: %v",xtransaction)
+				//fmt.Printf("user: %s",user)
+				xtransaction["ProID"] = user.ProStatus
+				// แก้ไขส่วนการสร้าง transactionSub
+				// transactionSub := &models.TransactionSub{
+				// 	MemberID: user.ID,
+				// 	MemberName: strings.ToUpper(request.Username),
+				// 	ProductID: int64(xtransaction["ProductID"].(int)), // แปลงเป็น int64
+				// 	ProviderID: xtransaction["ProviderID"].(int), // แปลงเป็น int64
+				// 	GameCode: xtransaction["GameCode"].(string),
+				// 	GameRoundID: xtransaction["GameRoundID"].(string),
+				// 	BetAmount: xtransaction["BetAmount"].(decimal.Decimal),
+				// 	PayoutAmount: xtransaction["PayoutAmount"].(decimal.Decimal),
+				// 	PlayInfo: xtransaction["PlayInfo"].(string),
+				// 	Status: xtransaction["Status"].(int), // แปลงเป็น int64
+				// 	// IsFeature: transaction.IsEndRound,      // เก็บเป็น bool ไม่ต้องแปลง
+				// 	// IsFeatureBuy: transaction.IsFeatureBuy, 
+				// 	RequestTime:request.TimestampMillis,
+				// 	// IsFeature:transaction.IsFeature,
+				// 	// IsEndRound:transaction.IsEndRound, 
+				// 	GameProvide: "PGSOFT",// แก้เป็น bool เช่นกัน				
+				// 	BeforeBalance: xtransaction["BeforeBalance"].(decimal.Decimal),
+				// 	Balance: xtransaction["Balance"].(decimal.Decimal),
+				// 	ProID: xtransaction["ProID"].(string), // แปลงเป็น int64
+				// }
+			 
 				if rowsAffected == 0 {
 							_err_  := db.Debug().Model(&models.TransactionSub{}).Create(xtransaction).Error
 							if _err_ != nil {
@@ -257,6 +284,7 @@ func PlaceBet(c *fiber.Ctx) error {
 							//fmt.Printf("TransactionAmount %v \n",transactionAmount)
 							updates := map[string]interface{}{
 								"Balance": user.Balance.Add(transactionAmount),
+								"ProID":user.ProStatus,
 								}
 
 							repository.UpdateUserFields(db,user.ID, updates) 

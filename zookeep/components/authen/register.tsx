@@ -21,6 +21,7 @@ type User = {
   repassword:string
   fullname:string
   prefix:string
+  referred_by:string
   
 }
 
@@ -98,7 +99,7 @@ export default function RegisterComponent({lng}:{lng:string}) {
   } = useForm<User>()
 
   const redirect = ()=>{
-    location.replace(`/${lng}/register`)
+    location.replace(`/${lng}/login`)
 }
 
   //const {login} = useAuthStore()
@@ -175,7 +176,19 @@ export default function RegisterComponent({lng}:{lng:string}) {
                 defaultValue=""  {...register("fullname", { required: true })} 
               />
             </div>
-      
+            <div className="mt-4">
+              <label className="block text-gray-700" htmlFor="referred_by">
+                Referred By
+              </label>
+              <Input
+                type="text"
+                id="referred_by"
+                className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
+                placeholder=""
+          
+                defaultValue=""  {...register("referred_by")} 
+              />
+            </div>
             <div className="mt-4">
               <label className="block text-gray-700" htmlFor="password">
                 Password
@@ -186,7 +199,7 @@ export default function RegisterComponent({lng}:{lng:string}) {
                 id="password"
                 className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
                 required
-                defaultValue="" {...register("password")} 
+                defaultValue="" {...register("password",{required:true})} 
               />
               <button type="button" className="px-3 py-2 mt-2 bg-gray-700 text-white rounded hover:bg-gray-600" onClick={() => setShowingA(!showingA)}>
                   {showingA ? <LucideEye className="w-3 h-4"/> : <LucideEyeOff className="w-3 h-4"/>}
@@ -210,6 +223,7 @@ export default function RegisterComponent({lng}:{lng:string}) {
                 </button>
               </div>
             </div>
+
             <div className="mt-6">
               <button type="submit" className="py-2 px-4 bg-gray-700 text-white rounded hover:bg-gray-600 w-full">
                 Regiser

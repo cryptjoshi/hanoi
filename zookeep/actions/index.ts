@@ -11,6 +11,7 @@ type User = {
     fullname:string;
     password: string;
     prefix:string;
+    referred_by:string;
 }
 
 type Dbstruct = {
@@ -455,13 +456,13 @@ return response.json()
 }
 
 export const RegisterUser = async (prefix:string,body:User)=>{
- 
+ console.log(JSON.stringify(body))
   const response = await fetch("http://152.42.185.164:4006/api/v1/users/register", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body:JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"role":"user","prefix":prefix})
+      body:JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"role":"user","prefix":prefix,"referred_by":body.referred_by})
  
     })
     return response.json()

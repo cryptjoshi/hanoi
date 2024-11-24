@@ -58,7 +58,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       if(token && prefix!=""){
      
         const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
-
+     
       if(res.Status){
       toast({
         title: t('common.success'),
@@ -98,11 +98,11 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
     
       
-
+ 
     
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
-     
+        //console.log(user)
         if(user.Status){
           setBalance(user.Data.balance);
        
@@ -135,7 +135,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       setIsLoading(true);
       if(token){
       const promotion = await GetPromotion(token);
-      
+      //console.log(promotion)
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
          
@@ -191,7 +191,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   }
     fetchPromotion(prefix);
     setIsLoading(false);
-  }, [prefix, user?.pro_status, t])
+  }, [prefix, user?.pro_status, t,filteredPromotions])
 
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
@@ -203,16 +203,17 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
         </div>
         <div>
+        <p className="text-xs sm:text-sm text-muted-foreground"> ref: {user?.referral}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
           <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-             
+    
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :  promotions.find(promo => promo.ID.toString() == user?.pro_status.toString() && promo.Status==1)?.name || t('noPromotion')  // Changed ID to id and added fallback text
+                :  promotions.find(promo => promo.ID.toString() == user?.pro_status && promo.status==1)?.name || t('noPromotion')  // Changed ID to id and added fallback text
               }   
             </p>
           </div>

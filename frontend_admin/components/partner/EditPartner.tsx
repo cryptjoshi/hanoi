@@ -28,7 +28,7 @@ import useAuthStore from "@/store/auth";
 //     { id: '2', name: 'Live Casino' },
 // ];
 
-function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { memberId: number, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
+function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: number, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
   
   const { t } = useTranslation(lng, 'translation', undefined);
   const { customerCurrency } = useAuthStore();
@@ -71,8 +71,8 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
     if (result.Status) {
       toast({
-        title: t("member.edit.success"),
-        description: t("member.edit.success_description"),
+        title: t("partner.edit.success"),
+        description: t("partner.edit.success_description"),
         variant: "default",
       })
       onClose();
@@ -87,15 +87,15 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   
     if (result.Status) {
       toast({
-        title: t("member.add.success"),
-        description: t("member.add.success_description"),
+        title: t("partner.add.success"),
+        description: t("partner.add.success_description"),
         variant: "default",
       })
       onClose();
     } else {
       toast({
-        title: t("member.add.error"),
-        description: t("member.add.error_description") + result.Message,
+        title: t("partner.add.error"),
+        description: t("partner.add.error_description") + result.Message,
         variant: "destructive",
       })
     }
@@ -103,8 +103,8 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   };
     return (
         <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
-          <h2 className="text-2xl font-bold mb-4">{memberId ? t('member.edit.title') : t('member.add.title')}</h2>
-          <p className="text-gray-600 mb-6">{t('member.edit.description')}</p>
+          <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
+          <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -112,7 +112,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="RefferalCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.refferalcode')}</FormLabel>
+                    <FormLabel>{t('partner.columns.refferalcode')}</FormLabel>
                     <FormControl>
                       <div className="flex">
                        
@@ -136,7 +136,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.username')}</FormLabel>
+                    <FormLabel>{t('partner.columns.username')}</FormLabel>
                     <FormControl>
                       <div className="flex">
                         <Input
@@ -174,7 +174,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.password')}</FormLabel>
+                    <FormLabel>{t('partner.columns.password')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -187,7 +187,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Fullname"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.fullname')}</FormLabel>
+                    <FormLabel>{t('partner.columns.fullname')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -250,7 +250,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Bankname"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.bankname')}</FormLabel>
+                    <FormLabel>{t('partner.columns.bankname')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -263,7 +263,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Banknumber"
                 render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('member.columns.banknumber')}</FormLabel>
+                  <FormLabel>{t('partner.columns.banknumber')}</FormLabel>
                   <FormControl>
                     <Input {...field}/>
                   </FormControl>
@@ -276,7 +276,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
             name="Balance"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('member.columns.balance')}</FormLabel>
+                <FormLabel>{t('partner.columns.balance')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -293,7 +293,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="ProStatus"
                 render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('member.columns.prostatus')}</FormLabel>
+                  <FormLabel>{t('partner.columns.prostatus')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -306,7 +306,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="MinTurnoverDef"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.minturnover_def')}</FormLabel>
+                    <FormLabel>{t('partner.columns.minturnover_def')}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder={"10%"} />
                     </FormControl>
@@ -373,7 +373,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="Status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.status')}</FormLabel>
+                    <FormLabel>{t('partner.columns.status')}</FormLabel>
                     <Select
                 onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
                       value={field.value?.toString() || ''}
@@ -398,7 +398,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 name="RefferedCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('member.columns.refferedcode')}</FormLabel>
+                    <FormLabel>{t('partner.columns.refferedcode')}</FormLabel>
                     <FormControl>
                       <div className="flex">
                        
@@ -427,4 +427,4 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
       );
 }
 
-export default EditMember;
+export default EditPartner;

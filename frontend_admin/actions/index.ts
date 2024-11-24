@@ -202,7 +202,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
     return response.json()
   }
 
-    export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
+    export const UpdatePromotion = async (dbname: string, promotionId: any, values: any) =>{
  
    console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',

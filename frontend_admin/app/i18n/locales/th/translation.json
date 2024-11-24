@@ -59,11 +59,13 @@
         "paymentMethod": "ชำระเงิน",
         "minDept":"ฝากขั้นต่ำ",
         "minSpend": "ยอดเทิร์นขั้นต่ำ",
+        "minCredit": "ยอดเทิร์นขั้นต่ำ",
         "maxSpend": "ยอดถอนเงินสูงสุด",
         "amount":"จำนวน",
         "balance":"ยอดเงิน",
         "deposit":"รายการฝาก",
         "withdrawal":"รายการถอน",
+        "maxwithdrawal":"ยอดถอนเงินสูงสุด",
         "example": "ตัวอย่าง",
         "termsAndConditions": "เงื่อนไขการถอนยอดโบนัส",
         "title": "โปรโมชัน",
@@ -112,7 +114,8 @@
             "usageLimit": "Receive Limit",
             "specificTime": "Specific Time",
             "paymentMethod": "Payment Method",
-            "minSpend": "Min Turnover",
+            "minSpend": "Min TurnCredit",
+            "minCredit":"Min TurnCredit",
             "columns": "คอลัมน์"
         },
         "rowSelected": "แถวที่เลือก",
@@ -156,7 +159,18 @@
         "selectunit":"เลือกหน่วย",
         "unit":"หน่วย",
         "percent":"เปอร์เซ็นต์",
-        "nonepercent":"ปกติ"
+        "nonepercent":"ปกติ",
+        "minSpendtype": "ประเภท เทิร์นโอเวอร์",
+        "selectMinspendType":"เลือกประเภทการคำนวณ เทิร์นโอเวอร์",
+        "minCreditdtype": "เลือกประเภทการคำนวณ เทิร์นโอเวอร์",
+        "selectMinCreditType":"เลือกประเภทการคำนวณ เทิร์นโอเวอร์",
+        "deposit_bonus":"รายการฝาก + เครดิตฟรี",
+        "minturn_placeholder":"พิมเครื่องหมาย % ต่อท้ายจำนวน ถ้าต้องการใช้ %",
+        "select_turntype":"เลือกประเภทการเทิร์น",
+        "turnover":"เทิร์นโอเวอร์",
+        "turncredit": "เทิร์นเครดิต",
+        "turntype": "ประเภทการเทิร์น",
+        "zerobalance":"ใช้ยอดคงเหลือศูนย์"
     },
     "games": {
         "title": "เกม",
@@ -278,7 +292,51 @@
             "search":"ค้นหา",
             "add":"เพิ่มสมาชิก",
             "cancel":"ยกเลิก",
-            "minturnover_def":"เทิร์นโอเวอร์ต่ำสุด เริ่มต้น"
+            "minturnover_def":"เทิร์นเครดิตต่ำสุด เริ่มต้น",
+            "refferalcode":"โค๊ดอ้างอิง",
+            "refferedcode":"อ้างอิง"
+        }
+    },
+    "partner": {
+        "title": "พาร์ทเนอร์",
+        "description": "รายละเอียดพาร์ทเนอร์",
+        "edit": {
+            "title": "แก้ไขพาร์ทเนอร์",
+            "description": "แก้ไขรายละเอียดพาร์ทเนอร์",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการแก้ไขพาร์ทเนอร์",
+            "success_description": "สำเร็จในการแก้ไขพาร์ทเนอร์"
+        },
+        "add": {
+            "title": "เพิ่มพาร์ทเนอร์",
+            "description": "เพิ่มรายละเอียดพาร์ทเนอร์",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "error_description": "ข้อผิดพลาดในการเพิ่มพาร์ทเนอร์",
+            "success_description": "สำเร็จในการเพิ่มพาร์ทเนอร์"
+        },
+        "columns": {
+            "id": "ID",
+            "name": "ชื่อ",
+            "username": "ชื่อผู้ใช้",
+            "fullname": "ชื่อ-สกุล",
+            "password": "รหัสผ่าน",
+            "bankname": "ชื่อธนาคาร",
+            "banknumber": "หมายเลขบัญชี",
+            "balance": "ยอดเงิน",
+            "status": "สถานะ",
+            "proactive": "โปรโมชั่นที่ใช้",
+            "columns":"คอลัมน์",
+            "prostatus":"สถานะโปรโมชั่น",
+            "edit":"แก้ไข",
+            "backToList":"กลับไปยังรายการ",
+            "search":"ค้นหา",
+            "add":"เพิ่มพาร์ทเนอร์",
+            "cancel":"ยกเลิก",
+            "minturnover_def":"เทิร์นเครดิตต่ำสุด เริ่มต้น",
+            "refferalcode":"โค๊ดอ้างอิง",
+            "refferedcode":"อ้างอิง"
         }
     },
     "settings": {

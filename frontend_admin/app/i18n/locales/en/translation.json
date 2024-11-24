@@ -59,12 +59,14 @@
         "specificTime": "Specific Time",
         "paymentMethod": "Payment Method",
         "minDept":"Min Deposit",
-        "minSpend": "Min Turnover",
+        "minSpend": "Min TurnOver",
+        "minCredit": "Min TurnCredit",
         "maxSpend": "Max Withdrawal ",
         "amount":"Amount",
         "balance":"Balance",
         "deposit":"Deposit",
         "withdrawal":"Withdrawal",
+        "maxwithdrawal":"Max withdrawal",
         "example": "Example",
         "termsAndConditions": "Terms and Conditions",
         "title": "Promotion",
@@ -113,7 +115,8 @@
             "usageLimit": "Receive Limit",
             "specificTime": "Specific Time",
             "paymentMethod": "Payment Method",
-            "minSpend": "Min Turnover",
+            "minSpend": "Min TurnOver",
+            "minCredit":"Min TurnCredit",
             "columns":"Columns"
         },
         "columnsfilter": "Columns",
@@ -158,7 +161,18 @@
         "selectunit":"Select Unit",
         "unit":"Unit",
         "percent":"Percent",
-        "nonepercent":"Normal"
+        "nonepercent":"Normal",
+        "minSpendtype": "Select Min TurnOver type",
+        "selectMinspendType":"Min TurnOver Type",
+        "minCreditdtype": "Select Min TurnCredit type",
+        "selectMinCreditType":"Min TurnCredit Type",
+        "deposit_bonus":"Deposit + Bonus",
+        "minturn_placeholder":"add % for use percent type",
+        "select_turntype":"Select for calculated",
+        "turnover":"Turn Over",
+        "turncredit": "Turn Credit",
+        "turntype":"Turn Type",
+        "zerobalance":"Zero Balance Mode"
     },
     "games": {
         "title": "Game",
@@ -278,7 +292,53 @@
             "add":"Add",
             "save":"Save",
             "cancel":"Cancel",
-            "minturnover_def":"Minimum TurnOver Default"
+            "minturnover_def":"Minimum TurnCredit Default",
+            "refferalcode":"Refferal code",
+            "refferedcode":"Reffered by"
+        }
+        
+        
+    },
+    "partner": {
+        "title": "Partner",
+        "description": "Partner detail",
+        "edit": {
+            "title": "Edit Partner",
+            "description": "Edit Partner detail",
+            "success": "Success",
+            "error": "Error",
+            "error_description": "Partner edit error description",
+            "success_description": "Partner edit success description"
+        },
+        "add": {
+            "title": "Add Partner",
+            "description": "Add Partner detail",
+            "success": "Success",
+            "error": "Error",
+            "error_description": "Partner edit error description",
+            "success_description": "Partner edit success description"
+        },
+        "columns": {
+            "id": "ID",
+            "username": "Username",
+            "name": "Name",
+            "fullname": "Fullname",
+            "password": "Password",
+            "bankname": "Bank Name",
+            "banknumber": "Bank Number",
+            "balance": "Balance",
+            "status": "Status",
+            "proactive": "Pro Active",
+            "prostatus":"Pro Status",
+            "edit":"Edit",
+            "backToList":"Back to List",
+            "search":"Search",
+            "add":"Add",
+            "save":"Save",
+            "cancel":"Cancel",
+            "minturnover_def":"Minimum TurnCredit Default",
+            "refferalcode":"Refferal code",
+            "refferedcode":"Reffered by"
         }
         
         

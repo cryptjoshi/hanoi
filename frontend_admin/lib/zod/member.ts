@@ -22,7 +22,9 @@ export const memberSchema = z.object({
       //Turnover:z.number().optional(),    
       //ProID:z.string(),    
       //PartnersKey:z.string(),    
-      ProStatus:z.string().optional(),    
+      ProStatus:z.string().optional(),   
+      ReferralCode:z.string().optional(), 
+      RefferedCode:z.string().optional(),
       //ProActive:z.string()
 
 });

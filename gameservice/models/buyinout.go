@@ -41,13 +41,14 @@ type BuyInOut struct {
 	CreatedAt         string `gorm:"column:createdAt;NOT NULL"`
 	UpdatedAt         string `gorm:"column:updatedAt;NOT NULL"`
 	DeletedAt         string `gorm:"column:deletedAt"`
-	TransactionID     string    `gorm:"type:varchar(255)";gorm:"column:TransactionID"`
+	TransactionID     string    `gorm:"type:varchar(255)";column:TransactionID"`
 	IsEndRound        int       `gorm:"column:IsEndRound"`
 	IsFeatureBuy      int       `gorm:"column:IsFeatureBuy"`
 	IsFeature         int       `gorm:"column:IsFeature"`
 	IsAction          string    `gorm:"type:varchar(50)";gorm:"column:IsAction"`
 	GameProvide       string    `gorm:"type:varchar(255)";gorm:"column:GameProvide"`
 	GameNumber        string    `gorm:"type:varchar(20)";gorm:"column:GameNumber"`
+	ProID			  string    `gorm:"column:ProID"`
 }
 
 func (m *BuyInOut) TableName() string {
@@ -83,6 +84,7 @@ type Buyinout struct {
     SettlementDate    *time.Time      `json:"SettlementDate"` // ใช้ pointer เพราะข้อมูลอาจเป็น null
     TransactionID     string          `json:"TransactionID"`
     TransactionAmount decimal.Decimal `json:"TransactionAmount"`
+	ProID			  string    `json:"ProID"`
 }
 
 type BuyInOutRequest struct {

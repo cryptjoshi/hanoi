@@ -5,7 +5,7 @@ import (
 	// "github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	//"github.com/golang-jwt/jwt/v4"
-	//"pkd/handler"
+	"pkd/handler"
 	//"pkd/middlewares"
 	"pkd/handler/ef" 
 	"pkd/handler/gc" 
@@ -34,12 +34,15 @@ func SetupRoutes(app *fiber.App) {
 	app.Post("/callback/Seamless/BuyOut",ef.BuyOut)
 	app.Post("/callback/Seamless/PushBet",ef.PushBet)
 	app.Post("/callback/Seamless/MobileLogin",ef.MobileLogin)
-	
+	app.Post("/callback/ef/gamelist",ef.GetGameList)
+	   
 
 	// PGSOFT
 	app.Get("/callback/pgsoft",pg.Index)
 	app.Post("/callback/pgsoft/checkBalance",pg.GetBalance)
 	app.Post("/callback/pgsoft/settleBets",pg.PlaceBet)
+	app.Post("/callback/pgsoft/gamelist",handler.GetGameList)
+	
 	
 	
 	// GCLUB
@@ -93,7 +96,11 @@ func SetupRoutes(app *fiber.App) {
 	// //Transactions
 	// //app.Get("/api/transaction/all",handler.GetAllTransaction)
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
-	// //app.Post("/api/statement",handler.AddStatement)
+	app.Post("/api/v1/pg/launchgame",pg.LaunchGame)
+	app.Post("/api/v1/ef/launchgame",ef.LaunchGame)
+	// app.Post("/api/v1/gc/launchgame",gc.LaunchGame)
+	app.Post("/api/v1/launchgame",handler.LaunchGame)
+	app.Post("/api/v1/transaction/add",handler.AddTransactions)
 
 
 	// // dashboard

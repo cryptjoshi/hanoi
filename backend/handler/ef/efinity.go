@@ -201,6 +201,7 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 	transactionsub.BetAmount = transactionsub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
+	transactionsub.ProID = users.ProStatus
 	
 	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
@@ -274,7 +275,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 	//transactionsub.BetAmount = transactionsub.BetAmount
 	transaction.BeforeBalance = users.Balance
 	transaction.Balance = users.Balance.Add(transaction.TransactionAmount)
-	
+	transaction.ProID = users.ProStatus
 	result := db.Create(&transaction); 
 	
 	
@@ -348,7 +349,7 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	transactionsub.BetAmount = transactionsub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	
+	transactionsub.ProID = users.ProStatus
 	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {

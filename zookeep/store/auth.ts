@@ -10,6 +10,7 @@ export interface AuthStore {
     refreshToken: string | null;
     customerCurrency: string | null;
     prefix:string;
+    user:User;
     Signin: (body: User) => Promise<boolean>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
@@ -26,6 +27,7 @@ export interface AuthStore {
 export type User = {
     username: string;
     password: string;
+    fullname:string;
     prefix:string;
 };
 
@@ -49,11 +51,12 @@ const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       customerCurrency: "THB",
       prefix:"",
+      user:{username:"",fullname:"",prefix:"",password:""},
       Signin: async (body: User) => {
        // const router = useRouter()
         try {
         
-          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix});
+          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix,fullname:body.fullname});
           // const response = await fetch(endpoint, {
           //   method: 'POST',
           //   headers: {
@@ -69,18 +72,19 @@ const useAuthStore = create<AuthStore>()(
             set({
               isLoggedIn: true,
               accessToken: data?.Token,
-              prefix:body.prefix
+              prefix:body.prefix,
+              user: {username:data.username,fullname:data.fullname,prefix:body.prefix,password:""}
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
             //router.redirect("/");
             //location.replace("/dashboard"); // หากต้องการ redirect ควรพิจารณาให้แน่ใจว่าใช้งานใน context ที่ถูกต้อง
-            return true
+            return data
           } else {
             set({ isLoggedIn: false, accessToken: null });
             localStorage.setItem('isLoggedIn', JSON.stringify(false));
             document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-            return false
+            return data
           }
         // return false
         } catch (error) {
@@ -90,7 +94,7 @@ const useAuthStore = create<AuthStore>()(
       },
       Logout: () => {
        // const router = useRouter()
-        set({ isLoggedIn: false, accessToken: null });
+        set({ isLoggedIn: false, accessToken: null,user:{username:"",fullname:"",prefix:"",password:""} });
         document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
        //  router.push("/"); 
         // location.replace("/"); // แนะนำให้ใช้ใน context ที่ปลอดภัย เช่นใน useEffect หรือ handle event

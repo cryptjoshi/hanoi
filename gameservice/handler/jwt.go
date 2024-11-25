@@ -25,6 +25,7 @@ import (
 	//"strings"
 	"fmt"
 	"errors"
+	"regexp"
 )
 var jwtKey  = []byte(os.Getenv("PASSWORD_SECRET"))
 //var CLIENT_ID = "6342e1be-fa03-456f-8d2d-8e1c9513c351" //[]byte(os.Getenv("CLIENT_ID"))
@@ -58,6 +59,15 @@ type Claims struct {
 }
 
  
+func GetPrefix(input string) (string, error) {
+	// ใช้ regexp เพื่อจับเฉพาะตัวอักษรก่อนตัวเลข
+	re := regexp.MustCompile(`^[a-zA-Z]+`)
+	matches := re.FindString(input)
+	if matches == "" {
+		return "", fmt.Errorf("No prefix found")
+	}
+	return matches, nil
+}
 
 
 func MapToJSONString(data fiber.Map) (string, error) {
@@ -67,7 +77,6 @@ func MapToJSONString(data fiber.Map) (string, error) {
 	}
 	return string(encoded), nil
 }
-
 
 func ValidateJWTReturn(tokenString string) models.Users {
 	claims := &Claims{}
@@ -80,18 +89,50 @@ func ValidateJWTReturn(tokenString string) models.Users {
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
         return jwtKey, nil
     })
+
+
+	//fmt.Printf("claims: %s ",claims)
 	username := claims.Username
+	 
+	prefix,_ := GetPrefix(username) //username[:3] // Extract prefix
+ 
+	// Connect to the database based on the prefix
+	db, err := database.ConnectToDB(prefix)
 	//checkerFromRequest := claims.Checker
 	var user models.Users
 	//fmt.Println(err)
 	if err==nil {
-		database.Database.Select("id,username,balance,Token").Where("username = ?", username).First(&user)
+		db.Select("id,username,password,balance,Token").Where("username = ?", username).First(&user)
 	}
 
 	 
 	return user
 	 
 }
+
+// func ValidateJWTReturn(tokenString string) models.Users {
+// 	claims := &Claims{}
+// 	//dbClaims := &Claims{}
+// 	//tokenString := c.Get("Authorization")[7:]
+// 	// token, claims, err := ValidateJWT(tokenString) // เรียกใช้ฟังก์ชันจาก utils
+// 	// if err != nil || !token.Valid {
+// 	// 	return c.Status(fiber.StatusUnauthorized).SendString("Invalid token")
+// 	// }
+// 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+//         return jwtKey, nil
+//     })
+// 	username := claims.Username
+// 	//checkerFromRequest := claims.Checker
+// 	var user models.Users
+// 	//fmt.Println(err)
+// 	if err==nil {
+// 		database.Database.Select("id,username,balance,Token").Where("username = ?", username).First(&user)
+// 	}
+
+	 
+// 	return user
+	 
+// }
 
 
 

@@ -12,7 +12,7 @@ import { GetUserInfo,GetPromotion } from '@/actions';
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
-import GameList from './gamelist';
+import GameList from './homegamelist';
 import PromotionList from './promotionlist';
 
 

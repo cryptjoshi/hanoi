@@ -7,8 +7,16 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import useAuthStore from '@/store/auth'
+ 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
-interface Promotion {
+export interface Promotion {
   ID: string;
   name: string;
   description: string;
@@ -23,43 +31,43 @@ interface PromotionListProps {
   onSelectPromotion: (promotion: Promotion) => void;
 }
 
-const GameList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListProps) => {
+export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListProps) => {
   const router = useRouter();
   const { t } = useTranslation(lng, 'translation', undefined);
   const { toast } = useToast();
   const { accessToken } = useAuthStore()
 
-  const handleAccept =  (item: Promotion) => {
-  const acceptPromotion = async () => {
+//   const handleAccept =  (item: Promotion) => {
+//     const acceptPromotion = async () => {
  
-    if(accessToken && prefix!=""){
-    const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
-    if(res.Status){
-    toast({
-      title: t('common.success'),
-      description: t('common.promotionAccept'),
-      variant: "default",
-    })
-    onSelectPromotion(item);
-  } else {
-    toast({
-      title: t('common.unsuccess'),
-      description: res.Message,
-      variant: "destructive",
-    })
-   // router.push(`/${lng}/login`);
-  }
-} else {
-  toast({
-    title: t('common.unsuccess'),
-    description: t('common.loginFirst'),
-    variant: "destructive",
-  })
-  router.push(`/${lng}/login`);
-}
-}
-  acceptPromotion()
-}
+//     if(accessToken && prefix!=""){
+//     const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
+//     if(res.Status){
+//     toast({
+//       title: t('common.success'),
+//       description: t('common.promotionAccept'),
+//       variant: "default",
+//     })
+//     onSelectPromotion(item);
+//   } else {
+//     toast({
+//       title: t('common.unsuccess'),
+//       description: res.Message,
+//       variant: "destructive",
+//     })
+//    // router.push(`/${lng}/login`);
+//   }
+// } else {
+//   toast({
+//     title: t('common.unsuccess'),
+//     description: t('common.loginFirst'),
+//     variant: "destructive",
+//   })
+//  // router.push(`/${lng}/login`);
+// }
+// }
+//   acceptPromotion()
+// }
 
 
   if (!promotions || promotions.length === 0) {
@@ -71,7 +79,13 @@ const GameList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListP
    
    <div className="p-4 sm:p-6">
        <h3 className="font-bold text-sm sm:text-base mb-2">{t('latestEvents')}</h3>
-
+       <Carousel
+      opts={{
+        align: "start",
+      }}
+      className="w-full max-w-xl"
+    >
+      <CarouselContent className={promotions.length === 1 ? "flex justify-center" : ""}>
        {promotions.map((item, index) => (
        <Card key={index} className="bg-black text-white p-3 sm:p-4">
          <div className="flex justify-between items-center">
@@ -96,10 +110,11 @@ const GameList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListP
        </CardFooter>
        </Card>
        ))}
-
+</CarouselContent>
+</Carousel>
      </div>
     </>
   )
 }
 
-export default GameList
+ 

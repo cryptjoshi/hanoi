@@ -30,9 +30,14 @@ type Users struct {
 	Win              decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:win;default:0"`
 	Lose             decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:lose;default:0"`
 	Turnover         decimal.Decimal   `gorm:"type:decimal(10,2);gorm:"column:turnover;default:0"`
+	MinTurnover      string    `gorm:"column:minturnover;type:varchar(50);default:0"`
+	MinTurnoverDef   string    `gorm:"column:minturnoverdef;"gorm:"type:varchar(50);"gorm:"default:'10%'"`
+	BetLimit         string    `gorm:"column:betlimit;"gorm:"type:varchar(50);"`
+	Currency         string    `gorm:"type:varchar(50)";gorm:"column:currency"`
 	ProID            string    `gorm:"type:varchar(50)";gorm:"column:pro_id"`
 	PartnersKey      string    `gorm:"type:varchar(50)";gorm:"column:partners_key"`
 	ProStatus        string    `gorm:"type:varchar(50)";gorm:"column:pro_status;default:none"`
+	ProBalance       decimal.Decimal   `gorm:"type:decimal(10,2);column:probalance;default:0"`
 	Firstname        string    `gorm:"type:varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:firstname"`
 	Lastname         string    `gorm:"type:varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:lastname"`
 	Deposit          decimal.Decimal   `gorm:"type:decimal(10,2);column:deposit;default:0"`
@@ -43,6 +48,15 @@ type Users struct {
 	TempSecret       string    `gorm:"type:varchar(50)";gorm:"column:temp_secret"`
 	Secret           string    `gorm:"type:text";gorm:"column:secret"`
 	OtpAuthUrl       string    `gorm:"type:text";gorm:"column:otpAuthUrl"`
+	LastProamount      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastproamount;default:0"`
+	LastDeposit      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastdeposit;default:0"`
+	LastWithdraw     decimal.Decimal   `gorm:"type:decimal(10,2);column:lastwithdraw;default:0"`
+	ReferralCode      string          `gorm:"type:varchar(50);column:referral_code;NOT NULL"` // รหัสแนะนำเฉพาะของสมาชิก
+	ReferredBy        string          `gorm:"type:varchar(50);column:referred_by"`            // รหัสของสมาชิกที่แนะนำ
+	TotalTurnover     decimal.Decimal `gorm:"type:decimal(15,2);column:total_turnover;default:0"` // Turnover รวมที่เกิดจากสมาชิกและ Affiliated
+	CommissionEarned  decimal.Decimal `gorm:"type:decimal(15,2);column:commission_earned;default:0"` // ค่าคอมมิชชันสะสมจาก Affiliated
+	PartnerID int `gorm:"column:partner_id"` // ใช้บันทึก ID ของ partner ที่เชื่อมโยง
+	AffiliateLink string `gorm:"type:varchar(255);column:affiliate_link"` // ใช้บันทึกลิงค์ที่ใช้
 }
 
 func (m *Users) TableName() string {

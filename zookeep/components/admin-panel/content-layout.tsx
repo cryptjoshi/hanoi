@@ -14,9 +14,9 @@ interface ContentLayoutProps {
 export function ContentLayout({ title, children }: ContentLayoutProps):ReactElement {
  const {lng} = useAuthStore()
   return (
-    <div  >
+    <div className="min-h-screen flex flex-col">
       <Navbar title={title} />
-      <div className="container pt-8 pb-8 px-4 sm:px-8">{children}</div>
+      <div className="container flex-grow pt-8 pb-8 px-4 sm:px-8">{children}</div>
       <Footer />
     </div>
   );

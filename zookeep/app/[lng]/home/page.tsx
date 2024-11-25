@@ -24,7 +24,7 @@ import WalletInterface from "@/components/home/WalletInterface";
 import HomePage from "@/components/home/home";
 //import { useTranslation } from '@/app/i18n'
 
-export default  function DashboardPage({ params: { lng } }) {
+export default  function DashboardPage({ params: { lng } }: { params: { lng: string } }) {
   //const { t } = await useTranslation(lng)
   const { t } =  useTranslation(lng,'translation' ,'menu');
   const sidebar = useStore(useSidebar, (x) => x);

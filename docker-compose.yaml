@@ -112,7 +112,7 @@ services:
       - "4007:8070"
     env_file: .env
     # environment:
-    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_HOST=games.tsxbet.com
     #   - VIRTUAL_PORT=4007
     volumes:
       - ./gameservice/:/app

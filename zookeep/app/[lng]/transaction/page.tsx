@@ -4,7 +4,8 @@ import { ContentLayout } from "@/components/admin-panel/content-layout";
 export default  function TransactionPage({ params: { lng } }) {
     return (
             <ContentLayout title="Transaction">
-            <TransactionForm lng={lng} />
+                <></>
+            {/* <TransactionForm lng={lng} /> */}
          </ContentLayout>
     );
 };

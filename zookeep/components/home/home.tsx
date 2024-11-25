@@ -203,7 +203,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">≈${formatNumber(balance)} {currency}</p>
         </div>
         <div>
-        <p className="text-xs sm:text-sm text-muted-foreground"> ref: {user?.referral}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground"> ref: {user?.referredby}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.fullname}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.username}</p>
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>

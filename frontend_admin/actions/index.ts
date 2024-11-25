@@ -204,7 +204,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
 
     export const UpdatePromotion = async (dbname: string, promotionId: any, values: any) =>{
  
-   console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
+   //console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',
@@ -288,7 +288,7 @@ export const GetDBMode = async (dbname:string) =>{
 
 export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
   
-  console.log(body)
+  //console.log(body)
 
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/update", { method: 'POST',
     headers: {   
@@ -298,6 +298,17 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
       body: JSON.stringify({"prefix":prefix,"id":id,"body":body})
     })
     return response.json()
+}
+
+export const GetCommission = async (prefix:string) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/commission",{method: 'Post',
+  headers: {   
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({"prefix":prefix})
+})
+  return response.json()
 }
 
 export async function navigate(path:string) {

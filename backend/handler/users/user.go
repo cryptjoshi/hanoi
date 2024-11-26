@@ -25,6 +25,7 @@ import (
 	// 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	// 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"hanoi/repository"
+	"hanoi/encrypt"
 	//"log"
 	// 	// "net"
 	// 	// "net/http"
@@ -82,7 +83,7 @@ func Login(c *fiber.Ctx) error {
 	db, err := database.ConnectToDB(loginRequest.Prefix)
 	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
 	//db.Migrator().CreateTable(&models.PromotionLog{})
-	db.AutoMigrate(&models.Users{})
+	//db.AutoMigrate(&models.Users{})
 	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
 	 
 	if err != nil {
@@ -225,7 +226,7 @@ func Register(c *fiber.Ctx) error {
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(200).SendString(err.Error())
 	}
-	fmt.Printf(" %s ",user.Username)
+	// fmt.Printf(" %s ",user)
 	db, conn := database.ConnectToDB(user.Prefix)
 	if conn != nil {
 		response := ErrorResponse{
@@ -236,10 +237,14 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	seedPhrase := handler.GenerateSeedPhrase(6)
-	fmt.Println("SeedPhase  %s\n", seedPhrase)
+	seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
-	result := db.Create(&user)
+	fmt.Printf("SeedPhase  %s\n", seedPhrase) 
+
+	user.ReferralCode = seedPhrase
+
+	fmt.Printf("user: %s \n",user)
+	result := db.Debug().Create(&user)
 
 	if result.Error != nil {
 		response := ErrorResponse{
@@ -329,26 +334,47 @@ func GetUser(c *fiber.Ctx) error {
 	// 	Turnover decimal.Decimal `json:"turnover"`
 	// 	createdAt time.Time `json:"createdat"`
 	// }
-	var summary models.BankStatement
+	//var summary models.BankStatement
 	
 	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
-	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
+	//db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
 	
 		 
 	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
 
 	//createdate := summary.createdAt.Format("2006-01-02")
-	// fmt.Println(summary.Turnover)
-	// fmt.Println(summary.CreatedAt)
-	// fmt.Println("342 line GetUser")
+	// fmt.Printf("turnover: %v \n",summary.Turnover)
+	// fmt.Printf("createdAt: %v \n",summary.CreatedAt)
+	// fmt.Printf("342 line GetUser \n")
 
-	if summary.Turnover.LessThanOrEqual(decimal.Zero) {
-	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
-	} else {
-		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
+	// if summary.Turnover.LessThanOrEqual(decimal.Zero) {
+	//  	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
+	// } else {
+	// 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
+	// }
+	
+	var promotionLog models.PromotionLog
+	db.Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
+		Order("created_at DESC").
+		First(&promotionLog)
+
+
+	var totalTurnover decimal.Decimal
+	if err := db.Model(&models.TransactionSub{}).
+		Where("proid = ? AND membername = ? AND created_at >= ?", 
+			users.ProStatus, 
+			users.Username, 
+			promotionLog.CreatedAt).
+		Select("COALESCE(SUM(turnover), 0)").
+		Scan(&totalTurnover).Error; err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Message": "ไม่สามารถคำนวณยอดเทิร์นได้ !",
+				"Status": false,
+				"Data": "เกิดข้อผิดพลาด!",
+			})
+			
+		
 	}
-	
-	
 
 
 	var promotion models.Promotion
@@ -358,7 +384,7 @@ func GetUser(c *fiber.Ctx) error {
 	}
 	pro_setting, err := wallet.CheckPro(db, &users) 
 	if err != nil {
-		
+		 
 		return c.JSON(fiber.Map{
 			"status": false,
 			"message":  err.Error(),
@@ -366,6 +392,24 @@ func GetUser(c *fiber.Ctx) error {
 				"id": -1,
 			}})
 	}
+
+	minTurnover := pro_setting["MinTurnover"].(string)
+	var baseAmount decimal.Decimal
+	if pro_setting["MinSpendType"] == "deposit" {
+		baseAmount = users.LastDeposit
+	} else {
+		baseAmount = users.LastDeposit.Add(users.LastProamount)
+	}
+
+	requiredTurnover, err := wallet.CalculateRequiredTurnover(minTurnover, baseAmount)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่สามารถคำนวณยอดเทิร์นได้",
+			"Data": fiber.Map{"id": -1},
+		})
+	}
+
 	// var transaction models.TransactionSub
 	// db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(balance,0) as balance").Where("membername= ? and deleted_at is null", users.Username).Scan(&transaction)
 	// var pro_balance decimal.Decimal
@@ -399,6 +443,8 @@ func GetUser(c *fiber.Ctx) error {
 			})
 		}
 
+	
+	//fmt.Printf("data: %+v\n", users)
 	response := fiber.Map{
 		"Status":  true,
 		"Message": "สำเร็จ",
@@ -410,10 +456,11 @@ func GetUser(c *fiber.Ctx) error {
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
-			"turnover":   summary.Turnover,
-			"minturnover": users.MinTurnover,
+			"turnover":   totalTurnover,//summary.Turnover,
+			"minturnover": requiredTurnover,
 			"lastdeposit": users.LastDeposit,
 			"lastproamount": users.LastProamount,
+			"referredby": users.ReferredBy,
 			"lastwithdraw": users.LastWithdraw,
 			"pro_status": users.ProStatus,
 			"pro_balance": pro_balance,
@@ -429,13 +476,13 @@ func GetUserByUsername(c *fiber.Ctx) error {
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(200).SendString(err.Error())
 	}
-	fmt.Printf(" %s ",user.Username)
+	//fmt.Printf(" %s ",user.Username)
 	db, conn := database.ConnectToDB(user.Prefix)
 
 
 	//db, _err := handler.GetDBFromContext(c)
 	prefix := c.Locals("Prefix")
-	fmt.Println("prefix:", prefix)
+	//fmt.Println("prefix:", prefix)
 	if conn != nil {
 
 		// response := fiber.Map{
@@ -974,7 +1021,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 		})
 	}
 
-	//fmt.Printf("ProStatusValue: %s",proStatusValue)
+	 
 	proStatus := fmt.Sprintf("%v", proStatusValue)
 
 // Check the type of proStatusValue
@@ -1009,7 +1056,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 		fmt.Errorf(" %s ",err)
 	}
 
-	//fmt.Printf("ProDetail: %s",pro_setting)
+	fmt.Printf("ProDetail: %s",pro_setting)
 
 	if pro_setting != nil {
 		 
@@ -1040,8 +1087,13 @@ func UpdateUserPro(c *fiber.Ctx) error {
 			}
 		}
 		if pro_setting["Type"] == "first" {
-
-			if user.Balance.IsZero() && user.Deposit.IsZero() && user.Actived.IsZero() { // หรือใช้ member.Actived == time.Time{}
+			// fmt.Printf("1047 line")
+			// fmt.Printf("user.Balance: %s \n",user.Balance)
+			// fmt.Printf("user.Deposit: %s \n",user.Deposit)
+			// fmt.Printf("user.Actived: %s \n",user.Actived)
+		 
+			
+			if user.Balance.IsZero() && user.Deposit.IsZero() && user.Actived == nil { // หรือใช้ member.Actived == time.Time{}
 				//user.ProStatus = "2"
 				fmt.Println("pro is actived")
 				repository.UpdateFieldsUserString(db, username, updates)
@@ -1054,7 +1106,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 
 
 				if user.Balance.IsZero() == false && pro_setting["ZeroBalance"] == 1 {
-				 fmt.Println("1012 line")
+				// fmt.Println("1012 line")
 					response := fiber.Map{
 						"Message": "ยอดคงเหลือมากกว่าศูนย์!",
 						"Status":  false,
@@ -1072,20 +1124,44 @@ func UpdateUserPro(c *fiber.Ctx) error {
 				
 			}
 		} else {
-			fmt.Printf("Prostatus:  %s \n",user.ProStatus)
-			fmt.Printf("1040 line Balance: %s \n",user.Balance)
+			// fmt.Printf("Prostatus:  %s \n",user.ProStatus)
+			// fmt.Printf("1040 line Balance: %s \n",user.Balance)
+			// fmt.Printf("1088 line \n")
+			// fmt.Printf("pro_setting: %s \n",pro_setting["Type"])
+			// if pro_setting["Type"] == "weekly" {
+			// 	fmt.Printf("1090 line \n")
+			// 	fmt.Printf("pro_setting: %s \n",pro_setting["Week"])
+			// }
+
 
 			var promotion_log models.PromotionLog
-			db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1",user.ID).Order("id DESC").Limit(1).Scan(&promotion_log)	
-			if promotion_log.Promotioncode != "" {
-				updates["ProStatus"] = "-1"
-				repository.UpdateFieldsUserString(db, username, updates)
-				response := fiber.Map{
-					"Message": "คุณใช้งานโปรโมชั่นนี้แล้ว ",
-					"Status":  false,
-					"Data":    "คุณใช้งานโปรโมชั่นนี้แล้ว",
+			db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").Limit(1).Scan(&promotion_log)	
+			
+			rowsAffected := db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").RowsAffected
+			fmt.Printf("rowsAffected: %d",rowsAffected)
+
+			if rowsAffected > 0 && pro_setting["MaxUse"] != nil {
+				maxUse, ok := pro_setting["MaxUse"].(int64)
+				if !ok {
+					// กรณีที่ไม่สามารถแปลงค่าได้
+					updates["ProStatus"] = ""
+					repository.UpdateFieldsUserString(db, username, updates)
+					return c.JSON(fiber.Map{
+						"Message": "เกิดข้อผิดพลาดในการตรวจสอบ MaxUse",
+						"Status":  false,
+					})
 				}
-				return c.JSON(response)
+				
+				if rowsAffected > maxUse {
+					updates["ProStatus"] = ""
+					repository.UpdateFieldsUserString(db, username, updates)
+					return c.JSON(fiber.Map{
+						"Message": "คุณใช้งานโปรโมชั่นนี้แล้ว",
+						"Status":  false,
+						"Data":    "คุณใช้งานโปรโมชั่นนี้แล้ว",
+					})
+				}
+			
 			} else if user.Balance.IsZero() == false && pro_setting["ZeroBalance"] == 1 { // หรือใช้ decimal.NewFromInt(0)
 				//user.ProStatus = old_promo
 				response := fiber.Map{

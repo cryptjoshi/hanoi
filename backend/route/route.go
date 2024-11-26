@@ -117,6 +117,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/member/update", handler.UpdateMember)
 
 	app.Post("/db/master/update", handler.UpdateMaster)
+	app.Post("/db/master/commission", handler.GetCommission)
 
 	app.Post("/db/exchange/rate", handler.GetExchangeRates)
 

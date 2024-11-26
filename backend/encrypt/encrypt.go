@@ -15,6 +15,8 @@ import (
 	"errors"
 	//"log"
 	"strconv"
+	"crypto/rand"
+	"math/big"
 	// "time"
 	//"github.com/valyala/fasthttp"
 )
@@ -25,6 +27,8 @@ var DESKEY = "3d68fd30" //"9c62a148"
 var DESIV =	"2a492233"//"8e014099"
 var SYSTEMCODE = "DocDemoSystem"//"tsxthb"
 var WEBID = "DocDemoWeb" //"tsxthb"
+const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 type ECResult struct {
 	Enc string `json:"enc"`
 	Unx int64 `json:"unx"` // ค่า unx คุณสามารถกำหนดเอง
@@ -352,3 +356,15 @@ func CalculateMD5Base64(clientID, clientSecret, encryptedData string) string {
 // 		"unx": unx,
 // 	}, nil
 // }
+
+func GenerateAffiliateCode(length int) (string, error) {
+	code := make([]byte, length)
+	for i := range code {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		code[i] = charset[num.Int64()]
+	}
+	return string(code), nil
+}

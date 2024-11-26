@@ -90,6 +90,7 @@ const formSchema = z.object({
   minDept:z.coerce.number(),
   minCredit:z.string().optional(),
   turnType:z.string(),
+  minwithdrawal:z.string(),
   minSpend: z.string().optional(),
   minSpendType: z.string().optional(),
   maxSpend: z.coerce.number(),
@@ -154,7 +155,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       try {
         const data = await GetPromotionById(prefix, promotionId);
         if (data.Status) {
-          
+         // console.log(data.Data)
           const formattedData = {
             ...data.Data,
             percentDiscount: Number(data.Data.percentDiscount),
@@ -163,6 +164,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             usageLimit: Number(data.Data.usageLimit),
             minDept: Number(data.Data.minDept),
             minSpend: data.Data.minSpend,
+            minwithdrawal:data.Data.Widthdrawmin,
             maxSpend: Number(data.Data.maxSpend),
             minSpendType: data.Data.minSpendType,
             minCredit: data.Data.MinCredit,
@@ -223,6 +225,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       endDate: values.endDate ? format(parse(values.endDate, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '',
       percentDiscount: values.percentDiscount.toString(),
       maxDiscount: values.maxDiscount.toString(),
+      minwithdrawal:values.minwithdrawal,
       minDept: values.minDept.toString(),
       minSpend: values.minSpend?.toString(),
       minSpendType:values.minSpendType?.toString(),
@@ -694,6 +697,23 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
            
           </div>
           }
+           <div className="grid grid-cols-2 gap-4">
+           <div className="space-y-2"> 
+          <FormField
+            control={form.control}
+            name="minwithdrawal"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.minwithdrawal')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="text" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+         </div>
+         <div className="space-y-2">
           <FormField
             control={form.control}
             name="maxSpend"
@@ -707,6 +727,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               </FormItem>
             )}
           />
+          </div>
+          </div>
           <FormField
             control={form.control}
             name="Zerobalance"

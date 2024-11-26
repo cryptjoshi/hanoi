@@ -21,6 +21,7 @@ type Promotion struct {
 	Includegames   string   `gorm:"size:255;not null;" json:"includegames"`
 	Excludegames   string   `gorm:"size:255;not null;" json:"excludegames"`
 	Turnamount   string   `gorm:"size:255;not null;" json:"turnamount"`
+	Widthdrawmin decimal.Decimal   `gorm:"type:numeric" json:"Widthdrawmin"` 
 	Widthdrawmax       decimal.Decimal   `gorm:"type:numeric" json:"Widthdrawmax"`
     Formular   string   `gorm:"size:255;not null;" json:"formular"`
 	Options   string   `gorm:"size:255;not null;" json:"options"`
@@ -43,7 +44,7 @@ type Promotion struct {
 	EndDate string `gorm:"size:255;not null;" json:"endDate"`
 	Status        int  `json:"status"`
 	Example string `gorm:"size:255;not null;" json:"example"`
-	ZeroBalance int `gorm:"column:zerobalance;default:0" json:"zerobalance"`
+	Zerobalance int `gorm:"column:zerobalance;default:0" json:"zerobalance"`
 	//DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 

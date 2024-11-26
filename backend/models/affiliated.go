@@ -5,17 +5,23 @@ import (
 	"time"
 )
 
-type AffiliateLog struct {
+type Affiliate struct {
 	gorm.Model
-	ID                int             `gorm:"column:id;primaryKey;autoIncrement"`
-	AffiliateUserID   int             `gorm:"column:affiliate_user_id;NOT NULL"`           // ID ของสมาชิกที่แนะนำ
-	ReferredUserID    int             `gorm:"column:referred_user_id;NOT NULL"`            // ID ของสมาชิกที่ถูกแนะนำ
-	TransactionID     int             `gorm:"column:transaction_id;NOT NULL"`              // ID ของรายการธุรกรรม
-	TurnoverAmount    decimal.Decimal `gorm:"type:decimal(15,2);column:turnover_amount;NOT NULL"` // Turnover ที่เกิดขึ้น
-	CommissionAmount  decimal.Decimal `gorm:"type:decimal(15,2);column:commission_amount;NOT NULL"` // ค่าคอมมิชชันจาก Turnover
-	CreatedAt         time.Time       `gorm:"column:created_at;NOT NULL"`
+	ID          int             `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`  // รหัส Affiliate
+	PartnerID   int             `gorm:"column:partner_id;NOT NULL"`                   // รหัส Partner (FK)
+	UserID      int             `gorm:"column:user_id;NOT NULL"`                      // รหัส User (FK)
+	Turnover    decimal.Decimal `gorm:"type:decimal(10,2);column:turnover;default:0"` // ยอด Turnover ของผู้ใช้
+	Commission  decimal.Decimal `gorm:"type:decimal(10,2);column:commission;default:0"` // ค่าคอมมิชชั่นที่ได้จาก Turnover
+	ReferralURL string          `gorm:"type:varchar(255);column:referral_url"`        // ลิงค์ที่ใช้ (เช่น https://example.com?partner_id=123)
+	Status      string          `gorm:"type:varchar(50);column:status;default:'active'"` // สถานะการเชื่อมโยง (active/inactive)
+	CreatedAt   time.Time       `gorm:"column:created_at;NOT NULL"`                   // วันที่สร้าง
+	UpdatedAt   time.Time       `gorm:"column:updated_at;NOT NULL"`                   // วันที่อัปเดตล่าสุด
+	Partner Partner `gorm:"foreignKey:PartnerID;references:ID"` // ความสัมพันธ์กับ Partner
+	User    Users   `gorm:"foreignKey:UserID;references:ID"`    // ความสัมพันธ์กับ Users
 }
 
-func (m *AffiliateLog) TableName() string {
-	return "AffiliateLog"
+
+
+func (m *Affiliate) TableName() string {
+	return "Affiliates"
 }

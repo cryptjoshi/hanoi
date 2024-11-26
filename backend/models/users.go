@@ -2,12 +2,12 @@ package models
 
 import (
 	"github.com/shopspring/decimal"
-	//"gorm.io/gorm"
+	"gorm.io/gorm"
 	"time"
 )
 
 type Users struct {
-	//gorm.Model
+	gorm.Model
 	ID               int       `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"`
 	Walletid         int       `gorm:"column:walletid;NOT NULL"`
 	Username         string    `gorm:"index:idx_username,unique";gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:username;NOT NULL"`
@@ -44,19 +44,20 @@ type Users struct {
 	Withdraw         decimal.Decimal   `gorm:"type:decimal(10,2);column:withdraw;default:0"`
 	Credit           decimal.Decimal   `gorm:"type:decimal(10,2);column:credit;default:0"`
 	Prefix           string    `gorm:"type:varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:prefix;NOT NULL"`
-	Actived          time.Time `gorm:"default:current_timestamp(3)";gorm:"column:actived;NOT NULL"`
+	Actived          *time.Time `gorm:"default:current_timestamp(3)";gorm:"column:actived;NOT NULL"`
 	TempSecret       string    `gorm:"type:varchar(50)";gorm:"column:temp_secret"`
 	Secret           string    `gorm:"type:text";gorm:"column:secret"`
 	OtpAuthUrl       string    `gorm:"type:text";gorm:"column:otpAuthUrl"`
 	LastProamount      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastproamount;default:0"`
 	LastDeposit      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastdeposit;default:0"`
 	LastWithdraw     decimal.Decimal   `gorm:"type:decimal(10,2);column:lastwithdraw;default:0"`
-	ReferralCode      string          `gorm:"type:varchar(50);column:referral_code;NOT NULL"` // รหัสแนะนำเฉพาะของสมาชิก
-	ReferredBy        string          `gorm:"type:varchar(50);column:referred_by"`            // รหัสของสมาชิกที่แนะนำ
 	TotalTurnover     decimal.Decimal `gorm:"type:decimal(15,2);column:total_turnover;default:0"` // Turnover รวมที่เกิดจากสมาชิกและ Affiliated
 	CommissionEarned  decimal.Decimal `gorm:"type:decimal(15,2);column:commission_earned;default:0"` // ค่าคอมมิชชันสะสมจาก Affiliated
 	PartnerID int `gorm:"column:partner_id"` // ใช้บันทึก ID ของ partner ที่เชื่อมโยง
 	AffiliateLink string `gorm:"type:varchar(255);column:affiliate_link"` // ใช้บันทึกลิงค์ที่ใช้
+	ReferralCode  string          `gorm:"column:referral_code;unique;not null"` // รหัสแนะนำ
+	ReferredBy    string          `gorm:"column:referred_by"` // ผู้แนะนำ (User ID)
+	TotalEarnings decimal.Decimal `gorm:"column:total_earnings;type:decimal(10,2);default:0"` // ค่าคอมมิชชั่นสะสม
 }
 
 func (m *Users) TableName() string {

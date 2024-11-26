@@ -23,10 +23,11 @@ import (
 	//"github.com/solrac97gr/basic-jwt-auth/config"
 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	//"github.com/solrac97gr/basic-jwt-auth/repository"
+	"encoding/hex"
 	"encoding/json"
 	"hanoi/database"
 	"hanoi/repository"
-
+	"crypto/md5"
 	"io/ioutil"
 	"log"
 	"net"
@@ -407,6 +408,14 @@ func Logout(c *fiber.Ctx) error {
 
 }
 
+func GenerateReferralCode(username string,length int) string {
+	md5 := md5.New()	
+	md5.Write([]byte(username+GenerateSeedPhrase(length)))
+	hash := hex.EncodeToString(md5.Sum(nil))
+
+	return hash 
+}
+
 func GenerateSeedPhrase(length int) string {
 	seedPhrase := ""
 	rand.Seed(time.Now().UnixNano())
@@ -484,6 +493,16 @@ func createDatabase(dbName string) *gorm.DB {
 
 	return newDB
 }
+
+func ConnectMaster() *gorm.DB {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, "master")
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil
+	}
+	return db
+}
+
 // Function to connect and create a database with a specific prefix and name
 func CreateDatabase(c *fiber.Ctx) error {
 
@@ -800,8 +819,9 @@ type ProBody struct  {
 	Example            string              `json:"example"`
 	MinSpendType       string              `json:"minSpendType"`
 	MinCredit          string              `json:"minCredit`
+	Widthdrawmin       decimal.NullDecimal `json:"minwithdrawal"`
 	TurnType           string              `json:"TurnType`
-	ZeroBalance        int                 `json:"zeroBalance"`
+	Zerobalance        int                 `json:"Zerobalance"`
 }
 type promotiondata struct {
 	Prefix string `json:"prefix"`
@@ -842,7 +862,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 
 	}
 	// database.CheckAndCreateTable(db, models.Promotion{})
-
+		//fmt.Printf(" data.Body: %+v",data.Body)
 	promotion := models.Promotion{
 		Name:               data.Body.Name,
 		Description:        data.Body.Description,
@@ -864,8 +884,9 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Example:            data.Body.Example,
 		MinSpendType:       data.Body.MinSpendType,
 		MinCredit:          data.Body.MinCredit,
+		Widthdrawmin:       data.Body.Widthdrawmin.Decimal,
 		TurnType:           data.Body.TurnType,
-		ZeroBalance:        data.Body.ZeroBalance,
+		Zerobalance:        data.Body.Zerobalance,
 	//	Firstdeposit:       data.Body.Firstdeposit,
 	}
 
@@ -927,7 +948,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	var promotions = []models.Promotion{}
 
 	err := db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
-
+	fmt.Printf("err: %s",err)
      
 	if err != nil {
 		log.Fatal("Error is",err)
@@ -974,10 +995,10 @@ func GetAllPromotion(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	//db.AutoMigrate(models.Promotion{})
-	err = db.AutoMigrate(&models.Promotion{})
-	if err != nil {
-		fmt.Println("err:", err)
-	}
+	// err = db.AutoMigrate(&models.Promotion{})
+	// if err != nil {
+	// 	fmt.Println("err:", err)
+	// }
 	promotions := []models.Promotion{}
 
 	err = db.Debug().Find(&promotions).Error
@@ -1045,7 +1066,31 @@ func UpdatePromotion(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
+	
 
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: data.Prefix + "_development",
+	// 	production:  data.Prefix + "_production",
+	// }
+
+	
+
+	db, err := database.ConnectToDB(data.Prefix)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	//err = db.AutoMigrate(&models.Promotion{})
+	//db.AutoMigrate(&models.Promotion{});
+	//AutoMigrate(&models.TsxAdmin{},&models.Provider{},&models.Promotion{});
+	//promotion = models.Promotion{}
+
+	//fmt.Printf(" data.Body: %+v",data.Body)
+	
 	promotion := models.Promotion{
 		Name:               data.Body.Name,
 		Description:        data.Body.Description,
@@ -1067,28 +1112,47 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Example:            data.Body.Example,
 		MinSpendType:       data.Body.MinSpendType,
 		MinCredit:          data.Body.MinCredit,
+		Widthdrawmin:       data.Body.Widthdrawmin.Decimal,
 		TurnType:           data.Body.TurnType,
-		ZeroBalance:        data.Body.ZeroBalance,
+		Zerobalance:        data.Body.Zerobalance,
 	}
+	// fmt.Printf("promotion: %+v\n", promotion)
 
-	// var prefixs = struct {
-	// 	development string
-	// 	production  string
-	// }{
-	// 	development: data.Prefix + "_development",
-	// 	production:  data.Prefix + "_production",
-	// }
-	db, err := database.ConnectToDB(data.Prefix)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	//err = db.AutoMigrate(&models.Promotion{})
-	//db.AutoMigrate(&models.Promotion{});
-	//AutoMigrate(&models.TsxAdmin{},&models.Provider{},&models.Promotion{});
-	//promotion = models.Promotion{}
-	err = db.Debug().Model(&promotion).Where("id = ?", data.PromotionId).Updates(promotion).Error
+	// err = db.Debug().Model(&models.Promotion{}).Select("name", "description", "percent_discount", 
+    // "start_date", "end_date", "max_discount", "unit", "usage_limit", "specific_time",
+    // "payment_method", "min_dept", "min_spend", "max_spend", "terms_and_conditions",
+    // "status", "includegames", "excludegames", "example", "min_spend_type", "min_credit",
+    // "turn_type", "zerobalance").Where("id = ?", data.PromotionId).Updates(promotion).Error
+	// err = db.Debug().Session(&gorm.Session{FullSaveAssociations: true}).
+    // Model(&models.Promotion{}).
+    // Where("id = ?", data.PromotionId).
+    // Updates(promotion).Error
+	//err = db.Debug().Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Updates(promotion).Error
+	
+	//err = db.Debug().Model(&models.Promotion{}).Select("*").Where("id = ?", data.PromotionId).Updates(promotion).Error
+	//err = db.Debug().Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Save(&promotion).Error
+	err = db.Debug().Exec(`
+    UPDATE promotions 
+    SET name = ?, description = ?, percent_discount = ?, 
+        start_date = ?, end_date = ?, max_discount = ?,
+        unit = ?, usage_limit = ?, specific_time = ?,
+        payment_method = ?, min_dept = ?, min_spend = ?,
+        max_spend = ?, terms_and_conditions = ?, status = ?,
+        includegames = ?, excludegames = ?, example = ?,
+        minSpendType = ?, minCredit = ?, turnType = ?,
+		widthdrawmin = ?,
+        zerobalance = ?
+    WHERE id = ?`,
+    promotion.Name, promotion.Description, promotion.PercentDiscount,
+    promotion.StartDate, promotion.EndDate, promotion.MaxDiscount,
+    promotion.Unit, promotion.UsageLimit, promotion.SpecificTime,
+    promotion.PaymentMethod, promotion.MinDept, promotion.MinSpend,
+    promotion.MaxSpend, promotion.TermsAndConditions, promotion.Status,
+    promotion.Includegames, promotion.Excludegames, promotion.Example,
+    promotion.MinSpendType, promotion.MinCredit, promotion.TurnType,
+	promotion.Widthdrawmin,
+    promotion.Zerobalance, data.PromotionId).Error
+	
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!" + err.Error(),
@@ -1788,7 +1852,7 @@ type Times struct {
 	Type       string `json:"type"`
 	Hours      string `json:"hours"`
 	Minute     string `json:"minute"`
-	DaysOfWeek string `json:"daysofweek"`
+	DaysOfWeek []string `json:"daysofweek"`
 }
 
 var ProItem struct {
@@ -1799,25 +1863,29 @@ var ProItem struct {
 }
 func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 	var promotion models.Promotion
-	if err := db.Where("id = ?", procode).Find(&promotion).Error; err != nil {
+	if err := db.Debug().Where("id = ?", procode).Find(&promotion).Error; err != nil {
+		fmt.Printf("Error unmarshalling JSON: %v", err)
 		return nil, err
 	}
 	if promotion.SpecificTime != "" {
 			if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
 			//log.Fatalf("Error unmarshalling JSON: %v", err)
+			fmt.Printf("Error unmarshalling JSON: %v", err)
 			return nil, err
 			}
 		} else {
 			return nil, nil
 		}
+	
+		 
 		response := make(map[string]interface{}) 
-		fmt.Printf(" %s ",promotion)
+		//fmt.Printf(" %s ",promotion)
 			response["Type"] = ProItem.ProType.Type
 			response["count"] = ProItem.UsageLimit
 			response["MinTurnover"] = promotion.MinSpend
 			response["Formular"] = promotion.Example
 		    response["Name"] = promotion.Name
-		if ProItem.ProType.Type == "week" {
+		if ProItem.ProType.Type == "weekly" {
 			response["Week"] = ProItem.ProType.DaysOfWeek
 		}
 	 
@@ -2166,6 +2234,48 @@ func UpdateMaster(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+
+
+func GetCommission(c *fiber.Ctx) error {
+	type MasterBodys struct {
+		Prefix string          `json:"prefix"`
+		ID     int             `json:"id"`
+		Body   []models.Settings `json:"body"`
+	}
+	
+	var settings []models.Settings
+
+	body := new(MasterBodys)	
+	if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	fmt.Printf("body: %+v",body)
+	db := ConnectMaster()
+	// if err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+
+	db.Debug().Model(&settings).Where("`key` like ?", body.Prefix+"%").Find(&settings)
+	
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data":    settings,
+	}
+	return c.JSON(response)
+}
+
 
 type TransactionRequest struct {
     Status          int                 `json:"status"`

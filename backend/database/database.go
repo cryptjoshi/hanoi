@@ -70,7 +70,7 @@ func CheckAndCreateTable(db *gorm.DB, model interface{}) error {
 }
 func migrateNormal(db *gorm.DB) {
 
-	if err := db.AutoMigrate(&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},
+	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateLog{},&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},
 		&models.BankStatement{},&models.BuyInOut{},&models.PromotionLog{},&models.Games{},&models.Promotion{},&models.Provider{},&models.TsxAdmin{}); err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
@@ -79,10 +79,16 @@ func migrateNormal(db *gorm.DB) {
 }
 
 func migrationPromotion(db *gorm.DB){
-	if err := db.AutoMigrate(&models.Users{});err != nil {
+	if err := db.AutoMigrate(&models.PromotionLog{});err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
 	fmt.Println("Migrations Promotion Tables executed successfully")
+}
+func migrationAffiliate(db *gorm.DB){
+	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateTracking{},&models.Users{},&models.AffiliateLog{},&models.Promotion{});err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	fmt.Println("Migrations Affiliate Tables executed successfully")
 }
 
 type Setting struct {
@@ -131,7 +137,8 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// Check if the connection already exists
 	if db, exists := dbConnections[dbName]; exists {
-	//	migrationPromotion(db)
+		//migrationPromotion(db)
+		migrationAffiliate(db)
 		return db, nil
 	}
 
@@ -175,6 +182,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 		return nil, err // Return the error if connection fails
 	}
 	//migrateNormal(db)
+	migrationAffiliate(db)
 	return db, nil
 }
 

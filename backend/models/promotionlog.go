@@ -15,6 +15,7 @@ type PromotionLog struct {
 	Promoamount decimal.Decimal   `gorm:"type:numeric"  json:"Promoamount"`
 	///Active        int  `json:"active"`
 	UserID      int  `gorm:"column:userid;"gorm:"not null;" json:"userid"`
+	StatementID int  `gorm:"column:statementid;"json:"statementid"`
 	WalletID    int  `gorm:"column:walletid;"gorm:"not null;" json:"walletid"`
 	Transactionamount decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:transactionamount;NOT NULL"`
 	Beforebalance     decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:beforebalance"`

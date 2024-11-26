@@ -14,14 +14,17 @@ export const memberSchema = z.object({
       //Token:z.string(),    
       //Role:z.string(),    
       //Salt:z.string(),    
-      Status:z.number(),    
+      Status:z.number(),
+      MinTurnoverDef:z.string().default('10%'),    
       //Betamount:z.number(),    
       //Win:z.number(),    
       //Lose:z.number(),    
       //Turnover:z.number().optional(),    
       //ProID:z.string(),    
       //PartnersKey:z.string(),    
-      ProStatus:z.string().optional(),    
+      ProStatus:z.string().optional(),   
+      ReferralCode:z.string().optional(), 
+      RefferedCode:z.string().optional(),
       //ProActive:z.string()
 
 });

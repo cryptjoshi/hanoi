@@ -21,11 +21,30 @@ services:
   whoami2:
     image: traefik/whoami
     networks:
-      - caddy
+      - proxy-net
     labels:
       caddy: whoami2.paribrand.shop
       caddy.reverse_proxy: "{{upstreams 80}}"
       caddy.tls: "internal"
+
+  games:
+    container_name: games
+    build:
+        context: ./games
+        dockerfile: ./Dockerfile
+        target: development
+    volumes:
+        - ./games:/app
+        - /app/node_modules
+        #- /app/.next
+    expose:
+        - '5003'
+    ports:
+        - "5003:5003"
+    working_dir: /app
+    env_file: .env
+    environment:
+      - NEXT_PUBLIC_ENVIRONMENT=development
 
   zookeep:
     container_name: zookeep
@@ -67,9 +86,9 @@ services:
         - /app/node_modules
         #- /app/.next
     expose:
-        - '4001'
+        - '5001'
     ports:
-        - "4001:4001"
+        - "5001:5001"
     working_dir: /app
     env_file: .env
     # labels:
@@ -149,5 +168,5 @@ networks:
   proxy-net:
       name: app-net
       external: true
-  caddy:
-      external: true
+  # caddy:
+  #     external: true

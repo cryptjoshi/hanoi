@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PromotionList from "@/components/promotion/list"
 import GameList from "@/components/games/list"
 import MemberList from "@/components/member/list"
+import PartnerList from "@/components/partner/list"
+import AgentSettings from "@/components/settings/agentsetting"
 import { useTranslation } from "@/app/i18n/client"
 
 export default function EditAgentSettings({ params: { lng,id } }: { params: { lng: string,id: string } }) {
@@ -18,6 +20,8 @@ export default function EditAgentSettings({ params: { lng,id } }: { params: { ln
           <TabsTrigger value="games" className="flex-grow md:flex-grow-0">{t('games.title')}</TabsTrigger>
           <TabsTrigger value="promotion" className="flex-grow md:flex-grow-0">{t('promotion.title')}</TabsTrigger>
           <TabsTrigger value="member" className="flex-grow md:flex-grow-0">{t('member.title')}</TabsTrigger>
+          <TabsTrigger value="partner" className="flex-grow md:flex-grow-0">{t('partner.title')}</TabsTrigger>
+          <TabsTrigger value="settings" className="flex-grow md:flex-grow-0">{t('settings.title')}</TabsTrigger>
         </TabsList>
         <TabsContent value="account" className="h-auto md:h-[calc(100vh-120px)]">
           <ProfileEdit lng={lng} id={id} />
@@ -30,6 +34,12 @@ export default function EditAgentSettings({ params: { lng,id } }: { params: { ln
         </TabsContent>
         <TabsContent value="member">
           <MemberList prefix={id} lng={lng} />
+        </TabsContent>
+        <TabsContent value="partner">
+          <PartnerList prefix={id} lng={lng} />
+        </TabsContent>
+        <TabsContent value="settings">
+          <AgentSettings lng={lng} id={id} />
         </TabsContent>
       </Tabs>
       {/* <SettingsLayout>

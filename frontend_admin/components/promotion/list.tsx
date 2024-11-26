@@ -77,6 +77,8 @@ export interface Promotion {
   startDate: string
   endDate: string
   example: string
+  turntype: string
+  minCredit: string
 }
 export interface GroupedDatabase {
   // Define the properties of GroupedDatabase here
@@ -308,9 +310,27 @@ export default function PromotionListDataTable({
     //   header: t('paymentMethod'),
     //   cell: info => info.getValue(),
     // }),
-    columnHelper.accessor('minSpend', {
-      header: t('promotion.minSpend'),
+    columnHelper.accessor('turntype', {
+      header: t('promotion.turntype') ,
       cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('MinCredit', {
+      header: t('promotion.minCredit') ,
+      cell: info => info.getValue(),
+      // info => {
+      //   const promotion = info.row.original;
+      //   // Check if turntype is 'turncredit' to display MinCredit
+      //   return promotion.turntype === 'turncredit' ? columns.toggleVisibility(true) : columns.toggleVisibility(true);
+      // },
+      enabledHiding: true,
+      show: false,
+      
+    }),
+    columnHelper.accessor('minSpend', {
+      header: t('promotion.minSpend') ,
+      cell: info => info.getValue(),
+      enabledHiding: true,
+      show: false,
     }),
     columnHelper.accessor('maxSpend', {
       header: t('promotion.maxSpend'),
@@ -412,7 +432,7 @@ export default function PromotionListDataTable({
   };
 
   if (isLoading) {
-    return <div>Loading promotions...</div>;
+    return <div>Loading {t('promotion.title')}...</div>;
   }
 
   return (

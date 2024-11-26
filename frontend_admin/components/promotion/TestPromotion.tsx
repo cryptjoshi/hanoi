@@ -49,24 +49,69 @@ export default function TestPromotion({lng,promotion}:TransProps) {
     const mindeposit = parseInt(promotion.getValues("minDept"))
     const formSchema = z.object({
         amount:    z.coerce.number().gte(100,{message:`Minimum ${mindeposit}`}),
-        balance: z.coerce.number()
+        balance: z.coerce.number(),
+        mincredit:z.coerce.number(),
+        minturnover: z.coerce.number(),
+        maxwithdrawal: z.coerce.number()
        ,//z.number().gte(mindeposit, { message: `Minimum ${mindeposit}` }),
     })
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             amount: 0,
-            balance: 0
+            balance: 0,
+            mincredit:0,
+            minturnover:0,
+            maxwithdrawal: 0,
         }as z.infer<typeof formSchema>
       })
       const amount = form.watch("amount");
 
       React.useEffect(() => {
           const percentDiscount = promotion.getValues("percentDiscount");
-          const calculatedBalance = (amount * percentDiscount / 100) + amount;
+          const maxDiscount = promotion.getValues("maxDiscount")
+          const maxwithdrawal = promotion.getValues("maxSpend")
+          const minCredit = promotion.getValues("MinCredit")
+
+          let calculatedBalance = (amount * percentDiscount / 100) + amount;
+          if(calculatedBalance>maxDiscount)
+          calculatedBalance = (1*amount)+(1*maxDiscount)
+          
           form.setValue("balance", calculatedBalance);
+
+        let minturn  = 0
+        let percentage = 0
+        if(promotion.getValues("turntype")=="turnover"){
+                if(promotion.getValues("minSpend").indexOf("%")>-1)
+                {
+                    percentage = parseFloat(promotion.getValues("minSpend").replace("%",""))
+
+                    minturn = calculatedBalance*((100+percentage)/100)
+                }else {
+                    minturn = promotion.getValues("minSpend")*calculatedBalance
+                }
+            //minturn = form.getValue("balance")*percentDiscount
+
+            form.setValue("minturnover",minturn)
+            } else {
+                if(promotion.getValues("MinCredit").indexOf("%")>-1)
+                {
+                    percentage = parseFloat(promotion.getValues("MinCredit").replace("%",""))
+        
+                    minturn = calculatedBalance*((100+percentage)/100)
+                }else {
+                    minturn = promotion.getValues("MinCredit")
+                }
+                //minturn = form.getValue("balance")*percentDiscount
+                form.setValue("mincredit",minturn)
+            }
+           // console.log("MinTurn:"+minturn)
+        
+        form.setValue("maxwithdrawal",maxwithdrawal)
+
+
       }, [amount, promotion, form]);
-     // console.log(promotion)
+      console.log(promotion)
     return (
       
         
@@ -75,8 +120,16 @@ export default function TestPromotion({lng,promotion}:TransProps) {
             <Form {...form}> 
             <form   className="space-y-4">
                 <div>
-                     { `${t('promotion.minDept')} : ${promotion.getValues("minDept")} `  } 
-                     {  `${t('promotion.percentDiscount')} :  ${promotion.getValues("percentDiscount")} %`  } 
+                    <p>{ `${t('promotion.minDept')} : ${promotion.getValues("minDept")} `  } </p>
+                    <p> {  `${t('promotion.percentDiscount')} :  ${promotion.getValues("percentDiscount")} %`  } </p>
+                    <p> {  `${t('promotion.maxDiscount')} :  ${promotion.getValues("maxDiscount")} `  } </p>
+                    { promotion.getValues("turntype")=="turnover"?<>
+                    <p> {  `${t('promotion.minSpend')} :  ${promotion.getValues("minSpend").indexOf("%")>-1?promotion.getValues("minSpend"):"x "+promotion.getValues("minSpend")} of ${promotion.getValues("minSpendType").indexOf("_")>-1?promotion.getValues("minSpendType").replace("_","+"):promotion.getValues("minSpendType")}`   }</p>
+                    <p> {  `${t('promotion.maxSpend')} :  ${promotion.getValues("maxSpend")} `   }</p>
+                    </>
+                    :
+                    <p> {  `${t('promotion.turncredit')} :  ${promotion.getValues("MinCredit") } `}  </p>
+                    }
                 </div>
                 <div>
                     {/* <label htmlFor="amount" className="block text-sm font-medium">{transactionType === 'deposit'?t('promotion.deposit'):t('promotion.withdrawal')}</label> */}
@@ -85,9 +138,9 @@ export default function TestPromotion({lng,promotion}:TransProps) {
             name="amount"
             render={({ field }) => (
               <FormItem className='mb-4'>
-                <FormLabel>{t('promotion.amount')}</FormLabel>
+                <FormLabel>{t('promotion.deposit')}</FormLabel>
                         <FormControl>
-                        <Input {...field} type="number"  onChange={(e) => field.onChange(Number(e.target.value))}/>
+                        <Input {...field} type="text"  onChange={(e) => field.onChange(Number(e.target.value))}/>
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -106,9 +159,49 @@ export default function TestPromotion({lng,promotion}:TransProps) {
                     </FormItem>
                     )}
                 />
-                 
+                  { promotion.getValues("turntype")=="turnover"? 
+                 <FormField
+            control={form.control}
+            name="minturnover"
+            render={({ field }) => (
+              <FormItem className='mb-4'>
+                <FormLabel>{t('promotion.minSpend')}</FormLabel>
+                        <FormControl>
+                        <Input {...field} type="number" readOnly />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                :
+                <FormField
+                control={form.control}
+                name="mincredit"
+                render={({ field }) => (
+                  <FormItem className='mb-4'>
+                    <FormLabel>{t('promotion.turncredit')}</FormLabel>
+                            <FormControl>
+                            <Input {...field} type="number" readOnly />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+            }
+                <FormField
+            control={form.control}
+            name="maxwithdrawal"
+            render={({ field }) => (
+              <FormItem className='mb-4'>
+                <FormLabel>{t('promotion.maxwithdrawal')}</FormLabel>
+                        <FormControl>
+                        <Input {...field} type="number" readOnly />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 </div>
-                
                 {/* <Button type="button" className="w-full" onClick={form.handleSubmit(handleSubmit)} >
                     {transactionType === 'deposit' ? t('promotion.deposit') : t('promotion.withdrawal')}
                 </Button> */}

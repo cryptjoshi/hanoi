@@ -68,15 +68,30 @@ export function AppearanceForm({ lng, prefix }: { lng: string, prefix: string })
 
   function onSubmit(data: AppearanceFormValues) {
 
-    const updateData = {
-      baseCurrency: data.baseCurrency,
-      customerCurrency: data.targetCurrency,
-      baseRate: exchangeRates[data.baseCurrency || "USD"],
-      customerRate: exchangeRates[data.targetCurrency || "USD"]
-    }
-
+    // const updateData = {
+    //   baseCurrency: data.baseCurrency,
+    //   customerCurrency: data.targetCurrency,
+    //   baseRate: exchangeRates[data.baseCurrency || "USD"],
+    //   customerRate: exchangeRates[data.targetCurrency || "USD"]
+    // }
+   // const updateData = 
     const update = async (prefix:string) => {
-      const response = await UpdateMaster(prefix,1,updateData)
+      const response = await UpdateMaster(prefix,1,[{
+        "key":   "baseCurrency",
+        "value": data.baseCurrency
+    },
+    {
+        "key":   "customerCurrency",
+        "value": data.targetCurrency
+    },
+    {
+        "key":   "baseRate",
+        "value": exchangeRates[data.baseCurrency || "USD"].toString() // Convert to string if necessary
+    },
+    {
+        "key":   "customerRate",
+        "value": exchangeRates[data.targetCurrency || "USD"].toString() // Convert to string if necessary
+    }])
   
       if(response.Status){
         setCustomerCurrency(data.targetCurrency)

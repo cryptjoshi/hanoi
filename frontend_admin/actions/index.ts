@@ -202,9 +202,9 @@ export const AddPromotion = async (prefix:string,body:any) =>{
     return response.json()
   }
 
-    export const UpdatePromotion = async (dbname: string, promotionId: any, values: { name: string; description: string; percentDiscount: string; startDate: string; endDate: string; maxDiscount: string; usageLimit: string; specificTime: string; paymentMethod: string; minSpend: string; maxSpend: string; termsAndConditions: string; status: string; }) =>{
+    export const UpdatePromotion = async (dbname: string, promotionId: any, values: any) =>{
  
-   console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
+   //console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
     const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
       headers: {   
         'Accept': 'application/json',
@@ -269,7 +269,27 @@ export const GetExchangeRate = async (currency:string) =>{
 }
 }
 
+export const GetDBMode = async (dbname:string) =>{
+  try{
+    const response = await fetch(`http://152.42.185.164:4006/api/v1/db/setting`,{method:'POST',
+    headers:{
+      'Accept':'application/json',
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({"prefix":dbname})
+  })
+    return response.json()
+  }catch(error){
+    console.log(error)
+    return error
+  }
+}
+
+
 export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
+  
+  //console.log(body)
+
   const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/update", { method: 'POST',
     headers: {   
       'Accept': 'application/json',
@@ -278,6 +298,17 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
       body: JSON.stringify({"prefix":prefix,"id":id,"body":body})
     })
     return response.json()
+}
+
+export const GetCommission = async (prefix:string) =>{
+  const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/commission",{method: 'Post',
+  headers: {   
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({"prefix":prefix})
+})
+  return response.json()
 }
 
 export async function navigate(path:string) {

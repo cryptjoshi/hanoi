@@ -57,20 +57,22 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   }, [memberId, prefix]);
 
   const handleSubmit = async (data: Member) => {
+  
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
     }
-    data.Status = JSON.parse(data.Status?.toString() || '{}').name
-   //console.log(data)
+    console.log(data)
+    data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
+ 
    const result = !isAdd ? await UpdateMember(prefix, memberId, data) : await AddMember(prefix, data)
    if (!isAdd) {
  
 
     if (result.Status) {
       toast({
-        title: t("edit.success"),
-        description: t("edit.success_description"),
+        title: t("member.edit.success"),
+        description: t("member.edit.success_description"),
         variant: "default",
       })
       onClose();
@@ -85,15 +87,15 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   
     if (result.Status) {
       toast({
-        title: t("add.success"),
-        description: t("add.success_description"),
+        title: t("member.add.success"),
+        description: t("member.add.success_description"),
         variant: "default",
       })
       onClose();
     } else {
       toast({
-        title: t("add.error"),
-        description: t("add.error_description") + result.Message,
+        title: t("member.add.error"),
+        description: t("member.add.error_description") + result.Message,
         variant: "destructive",
       })
     }
@@ -105,6 +107,30 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
           <p className="text-gray-600 mb-6">{t('member.edit.description')}</p>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+                control={form.control}
+                name="RefferalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('member.columns.refferalcode')}</FormLabel>
+                    <FormControl>
+                      <div className="flex">
+                       
+                        <Input
+                          {...field}
+                          className={cn(
+                            isAdd && "rounded-l-none","rounded-r-none",
+                            "flex-1"
+                          )}
+                          disabled={!isAdd}
+                        />
+                         
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}  
+              />
             <FormField
                 control={form.control}
                 name="Username"
@@ -275,7 +301,19 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 </FormItem>
               )}
             />  
-            
+              <FormField
+                control={form.control}
+                name="MinTurnoverDef"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('member.columns.minturnover_def')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={"10%"} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {/* <FormField
                 control={form.control}
                 name="gameType"
@@ -337,7 +375,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                   <FormItem>
                     <FormLabel>{t('member.columns.status')}</FormLabel>
                     <Select
-                onValueChange={(value) => field.onChange(parseInt(value))}
+                onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
                       value={field.value?.toString() || ''}
                     >
                     <FormControl>
@@ -354,6 +392,30 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
               <FormMessage />
             </FormItem>
                 )}
+              />
+              <FormField
+                control={form.control}
+                name="RefferedCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('member.columns.refferedcode')}</FormLabel>
+                    <FormControl>
+                      <div className="flex">
+                       
+                        <Input
+                          {...field}
+                          className={cn(
+                            isAdd && "rounded-l-none","rounded-r-none",
+                            "flex-1"
+                          )}
+                          disabled={!isAdd}
+                        />
+                         
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}  
               />
               <div className="flex justify-end space-x-2 mt-6">
                 <Button type="submit">{t('common.save')}</Button>

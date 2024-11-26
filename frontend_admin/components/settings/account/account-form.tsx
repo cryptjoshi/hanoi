@@ -1,5 +1,5 @@
 "use client"
-
+import {useEffect,useState} from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, CaretSortIcon, CheckIcon } from "@radix-ui/react-icons"
 import { format } from "date-fns"
@@ -34,6 +34,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useTranslation } from "@/app/i18n/client"
+import { GetCommission,UpdateMaster } from "@/actions"
+
 
 const languages = [
   { label: "English", value: "en" },
@@ -48,63 +50,136 @@ const languages = [
 ] as const
 
 const accountFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, {
-      message: "Name must be at least 2 characters.",
-    })
-    .max(30, {
-      message: "Name must not be longer than 30 characters.",
-    }),
-  dob: z.date({
-    required_error: "A date of birth is required.",
-  }),
-  language: z.string({
-    required_error: "Please select a language.",
-  }),
+  partner_commission:z.string().default("5%"),
+  user_commission:z.string().default("5%"),
 })
 
 type AccountFormValues = z.infer<typeof accountFormSchema>
 
 // This can come from your database or API.
 const defaultValues: Partial<AccountFormValues> = {
-  // name: "Your name",
-  // dob: new Date("2023-01-23"),
+  partner_commission:"5%",
+  user_commission:"5%",
 }
 
-export function AccountForm({ lng }: { lng: string }) {
+export function AccountForm({ lng,prefix }: { lng: string,prefix:string }) {
+
   const { t } =  useTranslation(lng, "translation",undefined)
+  
+ 
+  
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues,
   })
 
+
+  const [settings,setSettings] = useState([])
+
+
   function onSubmit(data: AccountFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
+
+    const update = async (prefix:string) => {
+      const response = await UpdateMaster(prefix,1,[{
+        "key":   `${prefix}_partner_commission`,
+        "value": data.partner_commission
+    },
+    {
+        "key":   `${prefix}_user_commission`,
+        "value": data.user_commission
+    },
+   ])
+  
+      if(response.Status){
+        //setCustomerCurrency(data.targetCurrency)
+        toast({
+          title: t("settings.appearance.update_preferences"),
+        description: (
+          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+            <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+          </pre>
+          ),
+        })
+      
+      }else{
+        toast({
+          title: t("settings.appearance.update_preferences"),
+          description: response.Message,
+        })
+      }
+    }
+    update(prefix) 
   }
+
+  useEffect(() => {
+    const fetchSettings = async (prefix: string) => {
+      try {
+        const data = await  GetCommission(prefix)
+        if(data.Status){
+          
+        //setSettings(data.Data)
+        // console.log(data.Data[1].key,data.Data[1].value)
+        // z.Set("partner_commission",data.Data[1].value)
+        // console.log(data.Data[2].key,data.Data[2].value)
+        // z.Set("user_commission",data.Data[2].value)
+
+        //console.log(data.Data.filter((obj:any)=>obj.key.indexOf("partner_commission"))[1])
+        //console.log(data.Data.filter((obj:any)=>obj.key.indexOf("user_commission"))[1])
+        
+       // console.log(data.Data)
+        
+       // form.set("partner_commission",data.Data[1].pertner_commission)
+       // form.set("user_commission",data.Data[1].pertner_commission)
+        
+
+
+
+
+        // Remove ID from formattedData before setting form values
+        // const { ID, ...formData } = formattedData;
+        // form.reset(formData as z.infer<typeof updatedFormSchema>);
+        // } 
+
+        // const usdData = await GetExchangeRate("USD")
+        // const baseToUsd = base === "USD" ? 1 : 1 / usdData.rates[base]
+        // const targetToUsd = target === "USD" ? 1 : 1 / usdData.rates[target]
+        
+        // const baseToTarget = baseToUsd / targetToUsd
+        // const targetToBase = targetToUsd / baseToUsd
+
+        // setExchangeRates({
+        //   [base]: 1,
+        //   [target]: baseToTarget,
+        //   [`${target}To${base}`]: targetToBase
+        // })
+      }
+      } catch (error) {
+        console.error("Error fetching agent settigs:", error)
+         
+      }
+    }
+    
+    fetchSettings(prefix)
+  
+  },[])
+
+
+
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
+      <FormField
           control={form.control}
-          name="name"
+          name="partner_commission"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{t("agents.settings.partner_commission")}</FormLabel>
               <FormControl>
-                <Input placeholder="Your name" {...field} />
+                <Input placeholder={t("agents.settings.partner_commission")} {...field} />
               </FormControl>
               <FormDescription>
-                This is the name that will be displayed on your profile and in
-                emails.
+               {t("agents.settings.partner_descriptions")}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -112,49 +187,21 @@ export function AccountForm({ lng }: { lng: string }) {
         />
         <FormField
           control={form.control}
-          name="dob"
+          name="user_commission"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-[240px] pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+            <FormItem>
+              <FormLabel>{t("agents.settings.user_commission")}</FormLabel>
+              <FormControl>
+                <Input placeholder={t("agents.settings.user_commission")} {...field} />
+              </FormControl>
               <FormDescription>
-                Your date of birth is used to calculate your age.
+               {t("agents.settings.user_descriptions")}
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
+        {/* <FormField
           control={form.control}
           name="language"
           render={({ field }) => (
@@ -216,8 +263,8 @@ export function AccountForm({ lng }: { lng: string }) {
               <FormMessage />
             </FormItem>
           )}
-        />
-        <Button type="submit">Update account</Button>
+        /> */}
+        <Button type="submit">{t("agents.settings.edit.submit")}</Button>
       </form>
     </Form>
   )

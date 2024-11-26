@@ -48,6 +48,9 @@ interface SpecificTime {
   hour?: string;
   minute?: string;
 }
+interface Formular {
+  amount: number;
+}
 // Update the Promotion interface
 // interface Promotion {
 //   id: string;
@@ -75,6 +78,7 @@ const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string(),
   percentDiscount: z.coerce.number(),
+  unit: z.string(),
   startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
     message: "Invalid date format"
   }),
@@ -84,7 +88,10 @@ const formSchema = z.object({
   maxDiscount: z.coerce.number(),
   usageLimit: z.coerce.number(),
   minDept:z.coerce.number(),
-  minSpend: z.coerce.number(),
+  minCredit:z.string().optional(),
+  turnType:z.string(),
+  minSpend: z.string().optional(),
+  minSpendType: z.string().optional(),
   maxSpend: z.coerce.number(),
   termsAndConditions: z.string().optional(),
   status: z.coerce.number(),
@@ -93,6 +100,7 @@ const formSchema = z.object({
   excludegames: z.string(),
   specificTime: z.string().optional(),
   paymentMethod: z.string().optional(),
+  Zerobalance:z.coerce.number().default(0)
 })
 
  
@@ -125,6 +133,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
     queryFn: async () => await GetGameStatus(prefix),
   });
   
+
   // Update the schema with translated messages
   const updatedFormSchema = formSchema.extend({
     startDate: z.string().refine((val) => isValid(parse(val, 'dd-MM-yyyy', new Date())), {
@@ -145,17 +154,23 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       try {
         const data = await GetPromotionById(prefix, promotionId);
         if (data.Status) {
+          
           const formattedData = {
             ...data.Data,
             percentDiscount: Number(data.Data.percentDiscount),
-            maxDiscount: Number(data.Data.maxDiscount),
+            unit: data.Data.unit,
+            maxDiscount: data.Data.max_discount,
             usageLimit: Number(data.Data.usageLimit),
             minDept: Number(data.Data.minDept),
-            minSpend: Number(data.Data.minSpend),
+            minSpend: data.Data.minSpend,
             maxSpend: Number(data.Data.maxSpend),
+            minSpendType: data.Data.minSpendType,
+            minCredit: data.Data.MinCredit,
+            turnType: data.Data.turntype,
             example: data.Data.example,
             startDate: data.Data.startDate ? format(new Date(data.Data.startDate), 'dd-MM-yyyy') : '',
             endDate: data.Data.endDate ? format(new Date(data.Data.endDate), 'dd-MM-yyyy') : '',
+            Zerobalance: data.Data.zerobalance
           };
           // Remove ID from formattedData before setting form values
           const { ID, ...formData } = formattedData;
@@ -209,10 +224,15 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       percentDiscount: values.percentDiscount.toString(),
       maxDiscount: values.maxDiscount.toString(),
       minDept: values.minDept.toString(),
-      minSpend: values.minSpend.toString(),
-      maxSpend: values.maxSpend.toString(),
+      minSpend: values.minSpend?.toString(),
+      minSpendType:values.minSpendType?.toString(),
+      maxSpend: values.maxSpend?.toString(),
+      example: values.example.toString(),
+      minCredit: values.minCredit?.toString(),
+      turntype: values.turnType.toString(),
+      Zerobalance:values.Zerobalance
     };
-
+    console.log("format values:"+JSON.stringify(formattedValues))
     if (promotionId) {
       const data = await UpdatePromotion(prefix, promotionId, formattedValues);
       if (data.Status) {
@@ -305,17 +325,59 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               </FormItem>
             )}
           />
+          
           <FormField
             control={form.control}
             name="percentDiscount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('promotion.percentDiscount')} %</FormLabel>
+                <FormLabel>{t('promotion.percentDiscount')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" onChange={(e) => field.onChange(Number(e.target.value))} />
+                  <Input {...field} type="text" onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.unit')}</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    <Select
+                      onValueChange={(value) => {
+                        // Get the current percentDiscount value
+                        const percentDiscountValue = form.getValues('percentDiscount');
+                        if(percentDiscountValue)
+                        if (value !== 'percent') {
+                           form.setValue('example', `deposit+((${percentDiscountValue}/100)*100)`); // Update example in form
+                        } else {
+                          form.setValue('example', `(1+(${percentDiscountValue}/100))*deposit`); // Update example in form
+                        }
+                        
+                        field.onChange(value); // Update the field value with the selected value
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('promotion.selectunit')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="percent">{t('promotion.percent')}</SelectItem>
+                        <SelectItem value="nonepercent">{t('promotion.nonepercent')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+ 
+                  </div>
+          
+            </FormControl>
+            <FormMessage />
+          </FormItem>
             )}
           />
           <FormField
@@ -454,6 +516,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="first">{t('common.first')}</SelectItem>
                         <SelectItem value="once">{t('common.once')}</SelectItem>
                         <SelectItem value="weekly">{t('common.weekly')}</SelectItem>
                         <SelectItem value="monthly">{t('common.monthly')}</SelectItem>
@@ -541,17 +604,96 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
           />
           <FormField
             control={form.control}
+            name="turnType"
+            render={({ field }) => (
+              <FormItem>
+                      <Label htmlFor="hour">{t('promotion.turntype')}</Label>
+                      <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('promotion.select_turntype')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="turnover">{t('promotion.turnover')}</SelectItem>
+                        <SelectItem value="turncredit">{t('promotion.turncredit')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    </FormItem>
+            )}
+        
+            />
+            {form.watch("turnType")=="turnover"?
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"> 
+              <FormField
+            control={form.control}
             name="minSpend"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('promotion.minSpend')} %</FormLabel>
+                <FormLabel>{t('promotion.minSpend')} </FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" />
+                  <Input {...field} type="text" placeholder={t('promotion.minturn_placeholder')} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          />
+            />
+            </div>
+            <div className="space-y-2">
+            <FormField
+            control={form.control}
+            name="minSpendType"
+            render={({ field }) => (
+              <FormItem>
+                      <Label htmlFor="hour">{t('promotion.minSpendtype')}</Label>
+                      <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('promotion.selectMinspendType')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="deposit_bonus">{t('promotion.deposit_bonus')}</SelectItem>
+                        <SelectItem value="deposit">{t('promotion.deposit')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    </FormItem>
+            )}
+        
+            />
+              </div>
+          </div>
+          :
+         
+              <div className="space-y-2"> 
+              <FormField
+            control={form.control}
+            name="minCredit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('promotion.minCredit')} </FormLabel>
+                <FormControl>
+                  <Input {...field} type="text"  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+            />
+          
+           
+          </div>
+          }
           <FormField
             control={form.control}
             name="maxSpend"
@@ -559,9 +701,33 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               <FormItem>
                 <FormLabel>{t('promotion.maxSpend')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" />
+                  <Input {...field} type="text" />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="Zerobalance"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border mt-2 p-2">
+                <div className="">
+                  <FormLabel className="text-base">{t('promotion.zerobalance')}</FormLabel>
+                  <FormDescription>
+                    {field.value === 1 ? t('promotion.status_active') : t('promotion.status_inactive')}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                   
+                  <Switch
+                    checked={field.value === 1}
+                    onCheckedChange={(checked) => {
+                      console.log(checked)
+                      field.onChange(checked?1:0);
+                    }}
+                  />
+                </FormControl>
               </FormItem>
             )}
           />
@@ -596,15 +762,17 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
           onClick={() => {
             const allGameIds = gameTypes?.Data?.map((item: any) => {
               try {
-                return JSON.parse(item.status).id.toString();
+                return item.status.id.toString();
               } catch {
                 return null;
               }
             }).filter(Boolean) || [];
+           
             const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
             const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
             
-            if (currentIncludeGames.length === allGameIds.length) {
+            // Check if all games are currently included
+            if (currentIncludeGames.length === allGameIds.length && allGameIds.length > 0) {
               // If all games are currently included, exclude all
               form.setValue('includegames', '');
               form.setValue('excludegames', allGameIds.join(','));
@@ -630,8 +798,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             const isIncluded = form.watch('includegames')?.split(',').includes(status.id.toString());
 
             function handleGameTypeToggle(id: string): void {
-              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean);
-              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean);
+              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
+              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
 
               if (isIncluded) {
                 form.setValue('includegames', currentIncludeGames.filter(gameId => gameId !== id).join(','));
@@ -707,3 +875,4 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
 };
 
 export default EditPromotionPanel;
+

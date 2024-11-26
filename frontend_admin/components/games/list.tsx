@@ -287,7 +287,7 @@ export default function GameListDataTable({
   };
 
   if (isLoading) {
-    return <div>Loading games...</div>;
+    return <div>Loading {t('title')}...</div>;
   }
 
   return (

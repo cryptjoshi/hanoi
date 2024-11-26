@@ -1,10 +1,10 @@
 import RegisterComponent from "@/components/authen/register"
 
-export default function RegisterPage(){
+export default function RegisterPage({lng}:{lng:string}){
 
     return (
         <>
-        <RegisterComponent />
+            <RegisterComponent lng={lng} />
         </>
     )
 }

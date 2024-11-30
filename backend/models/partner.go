@@ -19,6 +19,8 @@ type Partner struct {
 	CreatedAt       time.Time       `gorm:"column:created_at;NOT NULL"`                 // วันที่สร้าง
 	UpdatedAt       time.Time       `gorm:"column:updated_at;NOT NULL"`                 // วันที่อัปเดตล่าสุด
 	Affiliates []Affiliate `gorm:"foreignKey:PartnerID"` // ความสัมพันธ์กับ Affiliate
+	TotalEarnings   decimal.Decimal `gorm:"type:decimal(10,2);default:0"` // ค่าคอมมิชชั่นสะสม
+
 }
 
 type PartnerResponse struct {

@@ -2485,3 +2485,152 @@ func GetAllTransaction(c *fiber.Ctx) error {
 		})
 	}
 }
+
+func GetUserCommission(c *fiber.Ctx) error {
+	var users models.Users
+
+	db, _err := GetDBFromContext(c)
+	prefix := c.Locals("Prefix")
+	if _err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"Message": "โทเคนไม่ถูกต้อง!!",
+			"Status":  false,
+			"Data": fiber.Map{
+				"prefix": prefix,
+			},
+		})
+	}
+	id := c.Locals("Walletid")
+
+	u_err := db.Debug().Where("id= ?", id).Find(&users).Error
+	if u_err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+			"Data": fiber.Map{
+				"prefix": prefix,
+			},
+		})
+	}
+
+	var settings []models.Settings
+
+	db = ConnectMaster()
+
+	db.Debug().Model(&settings).Where("`key` like ?", users.Prefix+"%").Find(&settings)
+
+	// ดึงค่า referral_code จาก users
+	referralCode := users.ReferralCode
+	db,_ = GetDBFromContext(c)
+	// ดึงยอดรวมของ BetAmount จาก TransactionSub โดยใช้ JOIN กับ Users
+	var totalBetAmount decimal.Decimal
+	err := db.Debug().Raw(`
+		SELECT COALESCE(SUM(ts.betamount), 0) as TurnOver 
+		FROM TransactionSub ts 
+		JOIN Users u ON u.username = ts.membername 
+		WHERE u.referred_by = ? AND ts.deleted_at IS NULL
+	`, referralCode).Scan(&totalBetAmount).Error
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"Message": "เกิดข้อผิดพลาดในการดึงข้อมูล BetAmount",
+			"Status":  false,
+		})
+	}
+	//commissionValue,_ := fmt.Printf(" %s_user_commission",strings.ToLower(users.Prefix))
+	
+	// ค้นหาค่าคอมมิชชั่นจาก settings โดยใช้ key = prefix + "user_commission"
+	var commissionRate decimal.Decimal
+	for _, setting := range settings {
+		//fmt.Printf(" Setting: %+v",commissionValue)
+		if setting.Key == strings.ToLower(users.Prefix)+"_user_commission" { // ตรวจสอบจาก prefix + "user_commission"
+		   //fmt.Printf("setting.Value: %v \n",setting.Value)
+			//commissionRate, _ = decimal.NewFromString(setting.Value) // แปลงค่าจาก string เป็น decimal
+			if strings.HasSuffix(setting.Value, "%") {
+				// ลบ '%' ออกก่อนแปลงเป็น decimal
+				valueWithoutPercent := strings.TrimSuffix(setting.Value, "%")
+				commissionRate, _ = decimal.NewFromString(valueWithoutPercent) // แปลงค่าจาก string เป็น decimal
+			} else {
+				commissionRate, _ = decimal.NewFromString(setting.Value) // แปลงค่าจาก string เป็น decimal
+			}
+			break
+		}
+	}
+
+	// คำนวณค่าคอมมิชชั่น
+	commission := totalBetAmount.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+
+	return c.Status(200).JSON(fiber.Map{
+		"Status":     true,
+		"Data":      fiber.Map{
+			"totalBetAmount":      totalBetAmount,
+			"Commission": commission,
+		},
+		"Message":    "อัปเดตข้อมูลสำเร็จ!",
+	})
+}
+
+func CalculateUserCommission(db *gorm.DB,userID int,prefix string, refereeTurnover decimal.Decimal) error {
+
+	//db, _err := GetDBFromContext(c)
+	//prefix := c.Locals("Prefix")
+ 
+	// if _err != nil {
+
+	// 	return c.Status(400).JSON(fiber.Map{
+	// 		"Message": "โทเคนไม่ถูกต้อง!!",
+	// 		"Status":  false,
+	// 		"Data": fiber.Map{
+	// 			"prefix": prefix,
+	// 		},
+	// 	})
+	// }
+	
+	//var settings []models.Settings
+	// var user models.Users
+	// db.First(&user, userID)
+
+	//dbx := ConnectMaster()
+	//dbx.Debug().Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
+	// คำนวณค่าคอมมิชชั่น
+	//fmt.Printf(" Settings: %+v \n",settings)
+
+	// commission := refereeTurnover.Mul(decimal.NewFromFloat(5.0).Div(decimal.NewFromFloat(100))) // สมมุติ Commission Rate 5%
+
+	// // บันทึกข้อมูลในตาราง Referrals
+	// referral := models.Referral{
+	// 	UserID:     user.ID,
+	// 	Turnover:   refereeTurnover,
+	// 	Commission: commission,
+	// }
+	// db.Create(&referral)
+
+	// // อัปเดต TotalEarnings ใน Users
+	// user.TotalEarnings = user.TotalEarnings.Add(commission)
+	// db.Save(&user)
+
+	return nil
+}
+
+
+func CalculatePartnerCommission(db *gorm.DB,partnerID int, userTurnover decimal.Decimal) error {
+	var partner models.Partner
+	db.First(&partner, partnerID)
+
+	// คำนวณค่าคอมมิชชั่น
+	commission := userTurnover.Mul(partner.CommissionRate.Div(decimal.NewFromFloat(100)))
+
+	// บันทึกข้อมูลในตาราง AffiliateTracking
+	tracking := models.AffiliateTracking{
+		PartnerID:  partner.ID,
+		Turnover:   userTurnover,
+		Commission: commission,
+	}
+	db.Create(&tracking)
+
+	// อัปเดต TotalEarnings ใน Partners
+	partner.TotalEarnings = partner.TotalEarnings.Add(commission)
+	db.Save(&partner)
+
+	return nil
+}

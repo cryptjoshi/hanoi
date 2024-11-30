@@ -102,7 +102,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
-        //console.log(user)
+        console.log(user)
         if(user.Status){
           setBalance(user.Data.balance);
        
@@ -191,7 +191,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   }
     fetchPromotion(prefix);
     setIsLoading(false);
-  }, [prefix, user?.pro_status, t,filteredPromotions])
+  }, [prefix, user?.pro_status, t])
 
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">

@@ -70,6 +70,7 @@
         "deposit":"Deposit",
         "withdrawal":"Withdrawal",
         "maxwithdrawal":"Max withdrawal",
+        "minwithdrawal":"Min Withdrawal",
         "example": "Example",
         "termsAndConditions": "Terms and Conditions",
         "title": "Promotion",

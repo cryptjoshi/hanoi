@@ -191,7 +191,7 @@ function TransactionForm({lng,slug}:TransProps) {
              if(accessToken){
 
                 const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
-                //console.log(response)
+                console.log(response)
                 if(response.Status){
                     toast({
                         title: t("promotion.edit.success"),
@@ -201,7 +201,7 @@ function TransactionForm({lng,slug}:TransProps) {
         
                       router.push(`/${lng}/home`)
                 }  else {
-                    
+                   // console.log(response)
                     toast({
                         title: t("promotion.edit.error"),
                         description: response.Message,
@@ -210,7 +210,13 @@ function TransactionForm({lng,slug}:TransProps) {
         
                 }   
             } else {
-                router.push(`/${lng}/login`)
+               // 
+               toast({
+                title: t('form.error'),
+                description: "User not logged",
+                variant: "destructive",
+              })
+              router.push(`/${lng}/login`)
              }
         
             }

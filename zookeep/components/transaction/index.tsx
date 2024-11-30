@@ -84,31 +84,30 @@ function TransactionForm({lng,slug}:TransProps) {
           
     
           if (userLoginStatus.state) {
-                    if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
-            const user = await GetUserInfo(userLoginStatus.state.accessToken);
-          
-            if(user.Status){
-              setBalance(user.Data.balance);
-              setUser(user.Data);
-              setCurrency(userLoginStatus.state.customerCurrency);
-              setTurnOver(user.Data.turnover)
-            //  setPrefix(user.Data.prefix);
-               
+              if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
+                  const user = await GetUserInfo(userLoginStatus.state.accessToken);
+                
+                        if(user.Status){
+                          setBalance(user.Data.balance);
+                          setUser(user.Data);
+                          setCurrency(userLoginStatus.state.customerCurrency);
+                          setTurnOver(user.Data.turnover)
+                        //  setPrefix(user.Data.prefix);
+                          
+                        } else {
+                          // Redirect to login page if token is null
+                        //router.push(`/${lng}/login`);
+                        // console.log(user)
+                        return;
+                        }
+                  } else {
+                    router.push(`/${lng}/login`);
+                    return;
+                    }
             } else {
-              // Redirect to login page if token is null
-            router.push(`/${lng}/login`);
-            return;
+              router.push(`/${lng}/login`);
+              return;
             }
-           
-         
-          } else {
-            router.push(`/${lng}/login`);
-            return;
-            }
-          } else {
-            router.push(`/${lng}/login`);
-            return;
-          }
           } catch (error) {
            // router.push(`/${lng}/login`);
            console.log(error)

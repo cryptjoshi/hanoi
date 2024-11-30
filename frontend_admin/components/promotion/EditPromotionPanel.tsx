@@ -488,7 +488,12 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               <FormItem>
                 <FormLabel>{t('promotion.usageLimit')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" />
+                <Input 
+                    {...field} 
+                    type="number" 
+                    readOnly={cleanJsonString(form.getValues('specificTime') || '{}').type === 'first' || cleanJsonString(form.getValues('specificTime') || '{}').type === 'once'} 
+                    value={cleanJsonString(form.getValues('specificTime') || '{}').type === 'first' || cleanJsonString(form.getValues('specificTime') || '{}').type === 'once' ? 1 : field.value} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -506,10 +511,14 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                       onValueChange={(value) => {
                         const currentValue = cleanJsonString(field.value || '{}');
                         const newValue: SpecificTime = { type: value };
-                        if (value !== 'once') {
+                        if (value !== 'once' || value !== 'first') {
                           newValue.daysOfWeek = currentValue.daysOfWeek;
                         }
                         field.onChange(JSON.stringify(newValue));
+                        const specificTimeType = form.watch('specificTime') ? cleanJsonString(form.watch('specificTime')).type : '';
+                        if (specificTimeType === 'first' || specificTimeType === 'once') {
+                          form.setValue('usageLimit', 1);
+                        }
                       }}
                       value={cleanJsonString(field.value || '{}').type}
                     >

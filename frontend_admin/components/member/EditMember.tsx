@@ -57,7 +57,9 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   }, [memberId, prefix]);
 
   const handleSubmit = async (data: Member) => {
-  
+ 
+    console.log(isAdd)
+
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
@@ -103,8 +105,9 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
   };
     return (
         <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
+         
           <h2 className="text-2xl font-bold mb-4">{memberId ? t('member.edit.title') : t('member.add.title')}</h2>
-          <p className="text-gray-600 mb-6">{t('member.edit.description')}</p>
+          <p className="text-gray-600 mb-6">{memberId ?t('member.edit.description'):t('member.add.description')}</p>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -119,10 +122,10 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                         <Input
                           {...field}
                           className={cn(
-                            isAdd && "rounded-l-none","rounded-r-none",
-                            "flex-1"
+                            "rounded-r-1 border-r-0 w-[20ch]",
+                            "bg-muted" 
                           )}
-                          disabled={!isAdd}
+                          readOnly
                         />
                          
                       </div>

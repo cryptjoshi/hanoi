@@ -252,7 +252,7 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 
 	fmt.Printf(" Promotion.UsageLimit: %+v\n",promotion.UsageLimit)
 	// Check if promotionlog is not empty or has row affected = 1
-	if int64(promotion.UsageLimit) > 0 && RowsAffected >= int64(promotion.UsageLimit) { // Assuming ID is the primary key
+	if int64(promotion.UsageLimit) > 0 && RowsAffected > int64(promotion.UsageLimit) { // Assuming ID is the primary key
 		return nil, errors.New("คุณใช้งานโปรโมชั่นเกินจำนวนครั้งที่กำหนด")
 	}  
 		
@@ -262,7 +262,7 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 	
 
 	switch ProItem.ProType.Type {
-	case "first", "once","weekly","daily":
+	case "first", "once","weekly","daily","monthly":
 		response["minDept"] = promotion.MinDept
 		response["maxDept"] = promotion.MaxDiscount
 		response["Widthdrawmax"] = promotion.MaxSpend
@@ -923,8 +923,9 @@ func Withdraw(c *fiber.Ctx) error {
 			fmt.Printf(" baseAmount: %v \n",baseAmount)
 			fmt.Printf(" requiredTurnover: %v \n",requiredTurnover)
 			fmt.Printf(" totalTurnover: %v \n",totalTurnover)
-			
+			fmt.Printf(" userTurnover: %v \n",users.Turnover)
 			if err != nil {
+				fmt.Printf("err  %s \n",err)
                 return c.JSON(fiber.Map{
                     "Status": false,
                     "Message": "ไม่สามารถคำนวณยอดเทิร์นได้",
@@ -932,11 +933,11 @@ func Withdraw(c *fiber.Ctx) error {
                 })
             }
 
-            if users.Turnover.LessThan(requiredTurnover) {
+            if totalTurnover.LessThan(requiredTurnover.Mul(baseAmount)) {
                 return c.JSON(fiber.Map{
                     "Status": false,
-                    "Message": fmt.Sprintf("ยอดเทิร์นไม่เพียงพอ ต้องการ %v x %v %v แต่มี %v %v", 
-                        requiredTurnover, baseAmount,users.Currency, totalTurnover, users.Currency),
+                    "Message": fmt.Sprintf("ยอดเทิร์นไม่เพียงพอ ต้องการ %v %v แต่มี %v %v", 
+                        requiredTurnover.Mul(baseAmount),users.Currency, totalTurnover, users.Currency),
                     "Data": fiber.Map{"id": -1},
                 })
             }
@@ -1082,6 +1083,7 @@ func checkTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]inte
 			promotionLog.CreatedAt).
 		Select("COALESCE(SUM(turnover), 0)").
 		Scan(&totalTurnover).Error; 
+		fmt.Printf( "1086 Err Check: %s",err)
 	if err != nil {
 		return decimal.Decimal(decimal.NewFromInt(0)),errors.New("ไม่สามารถคำนวณยอดเทิร์นได้")
 	}

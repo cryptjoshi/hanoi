@@ -261,6 +261,7 @@ func Register(c *fiber.Ctx) error {
 			"Username":      strings.ToUpper(user.Prefix) + user.Username + currency,
 			"Currency":      currency,
 			"Actived": nil,
+			"ReferredBy": user.ReferredBy,
 		}
 		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
 			response := ErrorResponse{
@@ -358,6 +359,7 @@ func GetUser(c *fiber.Ctx) error {
 		Order("created_at DESC").
 		First(&promotionLog)
 
+	fmt.Printf("PromotionLog: %+v \n",promotionLog)
 
 	var totalTurnover decimal.Decimal
 	if err := db.Model(&models.TransactionSub{}).
@@ -384,7 +386,7 @@ func GetUser(c *fiber.Ctx) error {
 	}
 	pro_setting, err := wallet.CheckPro(db, &users) 
 	if err != nil {
-		 
+		fmt.Printf("388 error: %s \n",err)
 		return c.JSON(fiber.Map{
 			"status": false,
 			"message":  err.Error(),
@@ -393,7 +395,13 @@ func GetUser(c *fiber.Ctx) error {
 			}})
 	}
 
-	minTurnover := pro_setting["MinTurnover"].(string)
+	var minTurnover string
+	if pro_setting["MinTurnover"] != nil {
+		minTurnover = fmt.Sprintf("%v", pro_setting["MinTurnover"])
+	} else {
+		minTurnover = "0" // ค่าเริ่มต้นเมื่อเป็น nil
+	}
+
 	var baseAmount decimal.Decimal
 	if pro_setting["MinSpendType"] == "deposit" {
 		baseAmount = users.LastDeposit
@@ -401,7 +409,15 @@ func GetUser(c *fiber.Ctx) error {
 		baseAmount = users.LastDeposit.Add(users.LastProamount)
 	}
 
+	if minTurnover == "" {
+		minTurnover = "0"
+	}
+	fmt.Printf("minTurnover: %+v \n",minTurnover)
+	fmt.Printf("baseAmount: %+v \n",baseAmount)
+
+
 	requiredTurnover, err := wallet.CalculateRequiredTurnover(minTurnover, baseAmount)
+ 
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"Status": false,
@@ -972,6 +988,150 @@ func checkProlog(pro_id string,userid string) {
 }
 
 func UpdateUserPro(c *fiber.Ctx) error {
+	body := make(map[string]interface{})
+	if err := c.BodyParser(&body); err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	// Get the username from the context
+	username := c.Locals("username").(string)
+	
+	db, _err := handler.GetDBFromContext(c)
+	if _err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+
+	var user models.Users
+	err := db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+		}
+		return c.JSON(response)
+	}
+
+
+	proStatusValue, exists := body["pro_status"]
+	if !exists {
+		return c.JSON(fiber.Map{
+			"Status":  false,
+			"Message": "pro_status not found",
+		})
+	}
+
+	userPro := user.ProStatus
+
+	fmt.Printf(" userPrp: %v \n",userPro)
+	fmt.Printf(" user.Balance.IsZero(): %v \n",user.Balance.IsZero())
+	fmt.Printf(" user.Balance.LessThan: %v \n",user.Balance.LessThan(decimal.NewFromFloat(0.9)))
+
+
+	if user.Balance.IsZero() || user.Balance.LessThan(decimal.NewFromFloat(0.9)) {
+			userPro = ""
+	}
+	
+	pro_setting, err := handler.GetProdetail(db,userPro)
+	fmt.Printf("ProSetting: %+v \n",pro_setting)
+
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"Status": false,
+			"Message": "ไม่สามารถตรวจสอบโปรโมชั่นได้",
+			"Data": fiber.Map{"id": -1},
+		})
+	}
+
+	if pro_setting == nil  {
+
+
+		proStatus := fmt.Sprintf("%v", proStatusValue)
+		fmt.Printf("proStatus: %v \n",proStatus)
+	   //check maxuse
+	   var usageCount int64
+	   if err := db.Debug().Model(&models.PromotionLog{}).
+		   Where("userid = ? AND promotioncode = ? AND status = 1", user.ID, proStatus).
+		   Count(&usageCount).Error; err != nil {
+		   return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			   "Status": false,
+			   "Message": "ไม่สามารถตรวจสอบประวัติการใช้โปรโมชั่นได้",
+			   "Data": fiber.Map{"id": -1},
+		   })
+	   }
+
+
+	  
+	//    if prodetail["Type"] == "first" {
+	// 	// ตรวจสอบว่ามีการใช้โปรโมชั่นแล้วหรือไม่
+	// 		if usageCount > 1 {
+	// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 				"Status": false,
+	// 				"Message": "คุณใช้โปรโมชั่นนี้แล้ว",
+	// 				"Data": fiber.Map{"id": -1},
+	// 			})
+	// 		}
+	// 	}
+
+
+	  
+
+	   prodetail,_ := handler.GetProdetail(db,proStatus)
+		// ตรวจสอบกับค่า MaxUse จาก pro_setting
+		maxUse, ok := prodetail["MaxUse"].(int64)
+
+		fmt.Printf("maxUse: %v \n",maxUse)
+		fmt.Printf("usageCount: %v \n",usageCount)
+
+		if ok && usageCount >= maxUse {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Status": false,
+				"Message": "คุณใช้โปรโมชั่นนี้เกินจำนวนครั้งที่กำหนดแล้ว",
+				"Data": fiber.Map{"id": -1},
+			})
+		}
+	   updates := map[string]interface{}{
+		   "MinTurnover": prodetail["MinTurnover"],
+		   "ProStatus": proStatus,
+	   }
+	   repository.UpdateFieldsUserString(db, user.Username, updates)
+	   return c.Status(200).JSON(fiber.Map{
+		   "Status":  true,
+		   "Message": "อัปเดตข้อมูลสำเร็จ!",
+	   })
+
+		// updates = map[string]interface{}{
+		// 	"MinTurnover": pro_setting["MinTurnover"],
+		// 	"ProStatus": proStatus,
+		// }
+		// repository.UpdateFieldsUserString(db, user.Username, updates)
+		// return c.Status(200).JSON(fiber.Map{
+		// 	"Status":  true,
+		// 	"Message": "อัปเดตข้อมูลสำเร็จ!",
+		// })
+		
+	} else {
+
+		
+
+		return c.Status(400).JSON(fiber.Map{
+			"Message": "คุณใช้งานโปรโมชั่นอยู่",
+			"Status":  false,
+			"Data":    "คุณใช้งานโปรโมชั่นอยู่",
+		})
+		 
+	}
+
+}
+
+func XUpdateUserPro(c *fiber.Ctx) error {
 	// Parse the request body into a map
 	body := make(map[string]interface{})
 	if err := c.BodyParser(&body); err != nil {
@@ -1023,7 +1183,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 
 	 
 	proStatus := fmt.Sprintf("%v", proStatusValue)
-
+	fmt.Printf("1034 %v \n",proStatus)
 // Check the type of proStatusValue
 // switch v := proStatusValue.(type) {
 // case string:
@@ -1138,7 +1298,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 			db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").Limit(1).Scan(&promotion_log)	
 			
 			rowsAffected := db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").RowsAffected
-			fmt.Printf("rowsAffected: %d",rowsAffected)
+			fmt.Printf("rowsAffected: %d \n",rowsAffected)
 
 			if rowsAffected > 0 && pro_setting["MaxUse"] != nil {
 				maxUse, ok := pro_setting["MaxUse"].(int64)

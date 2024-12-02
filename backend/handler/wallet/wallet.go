@@ -6,6 +6,7 @@ import (
 	// "github.com/amalfra/etag"
 	// "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 	// "strconv"
 	"github.com/shopspring/decimal"
 	"github.com/Knetic/govaluate"
@@ -694,7 +695,20 @@ func Deposit(c *fiber.Ctx) error {
 	// 			"id": -1,
 	// 		}})
 	// }
+	var raw = fiber.Map{
+		"ref": users.Username,
+		"bankAccountName":users.Fullname,
+		"amount": deposit,
+		"bankCode": users.Bankname,
+		"bankAccountNo": users.Banknumber,
+		"merchantURL": "https://www.xn--9-twft5c6ayhzf2bxa.com/",
+	  };
 
+	result,err := payin(raw)
+	if err != nil {
+		fmt.Printf(" Error is %s \n",err)
+	}
+	fmt.Printf(" Result: %+v \n",result)
 	resultz := db.Debug().Create(&BankStatement); 
 	
 
@@ -1612,5 +1626,190 @@ func GetBankStatement(c *fiber.Ctx) error {
 
 
 
+func makePostRequest(url string,token string, bodyData interface{}) (*fasthttp.Response, error) {
+	// Marshal requestData struct เป็น JSON
+	jsonData, err := json.Marshal(bodyData)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	// สร้าง Request และ Response
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	// ตั้งค่า URL, Method, และ Body
+	req.SetRequestURI(url)
+	req.Header.SetMethod("POST")
+	req.Header.SetContentType("application/json")
+	//authHeader := createBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
+	if token != "" {
+	req.Header.Add("Authorization", "Bearer " + token)
+	}
+	req.SetBody(jsonData)
+
+	// ส่ง request
+	client := &fasthttp.Client{}
+	if err := client.Do(req, resp); err != nil {
+		return nil, fmt.Errorf("error making POST request: %v", err)
+	}
+
+	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+	fasthttp.ReleaseRequest(req)
+	
+	return resp, nil
+}
+func makeGetRequest(url string) (*fasthttp.Response, error) {
+	// Marshal requestData struct เป็น JSON
+	// jsonData, err := json.Marshal(bodyData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error marshaling JSON: %v", err)
+	// }
+
+	// สร้าง Request และ Response
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	// ตั้งค่า URL, Method, และ Body
+	req.SetRequestURI(url)
+	req.Header.SetMethod("GET")
+	req.Header.SetContentType("application/json")
+	//authHeader := createBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
+	//req.Header.Add("Authorization", authHeader)
+	//req.SetBody(jsonData)
+
+	// ส่ง request
+	client := &fasthttp.Client{}
+	if err := client.Do(req, resp); err != nil {
+		return nil, fmt.Errorf("error making POST request: %v", err)
+	}
+
+	// ปล่อย Request (เนื่องจาก fasthttp ใช้ memory pool)
+	fasthttp.ReleaseRequest(req)
+	
+	return resp, nil
+}
+
+
+type fistpayBody struct {
+	Ref string `json:"ref`
+	BankAccountName string `json:"bankAccountName"`
+	Amount string `json:"amount"`
+	BankCode string `json:"bankCode"`
+	BankAccountNo string `json:"bankAccountNo"`
+	MerchantURL string `json:"merchantURL"`
+}
+
+// var  key struct {
+// 	Secret:"25320a8b-cb44-40a4-8456-f6dfff9b735c",
+//     Access:"589235b3-0b5c-424b-84ad-2789e4132b33"
+// }
+type CResponse struct {
+	Message string      `json:"message"`
+	Status  bool        `json:"status"`
+	Data    interface{} `json:"data"`  
+}
+func payin(body interface{}) (CResponse,error) {
+
+	var raw = fiber.Map{
+     	"secretKey":"25320a8b-cb44-40a4-8456-f6dfff9b735c",
+        "accessKey":"589235b3-0b5c-424b-84ad-2789e4132b33",
+	} 
+	var response CResponse
+
+	resp,err := makePostRequest("https://service.1stpay.co/api/auth","",raw)
+	if err != nil {
+		fmt.Printf("Error making POST request: %v", err)
+	}
+	resultBytes := resp.Body()
+	resultString := string(resultBytes)
+	// แสดงผล string ที่ได้
+	//fmt.Println("Response body as string:", resultString)
+
+	err = json.Unmarshal([]byte(resultString), &response)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return response,err
+	}
+
+	//fmt.Printf("Token: %+v \n",response.Data)
+
+	
+    //  var raw := fistpayBody{
+	// 	Ref:
+	//  }
+	// 	body: raw,
+	resp,err = makePostRequest("https://service.1stpay.co/api/payin",response.Data.(string),body)
+	if err != nil {
+		fmt.Printf("Error making POST request: %v", err)
+	}
+	resultBytes = resp.Body()
+	resultString = string(resultBytes)
+	// แสดงผล string ที่ได้
+	fmt.Println("Response body as string:", resultString)
+
+	err = json.Unmarshal([]byte(resultString), &response)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return response,err
+	}
+
+	fmt.Printf("Token: %+v \n",response.Data)
+	// let url= 'https://service.1stpay.co/api/payin'
+	// fetch(url, requestOptions).then(async (result)=>{
+		
+	//   let xresponse = await result.json()
+	//   urllink = xresponse.link
+	//   response.provider = "1stpay"
+	//   myresponse.data = xresponse
+	//   myresponse.url = urllink
+	   
+	  
+
+	//   createJob(JSON.stringify({"MemberID":body.id,"MemberName":body.username,"BankName":bankno.getDataValue('bankname'),"ToBank":bankno.bankname,"ToAccount":bankno.banknumber,"Amount":body.amount,'Data':xresponse,"Detail":"SUCCESS","Balance":bankno.balance,"Status":"void","Method":"Deposit"}))
+
+	return response,nil
+}
+
+func payout(amount string) (error) {
+
+	return nil
+}
  
 
+
+// const getTokenPrefix  = async (prefix:string) => {
+// 	try {
+  
+// 	  let raw = ""
+// 	  if(prefix.toLocaleLowerCase()=="ckd"){
+// 		raw = JSON.stringify({
+// 		  "secretKey":"25320a8b-cb44-40a4-8456-f6dfff9b735c",
+// 		  "accessKey":"589235b3-0b5c-424b-84ad-2789e4132b33"
+// 		})
+// 	  } else {
+// 	   raw =  JSON.stringify({
+// 		  "secretKey":"970dca03-861b-41f5-bd51-024a6a7759a0",
+// 		  "accessKey":"8c9ece18-a509-4e14-b1db-53856d56351b"
+// 	  })
+// 	  }
+  
+  
+//    let res = await fetch("https://service.1stpay.co/api/auth",{
+// 	  method: "POST",
+// 	  headers: {
+// 	  "Content-Type": "application/json",
+// 	 // 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiZmx1a3h6eSIsImlhdCI6MTcyNDc2MzE3MSwiZXhwIjoxNzI0ODQ5NTcxfQ.77-N7Ex5mrjW6BAp9HBA2HbAtinELm0Zd7hVEhd0Ehw'
+// 		  },
+// 	  body: raw,
+// 	  redirect: "follow"
+//   })
+//   const response = await res.json()
+//   if(response.data)
+//    return {status:true,data: response.data} 
+//   else
+// 	return {status:false,data: response.message}
+//   }
+//   catch(err){
+// 	return {status:false}
+//   }
+//   }

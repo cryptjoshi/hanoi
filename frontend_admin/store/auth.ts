@@ -25,7 +25,7 @@ export type User = {
     password: string;
 };
 
-const endpoint =   "http://152.42.185.164:4006/api/v1/db/login"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
+const endpoint =    `${"http://localhost"}:4006/api/v1/db/login`//`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/login`// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
 
 // เพิ่มฟังก์ชันสำหรับอ่านค่า cookie
 function getCookie(name: string): string | null {
@@ -57,7 +57,7 @@ const useAuthStore = create<AuthStore>()(
           });
 
           const data = await response.json();
-          //console.log(data.Status)
+          console.log(data.Status)
           if (data.Status) {
             set({
               isLoggedIn: true,

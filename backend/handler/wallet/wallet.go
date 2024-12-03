@@ -1,7 +1,7 @@
 package wallet
 
 import (
-	// "context"
+	 "context"
 	// "fmt"
 	// "github.com/amalfra/etag"
 	// "github.com/go-redis/redis/v8"
@@ -17,7 +17,7 @@ import (
 	// _ "github.com/go-sql-driver/mysql"
 	"hanoi/models"
 	"gorm.io/gorm"
-	//"hanoi/database"
+	"hanoi/database"
 	//"hanoi/handler/jwtn"
 	"hanoi/handler"
 	//jtoken "github.com/golang-jwt/jwt/v4"
@@ -32,12 +32,58 @@ import (
 	// "net"
 	// "net/http"
 	// "os"
-	//"strconv"
+	"strconv"
 	"time"
 	"strings"
 	"fmt"
 	"errors"
+	"github.com/go-resty/resty/v2"
 )
+
+type fistpayBody struct {
+	Ref string `json:"ref`
+	BankAccountName string `json:"bankAccountName"`
+	Amount string `json:"amount"`
+	BankCode string `json:"bankCode"`
+	BankAccountNo string `json:"bankAccountNo"`
+	MerchantURL string `json:"merchantURL"`
+}
+
+// var  key struct {
+// 	Secret:"25320a8b-cb44-40a4-8456-f6dfff9b735c",
+//     Access:"589235b3-0b5c-424b-84ad-2789e4132b33"
+// }
+
+type CallbackRequest struct {
+	TransactionID   string  `json:"transactionID"`
+	MerchantID      string  `json:"merchantID"`
+	OwnerID         string  `json:"ownerID"`
+	Type            string  `json:"type"`
+	Amount          float64 `json:"amount"`
+	Fee             float64 `json:"fee"`
+	TransferAmount  float64 `json:"transferAmount"`
+	BankAccountNo   string  `json:"bankAccountNo"`
+	BankAccountName string  `json:"bankAccountName"`
+	BankCode        string  `json:"bankCode"`
+	Verify          int  `json:"verify"`
+	CreateAt        string  `json:"createAt"`
+	ExpiredAt       string  `json:"expiredAt"`
+	IsExpired       int    `json:"isExpired"`
+	Ref             string  `json:"ref"`
+	Provider        string  `json:"provider"`
+}
+
+
+type CResponse struct {
+	Message string      `json:"message"`
+	Status  bool        `json:"status"`
+	Data    interface{} `json:"data"`  
+}
+type ErrorResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
 type BankBody struct {
 	
 	UserID           int             `json:"userid"`
@@ -50,7 +96,38 @@ type BankBody struct {
 	Channel        string 		  	`json:"channel"`
 
 }
+ 
+type PayInResponse struct {
+	Link     string `json:"link"`
+	TransactionID string `json:"transactionID"`
+	MerchantID string `json:"merchantID"`
+	Provider string `json:"provider"`
+	Data     struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	} `json:"data"`
+  
+}
 
+type TokenRequest struct {
+	SecretKey string `json:"secretKey"`
+	AccessKey string `json:"accessKey"`
+}
+
+type TokenResponse struct {
+	Status bool        `json:"status"`
+	Data   interface{} `json:"data,omitempty"`
+}
+
+
+type PayInRequest struct {
+	Ref            string `json:"ref"`
+	BankAccountName string `json:"bankAccountName"`
+	Amount         string `json:"amount"`
+	BankCode       string `json:"bankCode"`
+	BankAccountNo  string `json:"bankAccountNo"`
+	MerchantURL    string `json:"merchantURL"`
+}
 func evaluateExpression(expression string) (decimal.Decimal, error) {
     // Create a new evaluator
     expr, err := govaluate.NewEvaluableExpression(expression)
@@ -673,7 +750,11 @@ func Deposit(c *fiber.Ctx) error {
 
 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
-	BankStatement.Proamount = BankStatement.Balance.Sub(BankStatement.Transactionamount)
+	if pro_setting != nil {
+		BankStatement.Proamount = BankStatement.Balance.Sub(BankStatement.Transactionamount) 
+	} else {
+		BankStatement.Proamount = decimal.NewFromFloat(0.0)
+	}
 	//user.Username = user.Prefix + user.Username
 	fmt.Printf("692 line \n")
 	fmt.Println(BankStatement.Balance)
@@ -695,20 +776,50 @@ func Deposit(c *fiber.Ctx) error {
 	// 			"id": -1,
 	// 		}})
 	// }
-	var raw = fiber.Map{
-		"ref": users.Username,
-		"bankAccountName":users.Fullname,
-		"amount": deposit,
-		"bankCode": users.Bankname,
-		"bankAccountNo": users.Banknumber,
-		"merchantURL": "https://www.xn--9-twft5c6ayhzf2bxa.com/",
-	  };
-
-	result,err := payin(raw)
-	if err != nil {
-		fmt.Printf(" Error is %s \n",err)
+ 
+	// requestBody := map[string]interface{}{
+	// 	"ref":            users.Username,
+	// 	"bankAccountName": users.Fullname,
+	// 	"amount":         deposit,
+	// 	"bankCode":       users.Bankname,
+	// 	"bankAccountNo":  users.Banknumber,
+	// 	"merchantURL":    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
+	// }
+	request := &PayInRequest{
+		Ref:            users.Username,
+		BankAccountName: users.Fullname,
+		Amount:         deposit.String(),
+		BankCode:       users.Bankname,
+		BankAccountNo:  users.Banknumber,
+		MerchantURL:    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
 	}
+	
+	var result PayInResponse
+	result, err = paying(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
+	if err != nil {
+		// จัดการข้อผิดพลาดที่เกิดขึ้น
+		fmt.Println("Error in paying:", err)
+	}
+	
+	
 	fmt.Printf(" Result: %+v \n",result)
+
+	if result.TransactionID != "" {
+		transactionID := result.TransactionID
+		BankStatement.Uid = transactionID
+		BankStatement.Prefix =  result.MerchantID
+		fmt.Println("Transaction ID:", transactionID)
+
+	} else {
+		fmt.Println("Transaction ID does not exist")
+	}
+
+	 
+	
+	BankStatement.Status = "waiting"
+	BankStatement.StatementType = "Deposit"
+	// event statement log
+
 	resultz := db.Debug().Create(&BankStatement); 
 	
 
@@ -723,78 +834,62 @@ func Deposit(c *fiber.Ctx) error {
 
 	 } else {
 
-		updates := map[string]interface{}{
-			"Balance": BankStatement.Balance,
-			"Turnover": users.Turnover,
-			"ProStatus": users.ProStatus,
-			}
+// 		updates := map[string]interface{}{
+// 			"Balance": BankStatement.Balance,
+// 			"Turnover": users.Turnover,
+// 			"ProStatus": users.ProStatus,
+// 			}
 	
-	// 	//db, _ = database.ConnectToDB(BankStatement.Prefix)
-	 _err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-	if _err != nil {
-		return c.Status(200).JSON(fiber.Map{
-			"Status": false,
-			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-			"Data": fiber.Map{ 
-				"id": -1,
-			}})
-		}
+ 
+// 	 _err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+// 	if _err != nil {
+// 		return c.Status(200).JSON(fiber.Map{
+// 			"Status": false,
+// 			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+// 			"Data": fiber.Map{ 
+// 				"id": -1,
+// 			}})
+// 		}
 
-    //  if BankStatement.Transactionamount.LessThan(decimal.Zero) {
-	// 	updates["LastWithdraw"] = BankStatement.Transactionamount
-	//  } else {
-		updates["LastDeposit"] = BankStatement.Transactionamount
-		updates["LastProamount"] = BankStatement.Balance.Sub(BankStatement.Transactionamount)
-	 //}
-	 _err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
-		if _err != nil {
-			return c.Status(200).JSON(fiber.Map{
-				"Status": false,
-				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-				"Data": fiber.Map{ 
-					"id": -1,
-				}})
-		} else {
-			//fmt.Println("User fields updated successfully")
-		}
+//     //  if BankStatement.Transactionamount.LessThan(decimal.Zero) {
+// 	// 	updates["LastWithdraw"] = BankStatement.Transactionamount
+// 	//  } else {
+// 		updates["LastDeposit"] = BankStatement.Transactionamount
+// 		updates["LastProamount"] = BankStatement.Balance.Sub(BankStatement.Transactionamount)
+// 	 //}
+// 	 _err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
+// 		if _err != nil {
+// 			return c.Status(200).JSON(fiber.Map{
+// 				"Status": false,
+// 				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+// 				"Data": fiber.Map{ 
+// 					"id": -1,
+// 				}})
+// 		} else {
+// 			//fmt.Println("User fields updated successfully")
+// 		}
 
  
-	if err := checkActived(db,&users); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"Status": false,
-			"Message":  "actived deposit ข้อมูลไม่ได้!",
-			"Data": fiber.Map{ 
-				"id": -1,
-			}})
-	}
+// 	if err := checkActived(db,&users); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"Status": false,
+// 			"Message":  "actived deposit ข้อมูลไม่ได้!",
+// 			"Data": fiber.Map{ 
+// 				"id": -1,
+// 			}})
+// 	}
 	 
 	 return c.Status(200).JSON(fiber.Map{
 		"Status": true,
 		"Data": fiber.Map{ 
-			"id": BankStatement.ID,
+			"id": BankStatement.Uid,
 			"beforebalance":BankStatement.Beforebalance,
 			"balance": BankStatement.Balance,
 		},
 	})
 	
-}
+ }
 
-}
-
-func turn2Percentage(strvalue string) decimal.Decimal {
-	var percentValue decimal.Decimal
-	var percentStr = ""
-	if strings.Contains(strvalue, "%") {
-	
-		percentStr = strings.TrimSuffix(strvalue, "%")
-	    percentValue,_ = decimal.NewFromString(percentStr)
-		percentValue = percentValue.Add(decimal.NewFromFloat(100)).Div(decimal.NewFromInt(100))
-	} else {
-		percentValue,_ = decimal.NewFromString(strvalue)
-	}
-	// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
-	
-	return percentValue
 }
 
 func Withdraw(c *fiber.Ctx) error {
@@ -1003,6 +1098,8 @@ func Withdraw(c *fiber.Ctx) error {
     BankStatement.Bankname = users.Bankname
     BankStatement.Accountno = users.Banknumber
     BankStatement.Transactionamount = withdraw
+	BankStatement.Status = "waiting"
+	BankStatement.StatementType =  "Withdraw"
 
 	 
 
@@ -1052,6 +1149,125 @@ func Withdraw(c *fiber.Ctx) error {
             "balance": BankStatement.Balance,
         },
     })
+}
+
+
+func Webhook(c *fiber.Ctx) error {
+		
+  		var requestBody CallbackRequest
+
+		
+		if err := c.BodyParser(&requestBody); err != nil {
+			return c.Status(200).SendString(err.Error())
+		}
+
+  		//db,_ := handler.GetDBFromContext(c)
+  		db,_ := database.ConnectToDB(requestBody.MerchantID)
+
+  		var bankstatement models.BankStatement
+
+    	if err_ := db.Debug().Where("Uid = ?",requestBody.TransactionID).First(&bankstatement).Error; err_ != nil {
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message": err_,
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
+		}
+
+// 		bankstatement.Uid = requestBody.TransactionID
+
+		if requestBody.Verify == 1 && requestBody.IsExpired == 0 {
+				bankstatement.Status = "verified"
+		}  else if requestBody.Verify == 0 && requestBody.IsExpired == 1 {
+				bankstatement.Status = "expired"
+				//bankstatement.Beforebalance = bankstatement.Balance.Sub(bankstatement.Transactionamount)
+				bankstatement.Transactionamount = decimal.NewFromFloat(0.0);
+		} 
+
+		if  requestBody.Type == "payin" {
+			 		updates := map[string]interface{}{
+						"Balance": bankstatement.Balance,
+						//"Turnover": users.Turnover,
+						//"ProStatus": users.ProStatus,
+						}
+				
+					
+					 _err := repository.UpdateUserFields(db, bankstatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+					if _err != nil {
+					return c.Status(200).JSON(fiber.Map{
+						"Status": false,
+						"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+						"Data": fiber.Map{ 
+							"id": -1,
+						}})
+					}
+					if err := db.Save(&bankstatement).Error; err != nil { // ใช้ db.Save เพื่ออัปเดต bankstatement
+						return c.JSON(fiber.Map{
+							"Status": false,
+							"Message": "เกิดข้อผิดพลาดในการอัปเดตข้อมูล",
+							"Data": fiber.Map{ 
+								"id": -1,
+							}})
+					}
+				 	//bankstatement.Beforebalance = bankstatement.Balance.Sub(bankstatement.Transactionamount)
+				
+		}
+
+
+		
+
+//     //  if BankStatement.Transactionamount.LessThan(decimal.Zero) {
+// 	// 	updates["LastWithdraw"] = BankStatement.Transactionamount
+// 	//  } else {
+// 		updates["LastDeposit"] = BankStatement.Transactionamount
+// 		updates["LastProamount"] = BankStatement.Balance.Sub(BankStatement.Transactionamount)
+// 	 //}
+// 	 	_err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
+// 		if _err != nil {
+// 			return c.Status(200).JSON(fiber.Map{
+// 				"Status": false,
+// 				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+// 				"Data": fiber.Map{ 
+// 					"id": -1,
+// 				}})
+// 		} 
+
+ 
+// 		if err := checkActived(db,&users); err != nil {
+// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 				"Status": false,
+// 				"Message":  "actived deposit ข้อมูลไม่ได้!",
+// 				"Data": fiber.Map{ 
+// 					"id": -1,
+// 				}})
+// 		}
+
+		return c.JSON(fiber.Map{
+			"Status": true,
+			"Message": "ถอนเงินสำเร็จ",
+			"Data": fiber.Map{
+				"id": bankstatement.Uid,
+				"beforebalance": bankstatement.Beforebalance,
+				"balance": bankstatement.Balance,
+			},
+		})
+}
+
+func turn2Percentage(strvalue string) decimal.Decimal {
+	var percentValue decimal.Decimal
+	var percentStr = ""
+	if strings.Contains(strvalue, "%") {
+	
+		percentStr = strings.TrimSuffix(strvalue, "%")
+	    percentValue,_ = decimal.NewFromString(percentStr)
+		percentValue = percentValue.Add(decimal.NewFromFloat(100)).Div(decimal.NewFromInt(100))
+	} else {
+		percentValue,_ = decimal.NewFromString(strvalue)
+	}
+	// แปลงเปอร์เซ็นต์เป็นค่าทศนิยม
+	
+	return percentValue
 }
 
 // เพิ่มฟังก์ชั่นช่วยคำนวณยอดเทิร์นที่ต้องการ
@@ -1642,9 +1858,9 @@ func makePostRequest(url string,token string, bodyData interface{}) (*fasthttp.R
 	req.Header.SetMethod("POST")
 	req.Header.SetContentType("application/json")
 	//authHeader := createBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
-	if token != "" {
-	req.Header.Add("Authorization", "Bearer " + token)
-	}
+	//if token != "" {
+	req.Header.Add("Authorization","Bearer "+token)
+	//}
 	req.SetBody(jsonData)
 
 	// ส่ง request
@@ -1690,86 +1906,59 @@ func makeGetRequest(url string) (*fasthttp.Response, error) {
 }
 
 
-type fistpayBody struct {
-	Ref string `json:"ref`
-	BankAccountName string `json:"bankAccountName"`
-	Amount string `json:"amount"`
-	BankCode string `json:"bankCode"`
-	BankAccountNo string `json:"bankAccountNo"`
-	MerchantURL string `json:"merchantURL"`
+
+func paying(request *PayInRequest) (PayInResponse, error) {
+	client := resty.New().
+		SetTimeout(30 * time.Second).
+		SetDebug(true) // ตั้งค่า timeout เป็น 30 วินาที
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+
+	url := "https://service.1stpay.co/api/payin"
+	token := getToken()
+	if token.Status {
+		fmt.Println("Token received:", token.Data)
+	} else {
+		fmt.Println("Failed to get token")
+	}
+	var response PayInResponse
+
+	authToken := fmt.Sprintf("%s %s", "Bearer", token.Data.(string))
+ 
+	num, _ := strconv.Atoi(request.Amount)
+	// สร้างคำร้อง
+	resp, err := client.R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", authToken).
+		//SetBody(string(body)). // ใช้ body ที่แปลงแล้ว
+		SetBody(map[string]interface{}{
+			"ref":            request.Ref,
+			"bankAccountName": request.BankAccountName,
+			"amount":         num,
+			"bankCode":       request.BankCode,
+			"bankAccountNo":  request.BankAccountNo,
+			"merchantURL":    request.MerchantURL,
+		}).
+		SetResult(&response).
+		Post(url)
+
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return response, err
+	}
+
+	if resp.IsSuccess() && response.Link != "" {
+		fmt.Println("Payment link:", response.Link)
+		fmt.Println("Provider:", response.Provider)
+		fmt.Println("Response data:", response.Data)
+	} else {
+		fmt.Println("Failed to get payment link")
+	}
+	return response, nil
 }
-
-// var  key struct {
-// 	Secret:"25320a8b-cb44-40a4-8456-f6dfff9b735c",
-//     Access:"589235b3-0b5c-424b-84ad-2789e4132b33"
-// }
-type CResponse struct {
-	Message string      `json:"message"`
-	Status  bool        `json:"status"`
-	Data    interface{} `json:"data"`  
-}
-func payin(body interface{}) (CResponse,error) {
-
-	var raw = fiber.Map{
-     	"secretKey":"25320a8b-cb44-40a4-8456-f6dfff9b735c",
-        "accessKey":"589235b3-0b5c-424b-84ad-2789e4132b33",
-	} 
-	var response CResponse
-
-	resp,err := makePostRequest("https://service.1stpay.co/api/auth","",raw)
-	if err != nil {
-		fmt.Printf("Error making POST request: %v", err)
-	}
-	resultBytes := resp.Body()
-	resultString := string(resultBytes)
-	// แสดงผล string ที่ได้
-	//fmt.Println("Response body as string:", resultString)
-
-	err = json.Unmarshal([]byte(resultString), &response)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-		return response,err
-	}
-
-	//fmt.Printf("Token: %+v \n",response.Data)
-
-	
-    //  var raw := fistpayBody{
-	// 	Ref:
-	//  }
-	// 	body: raw,
-	resp,err = makePostRequest("https://service.1stpay.co/api/payin",response.Data.(string),body)
-	if err != nil {
-		fmt.Printf("Error making POST request: %v", err)
-	}
-	resultBytes = resp.Body()
-	resultString = string(resultBytes)
-	// แสดงผล string ที่ได้
-	fmt.Println("Response body as string:", resultString)
-
-	err = json.Unmarshal([]byte(resultString), &response)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-		return response,err
-	}
-
-	fmt.Printf("Token: %+v \n",response.Data)
-	// let url= 'https://service.1stpay.co/api/payin'
-	// fetch(url, requestOptions).then(async (result)=>{
-		
-	//   let xresponse = await result.json()
-	//   urllink = xresponse.link
-	//   response.provider = "1stpay"
-	//   myresponse.data = xresponse
-	//   myresponse.url = urllink
-	   
-	  
-
-	//   createJob(JSON.stringify({"MemberID":body.id,"MemberName":body.username,"BankName":bankno.getDataValue('bankname'),"ToBank":bankno.bankname,"ToAccount":bankno.banknumber,"Amount":body.amount,'Data':xresponse,"Detail":"SUCCESS","Balance":bankno.balance,"Status":"void","Method":"Deposit"}))
-
-	return response,nil
-}
-
 func payout(amount string) (error) {
 
 	return nil
@@ -1813,3 +2002,62 @@ func payout(amount string) (error) {
 // 	return {status:false}
 //   }
 //   }
+
+
+// type PayInResponse struct {
+// 	Link    string `json:"link"`
+// 	Provider string `json:"provider"`
+// 	Data     map[string]interface{} `json:"data"`
+// }
+
+
+func getToken() TokenResponse {
+	url := "https://service.1stpay.co/api/auth"
+
+	// reqData := TokenRequest{
+	// 	SecretKey: "970dca03-861b-41f5-bd51-024a6a7759a0",
+	// 	AccessKey: "8c9ece18-a509-4e14-b1db-53856d56351b",
+	// }
+	reqData := TokenRequest{
+  		SecretKey:"25320a8b-cb44-40a4-8456-f6dfff9b735c",
+        AccessKey:"589235b3-0b5c-424b-84ad-2789e4132b33",
+	}
+	reqBody, err := json.Marshal(reqData)
+	if err != nil {
+		return TokenResponse{Status: false}
+	}
+
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(url)
+	req.Header.SetMethod("POST")
+	req.Header.SetContentType("application/json")
+	req.SetBody(reqBody)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	client := fasthttp.Client{}
+
+	if err := client.Do(req, resp); err != nil {
+		fmt.Println("Error:", err)
+		return TokenResponse{Status: false}
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(resp.Body(), &result); err != nil {
+		fmt.Println("Error parsing response:", err)
+		return TokenResponse{Status: false}
+	}
+
+	if data, ok := result["data"]; ok {
+		return TokenResponse{Status: true, Data: data}
+	}
+
+	return TokenResponse{Status: false, Data: result["message"]}
+}
+ 
+
+
+ 

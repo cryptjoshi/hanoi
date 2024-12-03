@@ -139,6 +139,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/statement/update", wallet.UpdateStatement)
 	app.Post("/statement/withdraw",jwt.JwtMiddleware, wallet.Withdraw)
 	app.Post("/statement/deposit",jwt.JwtMiddleware, wallet.Deposit)
+	app.Post("/statement/webhook",wallet.Webhook)
 	// app.Post("/transaction/add",handler.AddTransactions)
 	// app.Post("/transaction/update",handler.UpdateTransactions)
 	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)

@@ -1098,9 +1098,40 @@ func Withdraw(c *fiber.Ctx) error {
     BankStatement.Bankname = users.Bankname
     BankStatement.Accountno = users.Banknumber
     BankStatement.Transactionamount = withdraw
+
+	request := &PayInRequest{
+		Ref:            users.Username,
+		BankAccountName: users.Fullname,
+		Amount:         withdraw.Abs().String(),
+		BankCode:       users.Bankname,
+		BankAccountNo:  users.Banknumber,
+		//MerchantURL:    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
+	}
+	
+	var result PayInResponse
+	result, err := payout(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
+	if err != nil {
+		// จัดการข้อผิดพลาดที่เกิดขึ้น
+		fmt.Println("Error in paying:", err)
+	}
+	
+	
+	fmt.Printf(" Result: %+v \n",result)
+
+	if result.TransactionID != "" {
+		transactionID := result.TransactionID
+		BankStatement.Uid = transactionID
+		BankStatement.Prefix =  result.MerchantID
+		fmt.Println("Transaction ID:", transactionID)
+
+	} else {
+		fmt.Println("Transaction ID does not exist")
+	}
+
+
 	BankStatement.Status = "waiting"
 	BankStatement.StatementType =  "Withdraw"
-
+	
 	 
 
 
@@ -1212,6 +1243,50 @@ func Webhook(c *fiber.Ctx) error {
 					}
 				 	//bankstatement.Beforebalance = bankstatement.Balance.Sub(bankstatement.Transactionamount)
 				
+		} else if requestBody.Type == "payout" {
+			
+			// updates := map[string]interface{}{
+			// 	"Balance": decimal.Zero,
+			// 	"LastWithdraw": withdraw,
+			// }
+		
+			// if users.ProStatus != "" {
+			// 	updates["ProStatus"] = ""
+			// }
+		
+			// if err := tx.Model(&users).Updates(updates).Error; err != nil {
+			// 	tx.Rollback()
+			// 	return c.JSON(fiber.Map{
+			// 		"Status": false,
+			// 		"Message": "ไม่สามารถอัพเดทข้อมูลผู้ใช้ได้",
+			// 		"Data": fiber.Map{"id": -1},
+			// 	})
+			// }
+			updates := map[string]interface{}{
+				"Balance": bankstatement.Balance,
+				//"Turnover": users.Turnover,
+				//"ProStatus": users.ProStatus,
+				}
+		
+			
+			 _err := repository.UpdateUserFields(db, bankstatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+			if _err != nil {
+			return c.Status(200).JSON(fiber.Map{
+				"Status": false,
+				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
+			}
+			if err := db.Save(&bankstatement).Error; err != nil { // ใช้ db.Save เพื่ออัปเดต bankstatement
+				return c.JSON(fiber.Map{
+					"Status": false,
+					"Message": "เกิดข้อผิดพลาดในการอัปเดตข้อมูล",
+					"Data": fiber.Map{ 
+						"id": -1,
+					}})
+			}
+
 		}
 
 
@@ -1959,9 +2034,58 @@ func paying(request *PayInRequest) (PayInResponse, error) {
 	}
 	return response, nil
 }
-func payout(amount string) (error) {
 
-	return nil
+func payout(request *PayInRequest) (PayInResponse, error) {
+	client := resty.New().
+		SetTimeout(30 * time.Second).
+		SetDebug(true) // ตั้งค่า timeout เป็น 30 วินาที
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+
+	url := "https://service.1stpay.co/api/payout"
+	token := getToken()
+	if token.Status {
+		fmt.Println("Token received:", token.Data)
+	} else {
+		fmt.Println("Failed to get token")
+	}
+	var response PayInResponse
+
+	authToken := fmt.Sprintf("%s %s", "Bearer", token.Data.(string))
+ 
+	num, _ := strconv.Atoi(request.Amount)
+	// สร้างคำร้อง
+	resp, err := client.R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", authToken).
+		//SetBody(string(body)). // ใช้ body ที่แปลงแล้ว
+		SetBody(map[string]interface{}{
+			"ref":            request.Ref,
+			"bankAccountName": request.BankAccountName,
+			"amount":         num,
+			"bankCode":       request.BankCode,
+			"bankAccountNo":  request.BankAccountNo,
+			"merchantURL":    request.MerchantURL,
+		}).
+		SetResult(&response).
+		Post(url)
+
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return response, err
+	}
+
+	if resp.IsSuccess() && response.Link != "" {
+		fmt.Println("Payment link:", response.Link)
+		fmt.Println("Provider:", response.Provider)
+		fmt.Println("Response data:", response.Data)
+	} else {
+		fmt.Println("Failed to get payment link")
+	}
+	return response, nil
 }
  
 

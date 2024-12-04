@@ -846,6 +846,36 @@ func CreateDB(db *gorm.DB, dbName string) error {
 	fmt.Printf("Database %s created successfully\n", dbName)
 	return nil
 }
+
+
+
+// Promotion Part
+// type SwaggerTransactionSub struct {
+	type SwaggerProBody struct  {
+		Name               string              `json:"name"`
+		Description        string              `json:"description"`
+		PercentDiscount    decimal.NullDecimal `json:"percentDiscount"`
+		StartDate          string              `json:"startDate"`
+		EndDate            string              `json:"endDate"`
+		MaxDiscount        decimal.NullDecimal `json:"maxDiscount"`
+		Unit            string                 `json:"unit"`
+		UsageLimit         int                 `json:"usageLimit"`
+		SpecificTime       string              `json:"specificTime"`
+		PaymentMethod      string              `json:"paymentMethod"`
+		MinDept            decimal.NullDecimal `json:"minDept"`
+		MinSpend           string              `json:"minSpend"`
+		MaxSpend           decimal.NullDecimal `json:"maxSpend"`
+		TermsAndConditions string              `json:"termsAndConditions"`
+		Status             int                 `json:"status"`
+		Includegames       string              `json:"includegames"`
+		Excludegames       string              `json:"excludegames"`
+		Example            string              `json:"example"`
+		MinSpendType       string              `json:"minSpendType"`
+		MinCredit          string              `json:"minCredit`
+		Widthdrawmin       decimal.NullDecimal `json:"minwithdrawal"`
+		TurnType           string              `json:"TurnType`
+		Zerobalance        int                 `json:"Zerobalance"`
+	}
 type ProBody struct  {
 	Name               string              `json:"name"`
 	Description        string              `json:"description"`

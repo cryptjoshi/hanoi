@@ -19,6 +19,7 @@ type BankStatement struct {
 	BetAmount 		  decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:betamount;"`
 	Bet_amount 		  decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:bet_amount;"`
 	Transactionamount decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:transactionamount;NOT NULL"`
+	Amount decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:amount;"`
 	Beforebalance     decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:beforebalance"`
 	Proamount         decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:proamount"`
 	AddOnamount       decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:addonamount"`

@@ -1,5 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
+/data
+/database
 # dependencies
 /node_modules
 /.pnp
@@ -93,3 +94,4 @@ __fixtures__/custom-modules-dir/cache/
 __fixtures__/custom-modules-dir/patches/
 backend/tmp/app/engine
 backend/tmp/app/engine
+data/collection-2-4877165003810552486.wt

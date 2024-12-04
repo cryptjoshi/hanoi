@@ -445,6 +445,7 @@ func Deposit(c *fiber.Ctx) error {
 	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
+	BankStatement.Transactionamount = BankStatement.Amount
 	deposit := BankStatement.Transactionamount
 	//BankStatement.ProID = users.ProStatus
 	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
@@ -915,7 +916,7 @@ func Withdraw(c *fiber.Ctx) error {
             "Data": fiber.Map{"id": -1},
         })
     }
-	
+	BankStatement.Transactionamount = BankStatement.Amount
     withdraw := BankStatement.Transactionamount
 
 	withdrawAbs := withdraw.Abs()

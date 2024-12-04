@@ -1187,7 +1187,7 @@ func Withdraw(c *fiber.Ctx) error {
 func Webhook(c *fiber.Ctx) error {
 		
   		var requestBody CallbackRequest
-
+		message := "ถอนเงินสำเร็จ"		
 		
 		if err := c.BodyParser(&requestBody); err != nil {
 			return c.Status(200).SendString(err.Error())
@@ -1243,7 +1243,7 @@ func Webhook(c *fiber.Ctx) error {
 							}})
 					}
 				 	//bankstatement.Beforebalance = bankstatement.Balance.Sub(bankstatement.Transactionamount)
-				
+				message = "ฝากเงินสำเร็จ"
 		} else if requestBody.Type == "payout" {
 			
 			// updates := map[string]interface{}{
@@ -1319,9 +1319,12 @@ func Webhook(c *fiber.Ctx) error {
 // 				}})
 // 		}
 
+		
+
+	 
 		return c.JSON(fiber.Map{
 			"Status": true,
-			"Message": "ถอนเงินสำเร็จ",
+			"Message": message,
 			"Data": fiber.Map{
 				"id": bankstatement.Uid,
 				"beforebalance": bankstatement.Beforebalance,

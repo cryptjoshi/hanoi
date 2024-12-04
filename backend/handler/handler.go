@@ -17,7 +17,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-
+ 
 	//"github.com/golang-jwt/jwt"
 	jtoken "github.com/golang-jwt/jwt/v4"
 	//"github.com/solrac97gr/basic-jwt-auth/config"
@@ -448,14 +448,14 @@ func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
 func handleError(err error) {
 	log.Fatal(err)
 }
-func migrateNormal(db *gorm.DB) {
+// func migrateNormal(db *gorm.DB) {
 
-	if err := db.AutoMigrate(&models.Product{}, &models.BanksAccount{}, &models.Users{}, &models.TransactionSub{}, &models.BankStatement{}, &models.BuyInOut{}); err != nil {
-		handleError(err)
-	}
+// 	if err := db.AutoMigrate(&models.Product{}, &models.BanksAccount{}, &models.Users{}, &models.TransactionSub{}, &models.BankStatement{}, &models.BuyInOut{},&models.PromotionLog{}); err != nil {
+// 		handleError(err)
+// 	}
 
-	fmt.Println("Migrations Normal Tables executed successfully")
-}
+// 	fmt.Println("Migrations Normal Tables executed successfully")
+// }
 func migrateAdmin(db *gorm.DB) {
 
 	if err := db.AutoMigrate(&models.TsxAdmin{}, &models.Provider{}); err != nil {
@@ -463,7 +463,28 @@ func migrateAdmin(db *gorm.DB) {
 	}
 	fmt.Println("Migrations Admin Tables executed successfully")
 }
+func migrateNormal(db *gorm.DB) {
 
+	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateLog{},&models.Product{},&models.BanksAccount{},&models.Users{},&models.TransactionSub{},
+		&models.BankStatement{},&models.BuyInOut{},&models.PromotionLog{},&models.Games{},&models.Promotion{},&models.Provider{},&models.TsxAdmin{}); err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	 
+	fmt.Println("Migrations Normal Tables executed successfully")
+}
+
+func migrationPromotion(db *gorm.DB){
+	if err := db.AutoMigrate(&models.PromotionLog{});err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	fmt.Println("Migrations Promotion Tables executed successfully")
+}
+func migrationAffiliate(db *gorm.DB){
+	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateTracking{},&models.Users{},&models.AffiliateLog{},&models.Promotion{});err != nil {
+		fmt.Errorf("Tables schema migration not successfully\n")
+	}
+	fmt.Println("Migrations Affiliate Tables executed successfully")
+}
 // database
 
 type Dbstruct struct {
@@ -490,6 +511,29 @@ func createDatabase(dbName string) *gorm.DB {
 	}
 	newDsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, dbName)
 	newDB, err := gorm.Open(mysql.Open(newDsn), &gorm.Config{})
+
+	parts := strings.Split(dbName, "_")
+	if len(parts) > 1 {
+		// ใช้ parts[0] และ parts[1] ตามต้องการ
+		fmt.Println("Prefix:", parts[0])
+		fmt.Println("Suffix:", parts[1])
+		var settings []models.Settings // ระบุประเภทให้ชัดเจน
+		settings = append(settings, models.Settings{
+			Key:   parts[0],
+			Value: parts[1],
+		})
+		settings = append(settings,models.Settings{
+			Key: "ckd_partner_commission",
+			Value: "5%",
+		})
+		settings = append(settings,models.Settings{
+			Key: "ckd_user_commission",
+			Value: "5%",
+		})
+		db.Debug().Create(&settings)
+	}
+ 
+	
 
 	return newDB
 }
@@ -552,6 +596,8 @@ func CreateDatabase(c *fiber.Ctx) error {
 		}
 		migrateAdmin(newDB)
 		migrateNormal(newDB)
+		migrationAffiliate(newDB)
+		migrationPromotion(newDB)
 	}
 
 	response := fiber.Map{
@@ -563,7 +609,7 @@ func CreateDatabase(c *fiber.Ctx) error {
 
 func GetDatabaseList(c *fiber.Ctx) error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
-
+	fmt.Printf(" DSN: %s \n",dsn)
 	// Connect to MySQL without a specific database
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -581,6 +627,8 @@ func GetDatabaseList(c *fiber.Ctx) error {
 	groupedDatabases := make(map[string][]string)
 
 	rows, err := db.Raw("SHOW DATABASES").Rows()
+	fmt.Printf("Rows: %v \n",rows)
+	fmt.Printf("Err: %v \n",err)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดในการดึงรายชื่อฐานข้อมูล",
@@ -602,8 +650,8 @@ func GetDatabaseList(c *fiber.Ctx) error {
 		if err := rows.Scan(&dbName); err != nil {
 			continue
 		}
-		//fmt.Println(dbName)
-		//fmt.Println(systemDatabases[dbName])
+		fmt.Printf("DBName: %v",dbName)
+		fmt.Printf("SysDBName: %v",systemDatabases[dbName])
 		// Include databases with underscore in their names and exclude system databases
 		//
 		if strings.Contains(dbName, "_") && !systemDatabases[dbName] {
@@ -761,10 +809,10 @@ func RootLogin(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-
+	//dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FBangkok", loginRequest.Username, loginRequest.Password, dbName)
 	// เชื่อมต่อกับฐานข้อมูลระบบ 'mysql'
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?charset=utf8mb4&parseTime=True&loc=Local", loginRequest.Username, loginRequest.Password, mysql_host)
-	// fmt.Println(dsn)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?charset=utf8mb4&parseTime=True", loginRequest.Username, loginRequest.Password, mysql_host)
+	//fmt.Println(dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		response := fiber.Map{
@@ -798,6 +846,36 @@ func CreateDB(db *gorm.DB, dbName string) error {
 	fmt.Printf("Database %s created successfully\n", dbName)
 	return nil
 }
+
+
+
+// Promotion Part
+// type SwaggerTransactionSub struct {
+	type SwaggerProBody struct  {
+		Name               string              `json:"name"`
+		Description        string              `json:"description"`
+		PercentDiscount    decimal.NullDecimal `json:"percentDiscount"`
+		StartDate          string              `json:"startDate"`
+		EndDate            string              `json:"endDate"`
+		MaxDiscount        decimal.NullDecimal `json:"maxDiscount"`
+		Unit            string                 `json:"unit"`
+		UsageLimit         int                 `json:"usageLimit"`
+		SpecificTime       string              `json:"specificTime"`
+		PaymentMethod      string              `json:"paymentMethod"`
+		MinDept            decimal.NullDecimal `json:"minDept"`
+		MinSpend           string              `json:"minSpend"`
+		MaxSpend           decimal.NullDecimal `json:"maxSpend"`
+		TermsAndConditions string              `json:"termsAndConditions"`
+		Status             int                 `json:"status"`
+		Includegames       string              `json:"includegames"`
+		Excludegames       string              `json:"excludegames"`
+		Example            string              `json:"example"`
+		MinSpendType       string              `json:"minSpendType"`
+		MinCredit          string              `json:"minCredit`
+		Widthdrawmin       decimal.NullDecimal `json:"minwithdrawal"`
+		TurnType           string              `json:"TurnType`
+		Zerobalance        int                 `json:"Zerobalance"`
+	}
 type ProBody struct  {
 	Name               string              `json:"name"`
 	Description        string              `json:"description"`
@@ -1294,7 +1372,7 @@ func GetGameList(c *fiber.Ctx) error {
 	// 	development: body.Prefix + "_development",
 	// 	production:  body.Prefix + "_production",
 	// }
-
+    fmt.Printf("Prefix: %s ",body.Prefix)
 	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -2008,6 +2086,7 @@ func GetExchangeRates(c *fiber.Ctx) error {
 	// ทดสอบการเชื่อมต่อ Redis
 	pong, err := rdb.Ping(ctx).Result()
 	if err != nil {
+		fmt.Printf("err %s",err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Error connecting to Redis")
 		// อาจจะ return error หรือจัดการข้อผิดพลาดตามที่คุณต้องการ
 	} else {

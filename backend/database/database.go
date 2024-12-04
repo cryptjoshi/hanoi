@@ -137,7 +137,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// Check if the connection already exists
 	if db, exists := dbConnections[dbName]; exists {
-		//migrationPromotion(db)
+		migrationPromotion(db)
 		migrationAffiliate(db)
 		return db, nil
 	}
@@ -181,7 +181,8 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	} else {
 		return nil, err // Return the error if connection fails
 	}
-	//migrateNormal(db)
+	migrateNormal(db)
+	//CheckAndCreateTable(db,models.BankStatement{})
 	migrationAffiliate(db)
 	return db, nil
 }

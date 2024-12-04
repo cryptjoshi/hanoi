@@ -15,12 +15,15 @@ type Dbstruct = {
   username:string;
   dbnames:string[];
 }
+
+const url = "http://backendservice"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT
+
 export const Signin = async (body:User) =>{
      
  
        // const state = useAuthStore()
 
-        const response = await fetch("http://152.42.185.164:4006/api/v1/users/login", { method: 'POST',
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/users/login`, { method: 'POST',
             headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -32,7 +35,7 @@ export const Signin = async (body:User) =>{
 }
 
 export const GetDatabaseList = async () =>{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/list", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/list`, { method: 'POST',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -44,7 +47,7 @@ export const GetDatabaseList = async () =>{
 
 export const CreateUser = async (body:Dbstruct) =>{
  
-const response = await fetch("http://152.42.185.164:4006/api/v1/db/create", { method: 'POST',
+const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/create`, { method: 'POST',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -56,7 +59,7 @@ const response = await fetch("http://152.42.185.164:4006/api/v1/db/create", { me
 
 export const UpdateDatabaseListByPrefix = async (body:Dbstruct) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/update", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/update`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -68,7 +71,7 @@ export const UpdateDatabaseListByPrefix = async (body:Dbstruct) =>{
   
 export const GetDatabaseListByPrefix = async (prefix:string) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/prefix", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/prefix`, { method: 'POST',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -80,7 +83,7 @@ export const GetDatabaseListByPrefix = async (prefix:string) =>{
 
 export const GetMemberList = async (prefix:string) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/member/all", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/all`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -92,7 +95,7 @@ return response.json()
 
 export const GetMemberById = async (prefix:string,id:number) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/member/byid", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/byid`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -104,7 +107,7 @@ return response.json()
 
 export const AddMember = async (prefix:string,body:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/member/create", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/create`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -115,7 +118,7 @@ export const AddMember = async (prefix:string,body:any) =>{
 } 
 
 export const UpdateMember = async (prefix:string,id:any,body:any) =>{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/member/update", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/update`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -127,7 +130,7 @@ export const UpdateMember = async (prefix:string,id:any,body:any) =>{
 
 export const GetGameList = async (prefix:string) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/all", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/game/all`, { method: 'POST',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -139,7 +142,7 @@ export const GetGameList = async (prefix:string) =>{
 
 export const GetGameStatus = async (prefix:string) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/status", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/game/status`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -154,7 +157,7 @@ return response.json()
 
 export const GetGameById = async (prefix:string,id:number) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/byid", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/game/byid`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -166,7 +169,7 @@ return response.json()
 
 export const AddGame = async (prefix:string,body:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/create", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/game/create`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -178,7 +181,7 @@ export const AddGame = async (prefix:string,body:any) =>{
 
 export const UpdateGame = async (prefix:string,id:any,body:any) =>{
   
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/game/update", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/game/update`, { method: 'POST',
     headers: {   
       'Accept': 'application/json', 
       'Content-Type': 'application/json',
@@ -192,7 +195,7 @@ export const UpdateGame = async (prefix:string,id:any,body:any) =>{
 
 export const AddPromotion = async (prefix:string,body:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/create", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/create`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -205,7 +208,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
     export const UpdatePromotion = async (dbname: string, promotionId: any, values: any) =>{
  
    //console.log(JSON.stringify({"prefix":dbname,"promotionId":promotionId,"body":values}))
-    const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/update", { method: 'POST',
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/update`, { method: 'POST',
       headers: {   
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -216,7 +219,7 @@ export const AddPromotion = async (prefix:string,body:any) =>{
 }
 export const GetPromotionById = async (dbname:string,id:any) =>{
  
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/byid", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/byid`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -227,7 +230,7 @@ return response.json()
 }
 export const GetPromotion = async (dbname:string) =>{
  try{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/all", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/all`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -243,7 +246,7 @@ return response.json()
 } 
 
 export const DeletePromotion = async (dbname:string,id:any) =>{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/promotion/delete", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/delete`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -255,7 +258,7 @@ return response.json()
 
 export const GetExchangeRate = async (currency:string) =>{
   try{
-  const response = await fetch(`http://152.42.185.164:4006/api/v1/db/exchange/rate`,{method:'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/exchange/rate`,{method:'POST',
   headers:{
     'Accept':'application/json',
     'Content-Type':'application/json'
@@ -271,7 +274,7 @@ export const GetExchangeRate = async (currency:string) =>{
 
 export const GetDBMode = async (dbname:string) =>{
   try{
-    const response = await fetch(`http://152.42.185.164:4006/api/v1/db/setting`,{method:'POST',
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/setting`,{method:'POST',
     headers:{
       'Accept':'application/json',
       'Content-Type':'application/json'
@@ -290,7 +293,7 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
   
   //console.log(body)
 
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/update", { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/master/update`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -301,7 +304,7 @@ export const UpdateMaster = async (prefix:string,id:any,body:any) =>{
 }
 
 export const GetCommission = async (prefix:string) =>{
-  const response = await fetch("http://152.42.185.164:4006/api/v1/db/master/commission",{method: 'Post',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/master/commission`,{method: 'Post',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',

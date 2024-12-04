@@ -61,7 +61,7 @@ import (
 // @title Api Goteway in Go
 // @version 1.0
 // @description Api Goteway in Go.
-// @host 167.71.100.123:3003
+// @host localhost:4006
 // @BasePath /api/v1
 
 

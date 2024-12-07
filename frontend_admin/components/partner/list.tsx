@@ -1,7 +1,7 @@
 "use client"
  
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo,useRef } from 'react'
 import { useRouter } from 'next/navigation'
  
 import {
@@ -48,7 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
  
-import { GetMemberList } from '@/actions'
+import { GetPartnerList } from '@/actions'
 import { useTranslation } from '@/app/i18n/client';
  
  
@@ -130,7 +130,7 @@ export default function PartnerList({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [editingGame, setEditingGame] = useState<number | null>(null);
+  const [partnerId, setParnerId] = useState<number | null>(null);
   const [isAddingGame, setIsAddingGame] = useState(false);
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -138,8 +138,12 @@ export default function PartnerList({
   const router = useRouter()
 
   const {t} = useTranslation(lng,'translation',undefined)
-
+  const isSeedFetchedRef = useRef(false);
   useEffect(() => {
+    const redirect = ()=>{
+      location.replace(`/${lng}/login`)
+  }
+
     const fetchGames = async () => {
       if (!prefix) {
         setIsLoading(false);
@@ -147,16 +151,20 @@ export default function PartnerList({
       }
       setIsLoading(true);
       try {
-        const fetchedGames = await GetMemberList(prefix);
-        //onsole.log(fetchedGames)
+        const fetchedGames = await GetPartnerList(prefix);
+       // console.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
         console.error('Error fetching games:', error);
+        redirect()
       } finally {
         setIsLoading(false);
       }
     };
+    if ( !isSeedFetchedRef.current) {
     fetchGames();
+    isSeedFetchedRef.current = true; 
+    }
   }, [prefix, refreshTrigger])
 
   const columnHelper = createColumnHelper<iMember>()
@@ -311,7 +319,7 @@ export default function PartnerList({
   })
 
   const handleAddGame = () => {
-    setEditingGame(null);
+    //setEditingGame(null);
     setIsAddingGame(true);
     setShowTable(false);
   };
@@ -323,13 +331,13 @@ export default function PartnerList({
 
   const openEditPanel = (member: iMember) => {
   
-    setEditingGame(member.ID);
+    setParnerId(member.ID);
     setIsAddingGame(false);
     setShowTable(false);
   };
 
   const closeEditPanel = () => {
-    setEditingGame(null);
+    setParnerId(null);
     setIsAddingGame(false);
     setShowTable(true);
     setRefreshTrigger(prev => prev + 1);
@@ -344,11 +352,11 @@ export default function PartnerList({
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
-            <Button onClick={handleAddGame}>{t('member.add.title')}</Button>
+            <Button onClick={handleAddGame}>{t('partner.add.title')}</Button>
           </div>
           <div className="flex items-center py-4">
             <Input
-              placeholder={t('member.columns.search')}
+              placeholder={t('common.columns.search')}
               value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
                 table.getColumn("Username")?.setFilterValue(event.target.value)
@@ -470,7 +478,7 @@ export default function PartnerList({
             {t('member.columns.backToList')}
           </Button>
           <EditPartner
-            partnerId={editingGame || 0}
+            partnerId={partnerId || 0}
             isAdd={isAddingGame}
             lng={lng}
             prefix={prefix}

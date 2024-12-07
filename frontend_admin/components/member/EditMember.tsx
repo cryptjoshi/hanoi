@@ -47,6 +47,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
   const fetchMember = async (prefix:string,id:number) => {
     const data = await GetMemberById(prefix, id);
+    console.log(data)
     form.reset(data.Data as z.infer<typeof memberSchema>);
   };
 
@@ -58,13 +59,13 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
   const handleSubmit = async (data: Member) => {
  
-    console.log(isAdd)
+    //console.log(isAdd)
 
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
     }
-    console.log(data)
+    //console.log(data)
     data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
  
    const result = !isAdd ? await UpdateMember(prefix, memberId, data) : await AddMember(prefix, data)
@@ -112,7 +113,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
                 control={form.control}
-                name="RefferalCode"
+                name="ReferralCode"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('member.columns.refferalcode')}</FormLabel>

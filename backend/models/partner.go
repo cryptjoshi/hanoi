@@ -10,16 +10,24 @@ type Partner struct {
 	gorm.Model
 	ID              int             `gorm:"column:id;primaryKey;autoIncrement;NOT NULL"` // รหัส Partner
 	Name            string          `gorm:"type:varchar(255);column:name;NOT NULL"`      // ชื่อ Partner
+	Username         string    `gorm:"index:idx_username,unique;type:varchar(255);column:username;NOT NULL"`
+	Password         string    `gorm:"type:text;column:password;NOT NULL"`
 	Email           string          `gorm:"type:varchar(255);column:email;unique;NOT NULL"` // อีเมล
 	Phone           string          `gorm:"type:varchar(50);column:phone"`              // เบอร์โทร
-	AffiliateKey    string          `gorm:"type:varchar(50);unique;NOT NULL"`           // รหัส Affiliate ที่ใช้แนบในลิงค์
+	AffiliateKey    string          `gorm:"type:varchar(50);column:affiliatekey;unique;NOT NULL"`           // รหัส Affiliate ที่ใช้แนบในลิงค์
 	CommissionRate  decimal.Decimal `gorm:"type:decimal(5,2);column:commission_rate"`   // เปอร์เซ็นต์ค่าคอมมิชชั่น เช่น 10.00%
 	TotalCommission decimal.Decimal `gorm:"type:decimal(10,2);column:total_commission"` // ยอดค่าคอมมิชชั่นสะสม
 	Status          string          `gorm:"type:varchar(50);column:status;default:'active'"` // สถานะ (active/inactive)
+	Prefix          string    		`gorm:"type:varchar(50);column:prefix;NOT NULL"`    
 	CreatedAt       time.Time       `gorm:"column:created_at;NOT NULL"`                 // วันที่สร้าง
 	UpdatedAt       time.Time       `gorm:"column:updated_at;NOT NULL"`                 // วันที่อัปเดตล่าสุด
 	Affiliates []Affiliate `gorm:"foreignKey:PartnerID"` // ความสัมพันธ์กับ Affiliate
 	TotalEarnings   decimal.Decimal `gorm:"type:decimal(10,2);default:0"` // ค่าคอมมิชชั่นสะสม
+	Token            string    `gorm:"type:text";gorm:"column:token"`
+	Bankname         string    `gorm:"type:varchar(250);column:bankname"`
+	Banknumber       string    `gorm:"type:varchar(50)";column:banknumber;NOT NULL"`
+	Balance          decimal.Decimal   `gorm:"type:numeric(8,2);column:balance;default:0"`
+
 
 }
 

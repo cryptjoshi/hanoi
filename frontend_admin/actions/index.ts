@@ -80,7 +80,62 @@ export const GetDatabaseListByPrefix = async (prefix:string) =>{
   })
   return response.json()
 }
+export const GetPartnerList = async (prefix:string) =>{
+ 
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/all`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix})
+})
+return response.json()
+}
 
+export const  GetPartnerSeed = async (prefix:string) =>{
+ 
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/checkseed`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix})
+})
+return response.json()
+}
+export const GetPartnerById = async (prefix:string,id:number) =>{
+ 
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/byid`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"ID":id})
+})
+return response.json()
+}
+export const AddPartner = async (prefix:string,body:any) =>{
+ 
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/create`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"body":body})
+    })
+    return response.json()
+} 
+
+export const UpdatePartner = async (prefix:string,id:any,body:any) =>{
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/update`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({"prefix":prefix,"id":id,"body":body})
+    })
+    return response.json()
+}
 export const GetMemberList = async (prefix:string) =>{
  
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/all`, { method: 'POST',

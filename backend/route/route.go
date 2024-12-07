@@ -157,7 +157,7 @@ func SetupRoutes(app fiber.Router) {
 	// app.Post("api/user/byid",handler.GetBalanceFromID)
 	app.Post("/db/partner/all", partner.GetPartners)
 	app.Post("/db/partner/login", partner.Login)
-	app.Post("/db/partner/register",partner.Register)
+	app.Post("/db/partner/create",partner.Register)
 
 	app.Post("/db/partner/checkseed",partner.GetSeed)
 	// app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)

@@ -227,11 +227,15 @@ func GetPartners(c *fiber.Ctx) error {
 // @Param user body models.Partner true "User registration info"
 func Register(c *fiber.Ctx) error {
 
-	var currency = os.Getenv("CURRENCY")
+	//var currency = os.Getenv("CURRENCY")
 	user := new(models.Partner)
 
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(200).SendString(err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถแปลงข้อมูลได้: " + err.Error(),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 	// fmt.Printf(" %s ",user)
 	db, conn := database.ConnectToDB(user.Prefix)
@@ -243,16 +247,24 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-
-	seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
-
-	fmt.Printf("SeedPhase  %s\n", seedPhrase) 
-
-	user.AffiliateKey = seedPhrase
-
 	fmt.Printf("user: %s \n",user)
-	result := db.Debug().Create(&user)
+	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
+	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
+
+	//user.AffiliateKey = seedPhrase
+
+	
+	if user.Name == "" {
+		response := ErrorResponse{
+			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			Status:  false,
+		}
+
+		return c.Status(fiber.StatusBadRequest).JSON(response)
+	}
+	result := db.Debug().Create(&user)
+	
 	if result.Error != nil {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
@@ -262,22 +274,22 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	} else {
 
-		updates := map[string]interface{}{
-			"Partnerid":      user.ID,
-			"Preferredname": user.Name,
-			"Username":      strings.ToUpper(user.Prefix) + user.Name + currency,
-			"Currency":      currency,
-			"Actived": nil,
-			"AffiliateKey": user.AffiliateKey,
-		}
-		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
-			response := ErrorResponse{
-				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-				Status:  false,
-			}
+		// updates := map[string]interface{}{
+		// 	"Partnerid":      user.ID,
+		// 	"Preferredname": user.Name,
+		// 	"Username":      strings.ToUpper(user.Prefix) + user.Name + currency,
+		// 	"Currency":      currency,
+		// 	//"Actived": nil,
+		// 	"AffiliateKey": user.AffiliateKey,
+		// }
+		// if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
+		// 	response := ErrorResponse{
+		// 		Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+		// 		Status:  false,
+		// 	}
 
-			return c.Status(fiber.StatusBadRequest).JSON(response)
-		}
+		// 	return c.Status(fiber.StatusBadRequest).JSON(response)
+		// }
 
 		response := fiber.Map{
 			"Message": "เพิ่มยูสเซอร์สำเร็จ!",

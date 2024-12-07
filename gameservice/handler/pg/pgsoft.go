@@ -454,6 +454,9 @@ func LaunchGame(c *fiber.Ctx) error {
 		return c.Status(200).SendString(err.Error())
 	}
 	var users models.Users
+	var tokenString = c.Get("Authorization")[7:]
+	request.SessionToken = tokenString
+	fmt.Printf(" Token: %s \n",tokenString)
 	users = handler.ValidateJWTReturn(request.SessionToken);
 
 	//fmt.Printf("users: %v ",users)
@@ -480,7 +483,7 @@ func LaunchGame(c *fiber.Ctx) error {
 		"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
 	}
 	
-	//fmt.Printf(" args : %s ",args)
+	fmt.Printf(" args : %+v \n",args)
 	
 	resp,err := makePostRequest(common.PG_API_URL+"/seamless/login",args)		
 	if err != nil {

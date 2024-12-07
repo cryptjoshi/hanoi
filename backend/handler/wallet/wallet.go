@@ -786,6 +786,9 @@ func Deposit(c *fiber.Ctx) error {
 	// 	"bankAccountNo":  users.Banknumber,
 	// 	"merchantURL":    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
 	// }
+
+		fmt.Printf("Users: %+v \n",users)
+
 	request := &PayInRequest{
 		Ref:            users.Username,
 		BankAccountName: users.Fullname,

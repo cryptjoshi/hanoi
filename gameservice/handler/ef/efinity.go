@@ -1441,7 +1441,7 @@ func LaunchGame(c *fiber.Ctx) error {
 	// }
 
 	// fmt.Printf("Body: %s",bodyRequest.Body)
-	//var tokenString := c.Get("Authorization")[7:]
+	var tokenString = c.Get("Authorization")[7:]
 	request := new(EfRequest)
 	if err := c.BodyParser(request); err != nil {
 		respon := fiber.Map{
@@ -1452,6 +1452,7 @@ func LaunchGame(c *fiber.Ctx) error {
 		return c.JSON(respon)
 	}
 	var users models.Users
+	request.SessionToken = tokenString
 	users = handler.ValidateJWTReturn(request.SessionToken);
 
 	//fmt.Printf("users: %s ",users)
@@ -1490,7 +1491,7 @@ func LaunchGame(c *fiber.Ctx) error {
 	// 	"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
 	// }
 	
-	 
+	fmt.Printf(" args : %+v \n",args)
 	
 	resp,err := makePostRequest(common.INFINITY_PROD_URL+"/Seamless/LaunchGame",args)		
 	if err != nil {

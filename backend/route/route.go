@@ -6,6 +6,7 @@ import (
 
 	"hanoi/handler"
 	"hanoi/handler/users"
+	"hanoi/handler/partner"
 	"hanoi/handler/wallet"
 	//"hanoi/middlewares"
 	"hanoi/handler/ef"
@@ -154,5 +155,18 @@ func SetupRoutes(app fiber.Router) {
 
 	// app.Post("api/user/token",jwt,handler.UpdateToken)
 	// app.Post("api/user/byid",handler.GetBalanceFromID)
+	app.Post("/db/partner/all", partner.GetPartners)
+	app.Post("/db/partner/login", partner.Login)
+	app.Post("/db/partner/register",partner.Register)
 
+	app.Post("/db/partner/checkseed",partner.GetSeed)
+	// app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
+	// app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
+	// app.Post("/users/info",jwt.JwtMiddleware,users.GetUser)
+	// app.Post("/users/info/username",users.GetUserByUsername)
+	// app.Post("/users/statement",jwt.JwtMiddleware,users.GetUserStatement)
+	// app.Post("/users/transactions",jwt.JwtMiddleware,users.GetUserTransaction)
+	// app.Post("/users/update",jwt.JwtMiddleware,users.UpdateUser)
+	// app.Post("/users/update/pro",jwt.JwtMiddleware,users.UpdateUserPro)
+	// app.Post("/users/commission",jwt.JwtMiddleware,handler.GetUserCommission)
 }

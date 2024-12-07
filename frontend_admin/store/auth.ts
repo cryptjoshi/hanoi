@@ -25,7 +25,7 @@ export type User = {
     password: string;
 };
 
-const endpoint =    `${"http://localhost"}:4006/api/v1/db/login`//`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/login`// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
+const endpoint = `${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/login`//   `${"http://localhost"}:4006/api/v1/db/login`//`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/login`// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT +"api/v1/users/login"
 
 // เพิ่มฟังก์ชันสำหรับอ่านค่า cookie
 function getCookie(name: string): string | null {

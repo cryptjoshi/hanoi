@@ -38,12 +38,19 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
   //   queryKey: ['memberStatus'],
   //   queryFn: async () => await GetMemberStatus(prefix),
   // });
- 
-
-  const form = useForm<Partner>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    form
+  } = useForm<Partner>({
     resolver: zodResolver(partnerSchema),
-    defaultValues: {},
   });
+
+  // const form = useForm<Partner>({
+  //   resolver: zodResolver(partnerSchema),
+  //   defaultValues: {},
+  // });
 
   const fetchPartner = async (prefix:string,id:number) => {
     const data = await GetPartnerById(prefix, id);
@@ -66,7 +73,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     }
   }, [partnerId, prefix]);
 
-  const handleSubmit = async (data: Partner) => {
+  const handlesubmit = async (data: Partner) => {
     console.log(data)
     const errors = form.formState.errors;
     if (Object.keys(errors).length > 0) {
@@ -127,7 +134,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
           <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
           <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handlesubmit)} className="space-y-4">
             <FormField
                 control={form.control}
                 name="RefferalCode"

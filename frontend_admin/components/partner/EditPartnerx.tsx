@@ -38,80 +38,56 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
 
   const form = useForm<Partner>({
     resolver: zodResolver(partnerSchema),
-    defaultValues: {} as z.infer<typeof partnerSchema>
+    defaultValues: {},
   });
 
-  const fetchPartner = async (prefix:string,id:number) => {
-    const data = await GetPartnerById(prefix, id);
-    form.reset(data.Data as z.infer<typeof partnerSchema>);
-  };
+  // const fetchPartner = async (prefix:string,id:number) => {
+  //   const data = await GetPartnerById(prefix, id);
+  //   form.reset(data.Data as z.infer<typeof partnerSchema>);
+  // };
 
-  const fetchSeed = async (prefix:string) => {
-    const seed = await GetPartnerSeed(prefix)
-    form.setValue("RefferalCode",seed.Data.affiliatekey)
-  }
+  // const fetchSeed = async (prefix:string) => {
+  //   const seed = await GetPartnerSeed(prefix)
+  //   form.setValue("RefferalCode",seed.Data.affiliatekey)
+  // }
 
-  useEffect(() => {
-    if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
-      fetchSeed(prefix);
-      isSeedFetchedRef.current = true; //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
-  }
-  if (partnerId && !isSeedFetchedRef.current) {
-      fetchPartner(prefix, partnerId);
-    }
-  }, [partnerId, prefix]);
+  // useEffect(() => {
+  //   if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
+  //     fetchSeed(prefix);
+  //     isSeedFetchedRef.current = true; //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
+  // }
+  // if (partnerId && !isSeedFetchedRef.current) {
+  //     fetchPartner(prefix, partnerId);
+  //   }
+  // }, [partnerId, prefix]);
 
-  const handleSubmit = async (data: z.infer<typeof partnerSchema>) => {
-     
-    const result = await form.trigger();
-    if (!result) {
-      // If validation fails, show errors in toast
-      const errors = form.formState.errors;
-      let errorMessage = t('form.validationError');
-      Object.keys(errors).forEach((key) => {
-        // @ts-ignore
-        errorMessage += `\n${t(`promotion.${key}`)}: ${errors[key]?.message}`;
-      });
+  const handlesubmit = async (data: Partner) => {
 
+    console.log(data)
+
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      // แสดงข้อผิดพลาดหรือทำการจัดการตามที่ต้องการ
       toast({
-        title: t('form.error'),
-        description: errorMessage,
+        title: t("edit.error"),
+        description: t("edit.error_description"),
         variant: "destructive",
-      })
-      return; // Stop the submission
-    } else {
-      toast({
-        title: t("partner.add.success"),
-        description: result,
-        variant: "default",
-      })
+      });
+      return; // หยุดการทำงานหากมีข้อผิดพลาด
     }
 
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
-    }  
+    }
    
    console.log("isAdd:",isAdd)
    data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
-   
-   const formattedValues = {
-    ...data,
-     
-  };
-  console.log("format values:"+JSON.stringify(formattedValues))
-   
-   
-   
-   
-   
-   
-   
-   const resultx = !isAdd ? await UpdatePartner(prefix, partnerId, data) : await AddPartner(prefix, data)
+   const result = !isAdd ? await UpdatePartner(prefix, partnerId, data) : await AddPartner(prefix, data)
    if (!isAdd) {
  
 
-    if (resultx.Status) {
+    if (result.Status) {
       toast({
         title: t("partner.edit.success"),
         description: t("partner.edit.success_description"),
@@ -121,13 +97,13 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     } else {
       toast({
         title: t("edit.error"),
-        description: t("edit.error_description") + resultx.Message,
+        description: t("edit.error_description") + result.Message,
         variant: "destructive",
       })
     }
   } else {
   
-    if (resultx.Status) {
+    if (result.Status) {
       toast({
         title: t("partner.add.success"),
         description: t("partner.add.success_description"),
@@ -137,19 +113,18 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     } else {
       toast({
         title: t("partner.add.error"),
-        description: t("partner.add.error_description") + resultx.Message,
+        description: t("partner.add.error_description") + result.Message,
         variant: "destructive",
       })
     }
   }
   };
     return (
-      <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
           <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
           <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
-        
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handlesubmit)} className="space-y-4">
             <FormField
                 control={form.control}
                 name="RefferalCode"
@@ -317,10 +292,9 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
                 <Button type="submit">{t('common.save')}</Button>
                 <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
               </div>
-           
-        </div>
-        </form>
+            </form>
           </Form>
+        </div>
       );
 }
 

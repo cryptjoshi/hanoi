@@ -52,30 +52,18 @@ import { GetPartnerList } from '@/actions'
 import { useTranslation } from '@/app/i18n/client';
  
  
-export interface iMember {
+export interface iPartners {
   // Define the properties of GroupedDatabase here
   ID:number,
-  Walletid:number,       
 	Username:string,    
 	Password:string,    
-	ProviderPassword:string,    
-	Fullname:string,    
+	Name:string,    
 	Bankname:string,    
 	Banknumber:string,    
 	Balance:number,    
-	Beforebalance:number,    
-	Token:string,    
-	Role:string,    
-	Salt:string,    
+  AffiliateKey:string,
 	Status:number,    
-	Betamount:number,    
-	Win:number,    
-	Lose:number,    
-	Turnover:number,    
-	ProID:string,    
-	PartnersKey:string,    
-	ProStatus:string,    
-  ProActive:string
+	 
 
   // Add other properties as needed
 }
@@ -123,8 +111,8 @@ export default function PartnerList({
   prefix,
   data,
   lng,
-}: {prefix:string, data:DataTableProps<iMember>, lng:string}) {
-  const [games, setGames] = useState<iMember[]>([])
+}: {prefix:string, data:DataTableProps<iPartners>, lng:string}) {
+  const [partners, setPartners] = useState<iPartners[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -138,22 +126,22 @@ export default function PartnerList({
   const router = useRouter()
 
   const {t} = useTranslation(lng,'translation',undefined)
-  const isSeedFetchedRef = useRef(false);
+ // const isSeedFetchedRef = useRef(false);
   useEffect(() => {
     const redirect = ()=>{
       location.replace(`/${lng}/login`)
   }
 
-    const fetchGames = async () => {
+    const fetchPartners = async () => {
       if (!prefix) {
         setIsLoading(false);
         return;
       }
       setIsLoading(true);
       try {
-        const fetchedGames = await GetPartnerList(prefix);
-       // console.log(fetchedGames)
-        setGames(fetchedGames.Data);
+        const Response = await GetPartnerList(prefix);
+        //console.log(Response.Data)
+        setPartners(Response);
       } catch (error) {
         console.error('Error fetching games:', error);
         redirect()
@@ -161,13 +149,13 @@ export default function PartnerList({
         setIsLoading(false);
       }
     };
-    if ( !isSeedFetchedRef.current) {
-    fetchGames();
-    isSeedFetchedRef.current = true; 
-    }
-  }, [prefix, refreshTrigger])
+   // if ( !isSeedFetchedRef.current) {
+    fetchPartners();
+   // isSeedFetchedRef.current = true; 
+    //}
+  }, [prefix])
 
-  const columnHelper = createColumnHelper<iMember>()
+  const columnHelper = createColumnHelper<iPartners>()
 
   const columns = useMemo(() => [
     columnHelper.accessor('ID', {
@@ -179,7 +167,7 @@ export default function PartnerList({
       header: t('member.columns.username'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Fullname', {
+    columnHelper.accessor('Name', {
       header: t('member.columns.fullname'),
       cell: info => info.getValue(),
     }),
@@ -219,14 +207,14 @@ export default function PartnerList({
     //     return value === 1 ? t('active') : value === 0 ? t('inactive') : t('maintenance');
     //   }
     // }),
-    columnHelper.accessor('ProStatus', {
-      header: t('member.columns.prostatus'),
-      cell: info => info.getValue(),
-    }),
-    columnHelper.accessor('ProActive', {
-      header: t('member.columns.proactive'),
-      cell: info => info.getValue(),
-    }),
+    // columnHelper.accessor('ProStatus', {
+    //   header: t('member.columns.prostatus'),
+    //   cell: info => info.getValue(),
+    // }),
+    // columnHelper.accessor('ProActive', {
+    //   header: t('member.columns.proactive'),
+    //   cell: info => info.getValue(),
+    // }),
     // columnHelper.accessor('position', {
     //   header: t('columns.position'),
     //   cell: info => info.getValue(),
@@ -276,7 +264,7 @@ export default function PartnerList({
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const member = row.original as iMember;
+        const member = row.original as iPartners;
         return (
           <div>
             <Button 
@@ -292,7 +280,7 @@ export default function PartnerList({
   ], [])
 
   const table = useReactTable({
-    data: games,
+    data: partners.Data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -326,10 +314,10 @@ export default function PartnerList({
 
   const handleCloseAddGame = () => {
     setIsAddingGame(false);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev:any) => prev + 1);
   };
 
-  const openEditPanel = (member: iMember) => {
+  const openEditPanel = (member: iPartners) => {
   
     setParnerId(member.ID);
     setIsAddingGame(false);
@@ -340,7 +328,7 @@ export default function PartnerList({
     setParnerId(null);
     setIsAddingGame(false);
     setShowTable(true);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev:any) => prev + 1);
   };
 
   if (isLoading) {
@@ -358,7 +346,7 @@ export default function PartnerList({
             <Input
               placeholder={t('common.columns.search')}
               value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
+              onChange={(event:any) =>
                 table.getColumn("Username")?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
@@ -372,14 +360,14 @@ export default function PartnerList({
               <DropdownMenuContent align="end">
                 {table
                   .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
+                  .filter((column:any) => column.getCanHide())
+                  .map((column:any) => {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         // className="capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) => {
+                        onCheckedChange={(value:any) => {
                           if (value !== column.getIsVisible()) {
                             column.toggleVisibility(!!value)
                           }
@@ -395,9 +383,9 @@ export default function PartnerList({
           <div className="rounded-md border">
             <Table>
               <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
+                {table.getHeaderGroups().map((headerGroup:any) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
+                    {headerGroup.headers.map((header:any) => {
                       return (
                         <TableHead key={header.id}>
                           {header.isPlaceholder
@@ -414,12 +402,12 @@ export default function PartnerList({
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row:any) => (
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                     >
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell:any) => (
                         <TableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,

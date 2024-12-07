@@ -236,7 +236,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	seedPhrase,_  := CheckSeed(db)
+	seedPhrase  := CheckSeed(db)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
 	fmt.Printf("SeedPhase  %s\n", seedPhrase) 

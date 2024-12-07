@@ -142,7 +142,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     name:data.Fullname.toString(),    
     bankname:data.Bankname.toString(),    
     banknumber:data.Banknumber.toString(),    
-    status:data.Status
+    status:data.Status.toString()
   };
   console.log("format values:"+JSON.stringify(formattedValues))
    

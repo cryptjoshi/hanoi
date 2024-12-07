@@ -236,8 +236,8 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-
-	seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
+	seedPhrase,_  := CheckSeed(db)
+	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
 	fmt.Printf("SeedPhase  %s\n", seedPhrase) 
 
@@ -1378,6 +1378,21 @@ func XUpdateUserPro(c *fiber.Ctx) error {
 
 
 }
+
+func CheckSeed(db *gorm.DB) string {
+
+	var seedPhrase string
+	for {
+		seedPhrase, _ = encrypt.GenerateAffiliateCode(5) // สร้าง affiliate key ใหม่
+		rowsAffected := db.Debug().Model(&models.Users{}).Where("referral_code = ?", seedPhrase).RowsAffected
+		if rowsAffected == 0 { // ถ้าไม่ซ้ำ
+			break // ออกจากลูป
+		}
+	}
+	return seedPhrase
+}
+
+
 // ... rest of the code ...
 
 // type Body struct {

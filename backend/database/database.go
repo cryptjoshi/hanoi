@@ -181,8 +181,8 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	} else {
 		return nil, err // Return the error if connection fails
 	}
-	//migrateNormal(db)
-	CheckAndCreateTable(db,models.BankStatement{})
+	migrateNormal(db)
+	//CheckAndCreateTable(db,models.BankStatement{})
 	migrationAffiliate(db)
 	return db, nil
 }

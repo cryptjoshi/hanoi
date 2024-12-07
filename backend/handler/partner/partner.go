@@ -224,13 +224,20 @@ func GetPartners(c *fiber.Ctx) error {
 // @Success 200 {object} models.SwaggerUser
 // @Failure 400 {object} ErrorResponse "Error response"
 // @Router /users/register [post]
-// @Param user body models.Partner true "User registration info"
+// @Param user body models.Partner true "Partner registration info"
 func Register(c *fiber.Ctx) error {
 
 	//var currency = os.Getenv("CURRENCY")
-	user := new(models.Partner)
+	type RequestBody struct {
+		Prefix string      `json:"prefix"`
+		Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
+	}
 
-	if err := c.BodyParser(user); err != nil {
+	var partner RequestBody
+
+	//user := new(models.Partner)
+
+	if err := c.BodyParser(&partner); err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถแปลงข้อมูลได้: " + err.Error(),
@@ -238,7 +245,7 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 	// fmt.Printf(" %s ",user)
-	db, conn := database.ConnectToDB(user.Prefix)
+	db, conn := database.ConnectToDB(partner.Prefix)
 	if conn != nil {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่่ พบข้อมูล Prefix!",
@@ -247,7 +254,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	fmt.Printf("user: %s \n",user)
+	fmt.Printf("partner: %+v \n",partner.Body)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
 	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
@@ -255,7 +262,7 @@ func Register(c *fiber.Ctx) error {
 	//user.AffiliateKey = seedPhrase
 
 	
-	if user.Name == "" {
+	if partner.Body.Name == "" {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 			Status:  false,
@@ -263,7 +270,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	result := db.Debug().Create(&user)
+	result := db.Debug().Create(&partner.Body)
 	
 	if result.Error != nil {
 		response := ErrorResponse{
@@ -295,13 +302,14 @@ func Register(c *fiber.Ctx) error {
 			"Message": "เพิ่มยูสเซอร์สำเร็จ!",
 			"Status":  true,
 			"Data": fiber.Map{
-				"id":       user.ID,
-				"partnerid": user.ID,
-				"Partnername": user.Name,
+				"id":       partner.Body.ID,
+				"partnerid": partner.Body.ID,
+				"Partnername": partner.Body.Name,
 			},
 		}
 		return c.Status(fiber.StatusOK).JSON(response)
 	}
+	 
 }
 
 // @Summary Get userinfo

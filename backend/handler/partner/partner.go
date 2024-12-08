@@ -61,6 +61,25 @@ type Dbstruct struct {
 	Username string   `json:"username"`
 	Dbnames  []string `json:"dbnames"`
 }
+type PartnerBody struct {
+	Prefix string `json:"prefix"`
+	ID     int    `json:"id"`
+	Body   struct {
+		Fullname   string `json:"fullname"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		Status     int    `json:"status"`
+		Bankname   string `json:"bankname"`
+		Banknumber string `json:"banknumber"`
+		ProStatus  string `json:"prostatus"`
+		MinTurnoverDef string `json:"minturnoverdef"`
+	}
+}
+
+type RequestBody struct {
+	Prefix string      `json:"prefix"`
+	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
+}
 
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
@@ -224,17 +243,28 @@ func GetPartners(c *fiber.Ctx) error {
 // @Success 200 {object} models.SwaggerUser
 // @Failure 400 {object} ErrorResponse "Error response"
 // @Router /users/register [post]
-// @Param user body models.Partner true "User registration info"
+// @Param user body models.Partner true "Partner registration info"
 func Register(c *fiber.Ctx) error {
 
-	var currency = os.Getenv("CURRENCY")
-	user := new(models.Partner)
+	//var currency = os.Getenv("CURRENCY")
+	// type RequestBody struct {
+	// 	Prefix string      `json:"prefix"`
+	// 	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
+	// }
 
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(200).SendString(err.Error())
+	var partner RequestBody
+
+	//user := new(models.Partner)
+
+	if err := c.BodyParser(&partner); err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถแปลงข้อมูลได้: " + err.Error(),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 	// fmt.Printf(" %s ",user)
-	db, conn := database.ConnectToDB(user.Prefix)
+	db, conn := database.ConnectToDB(partner.Prefix)
 	if conn != nil {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่่ พบข้อมูล Prefix!",
@@ -243,16 +273,24 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
+	fmt.Printf("partner: %+v \n",partner.Body)
+	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
-	seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
+	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
 
-	fmt.Printf("SeedPhase  %s\n", seedPhrase) 
+	//user.AffiliateKey = seedPhrase
 
-	user.AffiliateKey = seedPhrase
+	
+	if partner.Body.Name == "" {
+		response := ErrorResponse{
+			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			Status:  false,
+		}
 
-	fmt.Printf("user: %s \n",user)
-	result := db.Debug().Create(&user)
-
+		return c.Status(fiber.StatusBadRequest).JSON(response)
+	}
+	result := db.Debug().Create(&partner.Body)
+	
 	if result.Error != nil {
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
@@ -262,34 +300,35 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	} else {
 
-		updates := map[string]interface{}{
-			"Partnerid":      user.ID,
-			"Preferredname": user.Name,
-			"Username":      strings.ToUpper(user.Prefix) + user.Name + currency,
-			"Currency":      currency,
-			"Actived": nil,
-			"AffiliateKey": user.AffiliateKey,
-		}
-		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
-			response := ErrorResponse{
-				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-				Status:  false,
-			}
+		// updates := map[string]interface{}{
+		// 	"Partnerid":      user.ID,
+		// 	"Preferredname": user.Name,
+		// 	"Username":      strings.ToUpper(user.Prefix) + user.Name + currency,
+		// 	"Currency":      currency,
+		// 	//"Actived": nil,
+		// 	"AffiliateKey": user.AffiliateKey,
+		// }
+		// if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
+		// 	response := ErrorResponse{
+		// 		Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+		// 		Status:  false,
+		// 	}
 
-			return c.Status(fiber.StatusBadRequest).JSON(response)
-		}
+		// 	return c.Status(fiber.StatusBadRequest).JSON(response)
+		// }
 
 		response := fiber.Map{
 			"Message": "เพิ่มยูสเซอร์สำเร็จ!",
 			"Status":  true,
 			"Data": fiber.Map{
-				"id":       user.ID,
-				"partnerid": user.ID,
-				"Partnername": user.Name,
+				"id":       partner.Body.ID,
+				"partnerid": partner.Body.ID,
+				"Partnername": partner.Body.Name,
 			},
 		}
 		return c.Status(fiber.StatusOK).JSON(response)
 	}
+	 
 }
 
 // @Summary Get userinfo
@@ -338,6 +377,7 @@ func GetPartner(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	
+ 
 	// var promotionLog models.PromotionLog
 	// db.Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
 	// 	Order("created_at DESC").
@@ -460,7 +500,45 @@ func GetPartner(c *fiber.Ctx) error {
 		}}
 	return c.JSON(response)
 }
+func GetPartnerById(c *fiber.Ctx) error {
+    body := new(PartnerBody)
+    if err := c.BodyParser(body); err != nil {
+        response := fiber.Map{
+            "Message": "รับข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
 
+    db, err := database.ConnectToDB(body.Prefix)
+    if err != nil {
+        response := fiber.Map{
+            "Message": "ติดต่อฐานข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
+
+    user := models.Partner{}
+    err = db.Debug().First(&user, body.ID).Error
+    if err != nil {
+        response := fiber.Map{
+            "Message": "ดึงข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
+
+    response := fiber.Map{
+        "Message": "ดึงข้อมูลสำเร็จ",
+        "Status":  true,
+        "Data":    user,
+    }
+    return c.JSON(response)
+}
 func GetPartnerByUsername(c *fiber.Ctx) error {
 	user := new(models.Partner)
 
@@ -908,29 +986,48 @@ type UpdateBody struct {
 
 func UpdatePartner(c *fiber.Ctx) error {
 	// Parse the request body into a map
-	body := make(map[string]interface{})
-	if err := c.BodyParser(&body); err != nil {
+
+	var data RequestBody
+
+	//var partner RequestBody
+
+
+	//body = make(map[string]interface{})
+	if err := c.BodyParser(&data); err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": err.Error(),
 		}
 		return c.JSON(response)
 	}
-
-	// Get the username from the context
-	username := c.Locals("username").(string)
-	
-	db, _err := handler.GetDBFromContext(c)
-	if _err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": "โทเคนไม่ถูกต้อง!!",
+	db, conn := database.ConnectToDB(data.Prefix)
+	if conn != nil {
+		response := ErrorResponse{
+			Message: "เกิดข้อผิดพลาดไม่่ พบข้อมูล Prefix!",
+			Status:  false,
 		}
-		return c.JSON(response)
-	}
 
+		return c.Status(fiber.StatusBadRequest).JSON(response)
+	}
+	fmt.Printf("data: %+v \n",data.Body)
+ 
+
+	// // Get the username from the context
+	// username := c.Locals("username").(string)
+	
+	// db, _err := handler.GetDBFromContext(c)
+	// if _err != nil {
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "โทเคนไม่ถูกต้อง!!",
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	//db, _ := database.ConnectToDB(data.Prefix)
+	
 	var user models.Partner
-	err := db.Where("username = ?", username).First(&user).Error
+
+	err := db.Where("username = ? ", data.Body.Username).First(&user).Error
 	if err != nil {
 		response := fiber.Map{
 			"Status":  false,
@@ -941,8 +1038,8 @@ func UpdatePartner(c *fiber.Ctx) error {
  
 
 	// Update the user with the provided fields
-	fmt.Printf("Body: %s",body)
-	if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+	// fmt.Printf("Body: %s",data.Body)
+	if err := db.Debug().Model(&user).Updates(data.Body).Error; err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),

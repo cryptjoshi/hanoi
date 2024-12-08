@@ -1996,10 +1996,12 @@ func UpdateMember(c *fiber.Ctx) error {
 	member := models.Users{}
 	member.Username = body.Body.Username
 	member.Password = body.Body.Password
+	member.Fullname = body.Body.Fullname
 	member.Status = body.Body.Status
 	member.Bankname = body.Body.Bankname
 	member.Banknumber = body.Body.Banknumber
 	member.Status = body.Body.Status
+	member.ProStatus = body.Body.ProStatus
 	member.MinTurnoverDef=body.Body.MinTurnoverDef
 	
 	//fmt.Println(member)

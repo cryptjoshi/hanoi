@@ -52,30 +52,18 @@ import { GetPartnerList } from '@/actions'
 import { useTranslation } from '@/app/i18n/client';
  
  
-export interface iMember {
+export interface iPartners {
   // Define the properties of GroupedDatabase here
   ID:number,
-  Walletid:number,       
-	Username:string,    
-	Password:string,    
-	ProviderPassword:string,    
-	Fullname:string,    
-	Bankname:string,    
-	Banknumber:string,    
-	Balance:number,    
-	Beforebalance:number,    
-	Token:string,    
-	Role:string,    
-	Salt:string,    
-	Status:number,    
-	Betamount:number,    
-	Win:number,    
-	Lose:number,    
-	Turnover:number,    
-	ProID:string,    
-	PartnersKey:string,    
-	ProStatus:string,    
-  ProActive:string
+	username:string,    
+	password:string,    
+	name:string,    
+	bankname:string,    
+	banknumber:string,    
+	balance:number,    
+  affiliatekey:string,
+	status:number,    
+	 
 
   // Add other properties as needed
 }
@@ -88,7 +76,7 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons"
 import EditMember from './EditPartner'
 import { number } from 'zod'
 import { formatNumber } from '@/lib/utils'
-import EditPartner from './EditPartner'
+import EditPartner from "./EditPartner"
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -115,7 +103,7 @@ function formatSpecificTime(jsonString: string,lng:string): string {
   }
 }
 
-// ตัวอย่างการใช้งาน
+// ตั���อย่างการใช้งาน
 // const jsonString = "{\"type\":\"weekly\",\"daysOfWeek\":[\"mon\"],\"hour\":\"11\",\"minute\":\"10\"}";
 // console.log(formatSpecificTime(jsonString));
 
@@ -123,14 +111,14 @@ export default function PartnerList({
   prefix,
   data,
   lng,
-}: {prefix:string, data:DataTableProps<iMember>, lng:string}) {
-  const [games, setGames] = useState<iMember[]>([])
+}: {prefix:string, data:DataTableProps<iPartners>, lng:string}) {
+  const [partners, setPartners] = useState<iPartners[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [partnerId, setParnerId] = useState<number | null>(null);
+  const [partnerId, setParnerId] = useState<iPartners>(null);
   const [isAddingGame, setIsAddingGame] = useState(false);
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -138,56 +126,58 @@ export default function PartnerList({
   const router = useRouter()
 
   const {t} = useTranslation(lng,'translation',undefined)
-  const isSeedFetchedRef = useRef(false);
+ // const isSeedFetchedRef = useRef(false);
   useEffect(() => {
     const redirect = ()=>{
       location.replace(`/${lng}/login`)
   }
 
-    const fetchGames = async () => {
+    const fetchPartners = async () => {
       if (!prefix) {
         setIsLoading(false);
         return;
       }
       setIsLoading(true);
       try {
-        const fetchedGames = await GetPartnerList(prefix);
-       // console.log(fetchedGames)
-        setGames(fetchedGames.Data);
+        const Response = await GetPartnerList(prefix);
+        if (Response && Response.Data) {
+          setPartners(Response.Data);
+        } else {
+          console.error('No data received from backend');
+        }
       } catch (error) {
-        console.error('Error fetching games:', error);
-        redirect()
+        console.error('Error fetching partners:', error);
+        redirect();
       } finally {
         setIsLoading(false);
       }
     };
-    if ( !isSeedFetchedRef.current) {
-    fetchGames();
-    isSeedFetchedRef.current = true; 
-    }
-  }, [prefix, refreshTrigger])
+    fetchPartners();
+  }, [prefix, refreshTrigger]);
 
-  const columnHelper = createColumnHelper<iMember>()
+  //console.log('Partners:', partners);
+
+  const columnHelper = createColumnHelper<iPartners>()
 
   const columns = useMemo(() => [
-    columnHelper.accessor('ID', {
+    columnHelper.accessor('id', {
       header: t('member.columns.id'),
       cell: info => info.getValue(),
       enableHiding: false,
     }),
-    columnHelper.accessor('Username', {
+    columnHelper.accessor('username', {
       header: t('member.columns.username'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Fullname', {
+    columnHelper.accessor('name', {
       header: t('member.columns.fullname'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Bankname', {
+    columnHelper.accessor('bankname', {
       header: t('member.columns.bankname'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Banknumber', {
+    columnHelper.accessor('banknumber', {
       header: t('member.columns.banknumber'),
       cell: info => info.getValue(),
     }),
@@ -195,18 +185,18 @@ export default function PartnerList({
     //   header: t('columns.username'),
     //   cell: info => info.getValue(),
     // }),
-    columnHelper.accessor('Balance', {
+    columnHelper.accessor('balance', {
       header: t('member.columns.balance'),
       cell: info => {
         const value = info.getValue();
         return formatNumber(parseFloat(value?.toString()), 2);
       }
     }),
-      columnHelper.accessor('Status', {
+      columnHelper.accessor('status', {
         header: t('member.columns.status'),
         cell: info => {
           const value = info.getValue();
-          return value === 1 ? t('common.active') : value === 0 ? t('common.inactive') : t('common.maintenance');
+          return value === 1 ? t('common.active') :  t('common.inactive') ;
         //  console.log('Raw specificTime value:', value); // For debugging
          
         }
@@ -219,14 +209,14 @@ export default function PartnerList({
     //     return value === 1 ? t('active') : value === 0 ? t('inactive') : t('maintenance');
     //   }
     // }),
-    columnHelper.accessor('ProStatus', {
-      header: t('member.columns.prostatus'),
-      cell: info => info.getValue(),
-    }),
-    columnHelper.accessor('ProActive', {
-      header: t('member.columns.proactive'),
-      cell: info => info.getValue(),
-    }),
+    // columnHelper.accessor('ProStatus', {
+    //   header: t('member.columns.prostatus'),
+    //   cell: info => info.getValue(),
+    // }),
+    // columnHelper.accessor('ProActive', {
+    //   header: t('member.columns.proactive'),
+    //   cell: info => info.getValue(),
+    // }),
     // columnHelper.accessor('position', {
     //   header: t('columns.position'),
     //   cell: info => info.getValue(),
@@ -276,14 +266,15 @@ export default function PartnerList({
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const member = row.original as iMember;
+        const member = row.original as iPartners;
+      //  console.log(member)
         return (
           <div>
             <Button 
               variant="ghost" 
               onClick={() => openEditPanel(member)}
             >
-              {t('member.edit.title')}
+              {t('partner.edit.title')}
             </Button>
           </div>
         );
@@ -292,7 +283,7 @@ export default function PartnerList({
   ], [])
 
   const table = useReactTable({
-    data: games,
+    data: partners,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -326,12 +317,14 @@ export default function PartnerList({
 
   const handleCloseAddGame = () => {
     setIsAddingGame(false);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev:any) => prev + 1);
   };
 
-  const openEditPanel = (member: iMember) => {
-  
-    setParnerId(member.ID);
+  const openEditPanel = (member: iPartners) => {
+    //console.log(member)
+    //console.log(JSON.stringify(member))
+    setParnerId(member);
+    
     setIsAddingGame(false);
     setShowTable(false);
   };
@@ -340,7 +333,7 @@ export default function PartnerList({
     setParnerId(null);
     setIsAddingGame(false);
     setShowTable(true);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev:any) => prev + 1);
   };
 
   if (isLoading) {
@@ -357,9 +350,9 @@ export default function PartnerList({
           <div className="flex items-center py-4">
             <Input
               placeholder={t('common.columns.search')}
-              value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("Username")?.setFilterValue(event.target.value)
+              value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
+              onChange={(event:any) =>
+                table.getColumn("username")?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />
@@ -372,14 +365,14 @@ export default function PartnerList({
               <DropdownMenuContent align="end">
                 {table
                   .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
+                  .filter((column:any) => column.getCanHide())
+                  .map((column:any) => {
                     return (
                       <DropdownMenuCheckboxItem
                         key={column.id}
                         // className="capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) => {
+                        onCheckedChange={(value:any) => {
                           if (value !== column.getIsVisible()) {
                             column.toggleVisibility(!!value)
                           }
@@ -395,9 +388,9 @@ export default function PartnerList({
           <div className="rounded-md border">
             <Table>
               <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
+                {table.getHeaderGroups().map((headerGroup:any) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
+                    {headerGroup.headers.map((header:any) => {
                       return (
                         <TableHead key={header.id}>
                           {header.isPlaceholder
@@ -414,12 +407,12 @@ export default function PartnerList({
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row:any) => (
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                     >
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell:any) => (
                         <TableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -478,7 +471,7 @@ export default function PartnerList({
             {t('member.columns.backToList')}
           </Button>
           <EditPartner
-            partnerId={partnerId || 0}
+            partnerId={partnerId.id}
             isAdd={isAddingGame}
             lng={lng}
             prefix={prefix}

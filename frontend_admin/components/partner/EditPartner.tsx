@@ -28,26 +28,71 @@ import useAuthStore from "@/store/auth";
 //     { id: '2', name: 'Live Casino' },
 // ];
 
+const formSchema = z.object({
+  ID:z.number().optional(),     
+  Username:z.string(),    
+  Password:z.string(),      
+  Fullname:z.string(),    
+  Bankname:z.string(),    
+  Banknumber:z.string(),    
+  Status:z.string(),  
+  ProStatus:z.string().optional(),   
+  RefferalCode:z.string(), 
+  RefferedCode:z.string().optional(),
+})
+
+
 function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: number, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
-  
+ 
   const { t } = useTranslation(lng, 'translation', undefined);
   const { customerCurrency } = useAuthStore();
-  //const [isSeedFetched, setIsSeedFetched] = useState(false);
-  const isSeedFetchedRef = useRef(false);
-  // const { data: memberStatus, isLoading: memberStatusLoading } = useQuery({
-  //   queryKey: ['memberStatus'],
-  //   queryFn: async () => await GetMemberStatus(prefix),
-  // });
  
+  const isSeedFetchedRef = useRef(false);
+   
 
   const form = useForm<Partner>({
-    resolver: zodResolver(partnerSchema),
-    defaultValues: {},
+    resolver: zodResolver(formSchema),
+    defaultValues: {} as z.infer<typeof formSchema>
   });
 
-  const fetchPartner = async (prefix:string,id:number) => {
+  const fetchPartner = async (prefix:string,id:any) => {
+   
+    
+      try {
+      //  console.log("prefix:",prefix,",id:",id)
     const data = await GetPartnerById(prefix, id);
-    form.reset(data.Data as z.infer<typeof partnerSchema>);
+   // console.log(data)
+    if(data.Status){
+      const formattedData = {
+        ...data.Data,
+        RefferalCode:data.Data.affiliatekey,
+        Username:data.Data.username,
+        Fullname:data.Data.name,
+        Password:data.Data.password,
+        Bankname:data.Data.bankname,
+        Banknumber:data.Data.banknumber,
+        Balance:data.Data.balance,
+        Status:data.Data.status
+
+      }
+      const { ID, ...formData } = formattedData;
+      form.reset(formData as z.infer<typeof formSchema>);
+    } else {
+      toast({
+        title: t("partner.fetch.error"),
+        description: data.Message,
+        variant: "destructive",
+      })
+    }
+    } catch (error) {
+      //console.error("Error fetching promotion:", error);
+      toast({
+        title: t("partner.fetch.error"),
+        description: t("partner.fetch.error_description"),
+        variant: "destructive",
+      })
+    }
+ 
   };
 
   const fetchSeed = async (prefix:string) => {
@@ -55,79 +100,115 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     form.setValue("RefferalCode",seed.Data.affiliatekey)
   }
 
+
+
   useEffect(() => {
-    //console.log(partnerId)
     if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
       fetchSeed(prefix);
-      isSeedFetchedRef.current = true; //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
+      isSeedFetchedRef.current = true;
+      //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
   }
-  if (partnerId && !isSeedFetchedRef.current) {
+  if (partnerId) {
+    
+     
       fetchPartner(prefix, partnerId);
+      
     }
+   
   }, [partnerId, prefix]);
 
-  const handleSubmit = async (data: Partner) => {
-    console.log(data)
-    const errors = form.formState.errors;
-    if (Object.keys(errors).length > 0) {
-      // แสดงข้อผิดพลาดหรือทำการจัดการตามที่ต้องการ
-      toast({
-        title: t("edit.error"),
-        description: t("edit.error_description"),
-        variant: "destructive",
-      });
-      return; // หยุดการทำงานหากมีข้อผิดพลาด
-    }
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+     
+    // const result = await form.trigger();
+    // if (!result) {
+    //   // If validation fails, show errors in toast
+    //   const errors = form.formState.errors;
+    //   let errorMessage = t('form.validationError');
+    //   Object.keys(errors).forEach((key) => {
+    //     // @ts-ignore
+    //     errorMessage += `\n${t(`promotion.${key}`)}: ${errors[key]?.message}`;
+    //   });
 
+    //   toast({
+    //     title: t('form.error'),
+    //     description: errorMessage,
+    //     variant: "destructive",
+    //   })
+    //   return; // Stop the submission
+    // } else {
+    //   toast({
+    //     title: t("partner.add.success"),
+    //     description: result,
+    //     variant: "default",
+    //   })
+    // }
+    //data.Status = JSON.parse(data.Status?.toString());
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
-    }
-   // console.log(data)
-    data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
- 
-   const result = !isAdd ? await UpdatePartner(prefix, partnerId, data) : await AddPartner(prefix, data)
-   if (!isAdd) {
- 
-
-    if (result.Status) {
+    }  
+   
+   //console.log("isAdd:",isAdd)
+   //data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
+   
+   const formattedValues = {
+    //...data,
+    affiliateKey:data.RefferalCode.toString(),
+    username:data.Username.toString(),    
+    password:data.Password.toString(),      
+    name:data.Fullname.toString(),    
+    bankname:data.Bankname.toString(),    
+    banknumber:data.Banknumber.toString(),    
+    status:data.Status.toString()
+  };
+ // console.log("format values:"+JSON.stringify(formattedValues))
+   
+  if (partnerId) {
+    const data = await UpdatePartner(prefix, partnerId, formattedValues)
+    if (data.Status) {
       toast({
         title: t("partner.edit.success"),
         description: t("partner.edit.success_description"),
         variant: "default",
       })
+     // queryClient.invalidateQueries({ queryKey: ['promotions'] });
       onClose();
     } else {
       toast({
-        title: t("edit.error"),
-        description: t("edit.error_description") + result.Message,
+        title: t("promotion.edit.error"),
+        description: t("promotion.edit.error_description") + data.Message,
         variant: "destructive",
       })
     }
   } else {
-  
-    if (result.Status) {
+    const data = await AddPartner(prefix, formattedValues)
+    if (data.Status) {
       toast({
-        title: t("partner.add.success"),
-        description: t("partner.add.success_description"),
+        title: t("promotion.add.success"),
+        description: data.Message,
         variant: "default",
       })
+     // queryClient.invalidateQueries({ queryKey: ['promotions'] });
       onClose();
     } else {
       toast({
-        title: t("partner.add.error"),
-        description: t("partner.add.error_description") + result.Message,
+        title: t("promotion.add.error"),
+        description: t("promotion.add.error_description") + data.Message,
         variant: "destructive",
       })
     }
   }
-  };
+};
+   
+   
+    
     return (
+      <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
           <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
           <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        
             <FormField
                 control={form.control}
                 name="RefferalCode"
@@ -292,12 +373,29 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
               />
                
               <div className="flex justify-end space-x-2 mt-6">
-                <Button type="submit">{t('common.save')}</Button>
+              <Button type="submit" onClick={async () => {
+              const result = await form.trigger();
+              if (!result) {
+                const errors = form.formState.errors;
+                let errorMessage = t('form.validationError');
+                Object.keys(errors).forEach((key) => {
+                  // @ts-ignore
+                  errorMessage += `\n${t(`partner.${key}`)}: ${errors[key]?.message}`;
+                });
+
+                toast({
+                  title: t('form.error'),
+                  description: errorMessage,
+                  variant: "destructive",
+                })
+              }
+            }}>{t('common.save')}</Button>
                 <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
               </div>
-            </form>
-          </Form>
+           
         </div>
+        </form>
+          </Form>
       );
 }
 

@@ -35,7 +35,7 @@ const formSchema = z.object({
   Fullname:z.string(),    
   Bankname:z.string(),    
   Banknumber:z.string(),    
-  Status:z.number(),  
+  Status:z.string(),  
   ProStatus:z.string().optional(),   
   RefferalCode:z.string(), 
   RefferedCode:z.string().optional(),
@@ -43,7 +43,7 @@ const formSchema = z.object({
 
 
 function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: number, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
-  
+ 
   const { t } = useTranslation(lng, 'translation', undefined);
   const { customerCurrency } = useAuthStore();
  
@@ -55,13 +55,25 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     defaultValues: {} as z.infer<typeof formSchema>
   });
 
-  const fetchPartner = async (prefix:string,id:number) => {
-    if (id) {
+  const fetchPartner = async (prefix:string,id:any) => {
+   
+    
       try {
+      //  console.log("prefix:",prefix,",id:",id)
     const data = await GetPartnerById(prefix, id);
+   // console.log(data)
     if(data.Status){
       const formattedData = {
         ...data.Data,
+        RefferalCode:data.Data.affiliatekey,
+        Username:data.Data.username,
+        Fullname:data.Data.name,
+        Password:data.Data.password,
+        Bankname:data.Data.bankname,
+        Banknumber:data.Data.banknumber,
+        Balance:data.Data.balance,
+        Status:data.Data.status
+
       }
       const { ID, ...formData } = formattedData;
       form.reset(formData as z.infer<typeof formSchema>);
@@ -73,14 +85,14 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
       })
     }
     } catch (error) {
-      console.error("Error fetching promotion:", error);
+      //console.error("Error fetching promotion:", error);
       toast({
         title: t("partner.fetch.error"),
         description: t("partner.fetch.error_description"),
         variant: "destructive",
       })
     }
-  }
+ 
   };
 
   const fetchSeed = async (prefix:string) => {
@@ -93,11 +105,16 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
   useEffect(() => {
     if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
       fetchSeed(prefix);
-      isSeedFetchedRef.current = true; //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
+      isSeedFetchedRef.current = true;
+      //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
   }
-  if (partnerId && !isSeedFetchedRef.current) {
+  if (partnerId) {
+    
+     
       fetchPartner(prefix, partnerId);
+      
     }
+   
   }, [partnerId, prefix]);
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -125,14 +142,14 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     //     variant: "default",
     //   })
     // }
-
+    //data.Status = JSON.parse(data.Status?.toString());
     if (isAdd) {
       // Combine prefix and username when saving
       data.Username = `${prefix}${data.Username}`;
     }  
    
-   console.log("isAdd:",isAdd)
-   data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
+   //console.log("isAdd:",isAdd)
+   //data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
    
    const formattedValues = {
     //...data,
@@ -144,7 +161,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     banknumber:data.Banknumber.toString(),    
     status:data.Status.toString()
   };
-  console.log("format values:"+JSON.stringify(formattedValues))
+ // console.log("format values:"+JSON.stringify(formattedValues))
    
   if (partnerId) {
     const data = await UpdatePartner(prefix, partnerId, formattedValues)

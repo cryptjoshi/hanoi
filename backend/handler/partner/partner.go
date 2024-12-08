@@ -61,6 +61,25 @@ type Dbstruct struct {
 	Username string   `json:"username"`
 	Dbnames  []string `json:"dbnames"`
 }
+type PartnerBody struct {
+	Prefix string `json:"prefix"`
+	ID     int    `json:"id"`
+	Body   struct {
+		Fullname   string `json:"fullname"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		Status     int    `json:"status"`
+		Bankname   string `json:"bankname"`
+		Banknumber string `json:"banknumber"`
+		ProStatus  string `json:"prostatus"`
+		MinTurnoverDef string `json:"minturnoverdef"`
+	}
+}
+
+type RequestBody struct {
+	Prefix string      `json:"prefix"`
+	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
+}
 
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
@@ -228,10 +247,10 @@ func GetPartners(c *fiber.Ctx) error {
 func Register(c *fiber.Ctx) error {
 
 	//var currency = os.Getenv("CURRENCY")
-	type RequestBody struct {
-		Prefix string      `json:"prefix"`
-		Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
-	}
+	// type RequestBody struct {
+	// 	Prefix string      `json:"prefix"`
+	// 	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
+	// }
 
 	var partner RequestBody
 
@@ -358,6 +377,7 @@ func GetPartner(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	
+ 
 	// var promotionLog models.PromotionLog
 	// db.Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
 	// 	Order("created_at DESC").
@@ -480,7 +500,45 @@ func GetPartner(c *fiber.Ctx) error {
 		}}
 	return c.JSON(response)
 }
+func GetPartnerById(c *fiber.Ctx) error {
+    body := new(PartnerBody)
+    if err := c.BodyParser(body); err != nil {
+        response := fiber.Map{
+            "Message": "รับข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
 
+    db, err := database.ConnectToDB(body.Prefix)
+    if err != nil {
+        response := fiber.Map{
+            "Message": "ติดต่อฐานข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
+
+    user := models.Partner{}
+    err = db.Debug().First(&user, body.ID).Error
+    if err != nil {
+        response := fiber.Map{
+            "Message": "ดึงข้อมูลผิดพลาด",
+            "Status":  false,
+            "Data":    err.Error(),
+        }
+        return c.JSON(response)
+    }
+
+    response := fiber.Map{
+        "Message": "ดึงข้อมูลสำเร็จ",
+        "Status":  true,
+        "Data":    user,
+    }
+    return c.JSON(response)
+}
 func GetPartnerByUsername(c *fiber.Ctx) error {
 	user := new(models.Partner)
 
@@ -928,29 +986,48 @@ type UpdateBody struct {
 
 func UpdatePartner(c *fiber.Ctx) error {
 	// Parse the request body into a map
-	body := make(map[string]interface{})
-	if err := c.BodyParser(&body); err != nil {
+
+	var data RequestBody
+
+	//var partner RequestBody
+
+
+	//body = make(map[string]interface{})
+	if err := c.BodyParser(&data); err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": err.Error(),
 		}
 		return c.JSON(response)
 	}
-
-	// Get the username from the context
-	username := c.Locals("username").(string)
-	
-	db, _err := handler.GetDBFromContext(c)
-	if _err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": "โทเคนไม่ถูกต้อง!!",
+	db, conn := database.ConnectToDB(data.Prefix)
+	if conn != nil {
+		response := ErrorResponse{
+			Message: "เกิดข้อผิดพลาดไม่่ พบข้อมูล Prefix!",
+			Status:  false,
 		}
-		return c.JSON(response)
-	}
 
+		return c.Status(fiber.StatusBadRequest).JSON(response)
+	}
+	fmt.Printf("data: %+v \n",data.Body)
+ 
+
+	// // Get the username from the context
+	// username := c.Locals("username").(string)
+	
+	// db, _err := handler.GetDBFromContext(c)
+	// if _err != nil {
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "โทเคนไม่ถูกต้อง!!",
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	//db, _ := database.ConnectToDB(data.Prefix)
+	
 	var user models.Partner
-	err := db.Where("username = ?", username).First(&user).Error
+
+	err := db.Where("username = ? ", data.Body.Username).First(&user).Error
 	if err != nil {
 		response := fiber.Map{
 			"Status":  false,
@@ -961,8 +1038,8 @@ func UpdatePartner(c *fiber.Ctx) error {
  
 
 	// Update the user with the provided fields
-	fmt.Printf("Body: %s",body)
-	if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
+	// fmt.Printf("Body: %s",data.Body)
+	if err := db.Debug().Model(&user).Updates(data.Body).Error; err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),

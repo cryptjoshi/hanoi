@@ -47,7 +47,7 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
   const fetchMember = async (prefix:string,id:number) => {
     const data = await GetMemberById(prefix, id);
-    console.log(data)
+   // console.log(data)
     form.reset(data.Data as z.infer<typeof memberSchema>);
   };
 
@@ -422,7 +422,23 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
                 )}  
               />
               <div className="flex justify-end space-x-2 mt-6">
-                <Button type="submit">{t('common.save')}</Button>
+              <Button type="submit" onClick={async () => {
+                    const result = await form.trigger();
+                    if (!result) {
+                      const errors = form.formState.errors;
+                      let errorMessage = t('form.validationError');
+                      Object.keys(errors).forEach((key) => {
+                        // @ts-ignore
+                        errorMessage += `\n${t(`member.${key}`)}: ${errors[key]?.message}`;
+                      });
+
+                      toast({
+                        title: t('form.error'),
+                        description: errorMessage,
+                        variant: "destructive",
+                      })
+                    }
+                  }}>{t('common.save')}</Button>
                 <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
               </div>
             </form>

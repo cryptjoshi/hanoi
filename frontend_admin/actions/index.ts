@@ -104,7 +104,7 @@ export const  GetPartnerSeed = async (prefix:string) =>{
 return response.json()
 }
 export const GetPartnerById = async (prefix:string,id:number) =>{
- 
+  
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/byid`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',

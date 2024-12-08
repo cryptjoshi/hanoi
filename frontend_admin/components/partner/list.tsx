@@ -55,14 +55,14 @@ import { useTranslation } from '@/app/i18n/client';
 export interface iPartners {
   // Define the properties of GroupedDatabase here
   ID:number,
-	Username:string,    
-	Password:string,    
-	Name:string,    
-	Bankname:string,    
-	Banknumber:string,    
-	Balance:number,    
-  AffiliateKey:string,
-	Status:number,    
+	username:string,    
+	password:string,    
+	name:string,    
+	bankname:string,    
+	banknumber:string,    
+	balance:number,    
+  affiliatekey:string,
+	status:number,    
 	 
 
   // Add other properties as needed
@@ -76,7 +76,7 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons"
 import EditMember from './EditPartner'
 import { number } from 'zod'
 import { formatNumber } from '@/lib/utils'
-import EditPartner from './EditPartner'
+import EditPartner from "./EditPartner"
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -103,7 +103,7 @@ function formatSpecificTime(jsonString: string,lng:string): string {
   }
 }
 
-// ตัวอย่างการใช้งาน
+// ตั���อย่างการใช้งาน
 // const jsonString = "{\"type\":\"weekly\",\"daysOfWeek\":[\"mon\"],\"hour\":\"11\",\"minute\":\"10\"}";
 // console.log(formatSpecificTime(jsonString));
 
@@ -118,7 +118,7 @@ export default function PartnerList({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [partnerId, setParnerId] = useState<number | null>(null);
+  const [partnerId, setParnerId] = useState<iPartners>(null);
   const [isAddingGame, setIsAddingGame] = useState(false);
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -140,42 +140,44 @@ export default function PartnerList({
       setIsLoading(true);
       try {
         const Response = await GetPartnerList(prefix);
-        //console.log(Response.Data)
-        setPartners(Response);
+        if (Response && Response.Data) {
+          setPartners(Response.Data);
+        } else {
+          console.error('No data received from backend');
+        }
       } catch (error) {
-        console.error('Error fetching games:', error);
-        redirect()
+        console.error('Error fetching partners:', error);
+        redirect();
       } finally {
         setIsLoading(false);
       }
     };
-   // if ( !isSeedFetchedRef.current) {
     fetchPartners();
-   // isSeedFetchedRef.current = true; 
-    //}
-  }, [prefix])
+  }, [prefix, refreshTrigger]);
+
+  //console.log('Partners:', partners);
 
   const columnHelper = createColumnHelper<iPartners>()
 
   const columns = useMemo(() => [
-    columnHelper.accessor('ID', {
+    columnHelper.accessor('id', {
       header: t('member.columns.id'),
       cell: info => info.getValue(),
       enableHiding: false,
     }),
-    columnHelper.accessor('Username', {
+    columnHelper.accessor('username', {
       header: t('member.columns.username'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Name', {
+    columnHelper.accessor('name', {
       header: t('member.columns.fullname'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Bankname', {
+    columnHelper.accessor('bankname', {
       header: t('member.columns.bankname'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Banknumber', {
+    columnHelper.accessor('banknumber', {
       header: t('member.columns.banknumber'),
       cell: info => info.getValue(),
     }),
@@ -183,18 +185,18 @@ export default function PartnerList({
     //   header: t('columns.username'),
     //   cell: info => info.getValue(),
     // }),
-    columnHelper.accessor('Balance', {
+    columnHelper.accessor('balance', {
       header: t('member.columns.balance'),
       cell: info => {
         const value = info.getValue();
         return formatNumber(parseFloat(value?.toString()), 2);
       }
     }),
-      columnHelper.accessor('Status', {
+      columnHelper.accessor('status', {
         header: t('member.columns.status'),
         cell: info => {
           const value = info.getValue();
-          return value === 1 ? t('common.active') : value === 0 ? t('common.inactive') : t('common.maintenance');
+          return value === 1 ? t('common.active') :  t('common.inactive') ;
         //  console.log('Raw specificTime value:', value); // For debugging
          
         }
@@ -265,13 +267,14 @@ export default function PartnerList({
       enableHiding: false,
       cell: ({ row }) => {
         const member = row.original as iPartners;
+      //  console.log(member)
         return (
           <div>
             <Button 
               variant="ghost" 
               onClick={() => openEditPanel(member)}
             >
-              {t('member.edit.title')}
+              {t('partner.edit.title')}
             </Button>
           </div>
         );
@@ -280,7 +283,7 @@ export default function PartnerList({
   ], [])
 
   const table = useReactTable({
-    data: partners.Data,
+    data: partners,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -318,8 +321,10 @@ export default function PartnerList({
   };
 
   const openEditPanel = (member: iPartners) => {
-  
-    setParnerId(member.ID);
+    //console.log(member)
+    //console.log(JSON.stringify(member))
+    setParnerId(member);
+    
     setIsAddingGame(false);
     setShowTable(false);
   };
@@ -345,9 +350,9 @@ export default function PartnerList({
           <div className="flex items-center py-4">
             <Input
               placeholder={t('common.columns.search')}
-              value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
+              value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
               onChange={(event:any) =>
-                table.getColumn("Username")?.setFilterValue(event.target.value)
+                table.getColumn("username")?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />
@@ -466,7 +471,7 @@ export default function PartnerList({
             {t('member.columns.backToList')}
           </Button>
           <EditPartner
-            partnerId={partnerId || 0}
+            partnerId={partnerId.id}
             isAdd={isAddingGame}
             lng={lng}
             prefix={prefix}

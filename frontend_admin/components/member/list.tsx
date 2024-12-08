@@ -147,7 +147,7 @@ export default function MemberListDataTable({
       setIsLoading(true);
       try {
         const fetchedGames = await GetMemberList(prefix);
-        //onsole.log(fetchedGames)
+        console.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
         console.error('Error fetching games:', error);
@@ -165,6 +165,10 @@ export default function MemberListDataTable({
       header: t('member.columns.id'),
       cell: info => info.getValue(),
       enableHiding: false,
+    }),
+    columnHelper.accessor('ReferralCode', {
+      header: t('member.columns.referralcode'),
+      cell: info => info.getValue(),
     }),
     columnHelper.accessor('Username', {
       header: t('member.columns.username'),

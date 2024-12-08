@@ -298,10 +298,9 @@
             "cancel":"Cancel",
             "minturnover_def":"Minimum TurnCredit Default",
             "refferalcode":"Refferal code",
-            "refferedcode":"Reffered by"
+            "refferedcode":"Reffered by",
+            "referralcode":"Refferal code"
         }
-        
-        
     },
     "partner": {
         "title": "Partner",
@@ -330,6 +329,7 @@
             "password": "Password",
             "bankname": "Bank Name",
             "banknumber": "Bank Number",
+            "turnover":"Turn Over",
             "balance": "Balance",
             "status": "Status",
             "proactive": "Pro Active",
@@ -342,7 +342,10 @@
             "cancel":"Cancel",
             "minturnover_def":"Minimum TurnCredit Default",
             "refferalcode":"Refferal code",
-            "refferedcode":"Reffered by"
+            "refferedcode":"Reffered by",
+            "totalcommission": "Total Commission",
+            "totalearnings":"Total Earnings"
+
         }
         
         

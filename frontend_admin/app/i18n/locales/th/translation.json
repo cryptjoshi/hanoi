@@ -298,7 +298,8 @@
             "cancel":"ยกเลิก",
             "minturnover_def":"เทิร์นเครดิตต่ำสุด เริ่มต้น",
             "refferalcode":"โค๊ดอ้างอิง",
-            "refferedcode":"อ้างอิง"
+            "refferedcode":"อ้างอิง",
+            "referralcode":"โค๊ดอ้างอิง"
         }
     },
     "partner": {
@@ -328,6 +329,7 @@
             "password": "รหัสผ่าน",
             "bankname": "ชื่อธนาคาร",
             "banknumber": "หมายเลขบัญชี",
+            "turnover":"เทิร์นโอเวอร์",
             "balance": "ยอดเงิน",
             "status": "สถานะ",
             "proactive": "โปรโมชั่นที่ใช้",
@@ -340,7 +342,9 @@
             "cancel":"ยกเลิก",
             "minturnover_def":"เทิร์นเครดิตต่ำสุด เริ่มต้น",
             "refferalcode":"โค๊ดอ้างอิง",
-            "refferedcode":"อ้างอิง"
+            "refferedcode":"อ้างอิง",
+            "totalcommission": "คอมมิชชั่นทั้งหมด",
+            "totalearnings":"รายได้ทั้งหมด"
         }
     },
     "settings": {

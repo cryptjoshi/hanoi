@@ -10,7 +10,10 @@
         "username": "Username",
         "password": "Password",
         "submit": "Submit"
-      }
+      },
+      "columns":{
+        "search": "Search"
+    }
 
   }
   

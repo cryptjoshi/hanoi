@@ -141,6 +141,7 @@ export default function PartnerList({
       try {
         const Response = await GetPartnerList(prefix);
         if (Response && Response.Data) {
+           console.log(Response.Data)
           setPartners(Response.Data);
         } else {
           console.error('No data received from backend');
@@ -161,39 +162,54 @@ export default function PartnerList({
 
   const columns = useMemo(() => [
     columnHelper.accessor('id', {
-      header: t('member.columns.id'),
+      header: t('partner.columns.id'),
       cell: info => info.getValue(),
       enableHiding: false,
     }),
     columnHelper.accessor('username', {
-      header: t('member.columns.username'),
+      header: t('partner.columns.username'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('name', {
-      header: t('member.columns.fullname'),
+      header: t('partner.columns.fullname'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('bankname', {
-      header: t('member.columns.bankname'),
+      header: t('partner.columns.bankname'),
       cell: info => info.getValue(),
     }),
     columnHelper.accessor('banknumber', {
-      header: t('member.columns.banknumber'),
+      header: t('partner.columns.banknumber'),
       cell: info => info.getValue(),
     }),
     // columnHelper.accessor('Password', {
     //   header: t('columns.username'),
     //   cell: info => info.getValue(),
     // }),
+   
+    columnHelper.accessor('totalearnings', {
+      header: t('partner.columns.totalearnings'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+    columnHelper.accessor('totalcommission', {
+      header: t('partner.columns.totalcommission'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
     columnHelper.accessor('balance', {
-      header: t('member.columns.balance'),
+      header: t('partner.columns.balance'),
       cell: info => {
         const value = info.getValue();
         return formatNumber(parseFloat(value?.toString()), 2);
       }
     }),
       columnHelper.accessor('status', {
-        header: t('member.columns.status'),
+        header: t('partner.columns.status'),
         cell: info => {
           const value = info.getValue();
           return value === 1 ? t('common.active') :  t('common.inactive') ;
@@ -210,11 +226,11 @@ export default function PartnerList({
     //   }
     // }),
     // columnHelper.accessor('ProStatus', {
-    //   header: t('member.columns.prostatus'),
+    //   header: t('partner.columns.prostatus'),
     //   cell: info => info.getValue(),
     // }),
     // columnHelper.accessor('ProActive', {
-    //   header: t('member.columns.proactive'),
+    //   header: t('partner.columns.proactive'),
     //   cell: info => info.getValue(),
     // }),
     // columnHelper.accessor('position', {
@@ -349,7 +365,7 @@ export default function PartnerList({
           </div>
           <div className="flex items-center py-4">
             <Input
-              placeholder={t('common.columns.search')}
+              placeholder={t('common.search')}
               value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
               onChange={(event:any) =>
                 table.getColumn("username")?.setFilterValue(event.target.value)
@@ -378,7 +394,7 @@ export default function PartnerList({
                           }
                         }}
                       >
-                        {t(`member.columns.${(column.id as string).toLowerCase()}`)}
+                        {t(`partner.columns.${(column.id as string).toLowerCase()}`)}
                       </DropdownMenuCheckboxItem>
                     )
                   })}
@@ -468,7 +484,7 @@ export default function PartnerList({
             className="mb-4"
           >
             <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            {t('member.columns.backToList')}
+            {t('partner.columns.backToList')}
           </Button>
           <EditPartner
             partnerId={partnerId.id}

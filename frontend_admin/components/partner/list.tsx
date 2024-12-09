@@ -353,7 +353,7 @@ export default function PartnerList({
   };
 
   if (isLoading) {
-    return <div>Loading {t('member.title')}...</div>;
+    return <div>Loading {t('partner.title')}...</div>;
   }
 
   return (

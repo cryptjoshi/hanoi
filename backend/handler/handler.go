@@ -812,7 +812,7 @@ func RootLogin(c *fiber.Ctx) error {
 	//dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FBangkok", loginRequest.Username, loginRequest.Password, dbName)
 	// เชื่อมต่อกับฐานข้อมูลระบบ 'mysql'
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?charset=utf8mb4&parseTime=True", loginRequest.Username, loginRequest.Password, mysql_host)
-	//fmt.Println(dsn)
+	fmt.Printf("DSN: %s",dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		response := fiber.Map{

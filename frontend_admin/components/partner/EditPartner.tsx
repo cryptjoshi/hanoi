@@ -144,10 +144,6 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     //   })
     // }
     //data.Status = JSON.parse(data.Status?.toString());
-    if (isAdd) {
-      // Combine prefix and username when saving
-      data.Username = `${prefix}${data.Username}`;
-    }  
    
    //console.log("isAdd:",isAdd)
    //data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
@@ -156,12 +152,18 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     //...data,
     affiliateKey:data.RefferalCode.toString(),
     username:data.Username.toString(),    
+    Preferredname:data.Username.toString(),
     password:data.Password.toString(),      
     name:data.Fullname.toString(),    
     bankname:data.Bankname.toString(),    
     banknumber:data.Banknumber.toString(),    
     status:data.Status.toString()
   };
+  if (isAdd) {
+    // Combine prefix and username when saving
+    formattedValues.username = `${prefix}${data.Username}`;
+  }  
+ 
  // console.log("format values:"+JSON.stringify(formattedValues))
    
   if (partnerId) {

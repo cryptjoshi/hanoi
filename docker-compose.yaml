@@ -46,6 +46,35 @@ services:
     environment:
       - NEXT_PUBLIC_ENVIRONMENT=development
 
+  moodeng:
+    container_name: moodeng
+    build:
+        context: ./moodeng
+        dockerfile: ./Dockerfile
+        target: development
+    volumes:
+        - ./moodeng:/app
+        - /app/node_modules
+        #- /app/.next
+    expose:
+        - '5002'
+    ports:
+        - "5002:5002"
+    working_dir: /app
+    env_file: .env
+    environment:
+      - NEXT_PUBLIC_ENVIRONMENT=development
+    # labels:
+    #   caddy: paribrand.shop
+    #   caddy.reverse_proxy: "{{upstreams 4001}}"
+    #   caddy.tls: "internal"
+    # environment:
+    #    - VIRTUAL_HOST=dashboard.tsxbet.com
+    #    - VIRTUAL_PORT=4001
+    #    - NEXT_PUBLIC_PREFIX=PKD
+    networks:
+        - proxy-net
+
   zookeep:
     container_name: zookeep
     build:

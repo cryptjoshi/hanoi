@@ -95,7 +95,7 @@ type Setting struct {
 	Value string `gorm:"column:value"` // Adjust the struct according to your table schema
 }
 
-func getMaster(prefix string) (Setting,error) {
+func GetMaster(prefix string) (Setting,error) {
 
 	masterDSN := fmt.Sprintf(baseDSN, "master") // Assuming 'master' is the database name for settings
 	masterDB, err := gorm.Open(mysql.Open(masterDSN), &gorm.Config{
@@ -195,4 +195,17 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+func connectDBP(prefix string) (*gorm.DB, error) {
+	// สร้าง DSN สำหรับการเชื่อมต่อฐานข้อมูล
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, prefix)
+
+	// เชื่อมต่อกับฐานข้อมูล
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("ไม่สามารถเชื่อมต่อกับฐานข้อมูล: %v", err)
+	}
+
+	return db, nil
 }

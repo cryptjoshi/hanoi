@@ -86,7 +86,7 @@ type User = {
 // }
 
 
-export default function RegisterComponent({lng}:{lng:string}) {
+export default function RegisterComponent({lng,refferedcode}:{lng:string,refferedcode:string}) {
  
  //const [iserror,setError] = React.useState(false)
  //const state = useAuthStore()
@@ -105,7 +105,10 @@ export default function RegisterComponent({lng}:{lng:string}) {
 
   //const {login} = useAuthStore()
   const onSubmit: SubmitHandler<User> = (body:User) => {
-
+    if (refferedcode) {
+      body.referred_by = refferedcode; // ใส่ค่า refferedcode ลงใน referred_by
+    }
+   console.log(body)
    RegisterUser("ckd",body).then((response) =>{
  
     if(!response.Status){
@@ -174,7 +177,8 @@ export default function RegisterComponent({lng}:{lng:string}) {
                 className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
                 placeholder=""
                 required
-                defaultValue=""  {...register("fullname", { required: true })} 
+                defaultValue=""  
+                {...register("fullname", { required: true })} 
               />
             </div>
             <div className="mt-4">
@@ -186,8 +190,9 @@ export default function RegisterComponent({lng}:{lng:string}) {
                 id="referred_by"
                 className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
                 placeholder=""
-          
-                defaultValue=""  {...register("referred_by")} 
+                defaultValue={refferedcode}
+                readOnly={!!refferedcode} 
+                {...register("referred_by")} 
               />
             </div>
             <div className="mt-4">

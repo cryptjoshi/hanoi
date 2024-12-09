@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 // import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 // import { Calendar } from "@/components/ui/calendar";
 import useAuthStore from "@/store/auth";
+import { iPartners } from "./list";
 
 // const gametype = [
 //     { id: '1', name: 'Slot' },
@@ -42,7 +43,7 @@ const formSchema = z.object({
 })
 
 
-function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: number, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
+function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: iPartners, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
  
   const { t } = useTranslation(lng, 'translation', undefined);
   const { customerCurrency } = useAuthStore();
@@ -111,7 +112,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
   if (partnerId) {
     
      
-      fetchPartner(prefix, partnerId);
+      fetchPartner(prefix, partnerId.id);
       
     }
    
@@ -164,7 +165,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
  // console.log("format values:"+JSON.stringify(formattedValues))
    
   if (partnerId) {
-    const data = await UpdatePartner(prefix, partnerId, formattedValues)
+    const data = await UpdatePartner(prefix, partnerId.id, formattedValues)
     if (data.Status) {
       toast({
         title: t("partner.edit.success"),
@@ -353,8 +354,8 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
                   <FormItem>
                     <FormLabel>{t('partner.columns.status')}</FormLabel>
                     <Select
-                onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
-                      value={field.value?.toString() || ''}
+                onValueChange={(value:any) => field.onChange(value)}
+                      value={field.value || ''}
                     >
                     <FormControl>
                     <SelectTrigger>

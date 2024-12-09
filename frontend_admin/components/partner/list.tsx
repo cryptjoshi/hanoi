@@ -54,6 +54,7 @@ import { useTranslation } from '@/app/i18n/client';
  
 export interface iPartners {
   // Define the properties of GroupedDatabase here
+  id:number,
   ID:number,
 	username:string,    
 	password:string,    
@@ -337,7 +338,7 @@ export default function PartnerList({
   };
 
   const openEditPanel = (member: iPartners) => {
-    //console.log(member)
+    console.log(member)
     //console.log(JSON.stringify(member))
     setParnerId(member);
     
@@ -487,7 +488,7 @@ export default function PartnerList({
             {t('partner.columns.backToList')}
           </Button>
           <EditPartner
-            partnerId={partnerId.id}
+            partnerId={partnerId}
             isAdd={isAddingGame}
             lng={lng}
             prefix={prefix}

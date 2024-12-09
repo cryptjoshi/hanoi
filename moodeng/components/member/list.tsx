@@ -68,18 +68,21 @@ export interface iMember {
 	Role:string,    
 	Salt:string,    
 	Status:number,    
-	Betamount:number,    
+	Betamount:number,  
+  Commission:number,  
 	Win:number,    
 	Lose:number,    
 	Turnover:number,    
 	ProID:string,    
 	PartnersKey:string,    
 	ProStatus:string,    
-  ProActive:string
+  ProActive:string,
+  Prefix:string
+
 
   // Add other properties as needed
 }
-interface DataTableProps<TData> {
+export interface DataTableProps<TData> {
   columns: ColumnDef<TData, any>[]
   data: TData[]
 }
@@ -88,6 +91,7 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons"
 import EditMember from './EditMember'
 import { number } from 'zod'
 import { formatNumber } from '@/lib/utils'
+import useAuthStore from '@/store/auth'
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -119,10 +123,9 @@ function formatSpecificTime(jsonString: string,lng:string): string {
 // console.log(formatSpecificTime(jsonString));
 
 export default function MemberListDataTable({
-  prefix,
   data,
   lng,
-}: {prefix:string, data:DataTableProps<iMember>, lng:string}) {
+}: { data:DataTableProps<iMember>, lng:string}) {
   const [games, setGames] = useState<iMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -134,20 +137,18 @@ export default function MemberListDataTable({
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showTable, setShowTable] = useState(true);
+  const [prefix,setPrefix] = useState(null)
   const router = useRouter()
-
+  const { customerCurrency,accessToken } = useAuthStore();
   const {t} = useTranslation(lng,'translation',undefined)
 
   useEffect(() => {
     const fetchGames = async () => {
-      if (!prefix) {
-        setIsLoading(false);
-        return;
-      }
+      
       setIsLoading(true);
       try {
-        const fetchedGames = await GetMemberList(prefix);
-        console.log(fetchedGames)
+        const fetchedGames = await GetMemberList(accessToken);
+       // console.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
         console.error('Error fetching games:', error);
@@ -156,7 +157,7 @@ export default function MemberListDataTable({
       }
     };
     fetchGames();
-  }, [prefix, refreshTrigger])
+  }, [ refreshTrigger])
 
   const columnHelper = createColumnHelper<iMember>()
 
@@ -166,10 +167,10 @@ export default function MemberListDataTable({
       cell: info => info.getValue(),
       enableHiding: false,
     }),
-    columnHelper.accessor('ReferralCode', {
-      header: t('member.columns.referralcode'),
-      cell: info => info.getValue(),
-    }),
+    // columnHelper.accessor('ReferralCode', {
+    //   header: t('member.columns.referralcode'),
+    //   cell: info => info.getValue(),
+    // }),
     columnHelper.accessor('Username', {
       header: t('member.columns.username'),
       cell: info => info.getValue(),
@@ -178,20 +179,34 @@ export default function MemberListDataTable({
       header: t('member.columns.fullname'),
       cell: info => info.getValue(),
     }),
-    columnHelper.accessor('Bankname', {
-      header: t('member.columns.bankname'),
-      cell: info => info.getValue(),
-    }),
-    columnHelper.accessor('Banknumber', {
-      header: t('member.columns.banknumber'),
-      cell: info => info.getValue(),
-    }),
+    // columnHelper.accessor('Bankname', {
+    //   header: t('member.columns.bankname'),
+    //   cell: info => info.getValue(),
+    // }),
+    // columnHelper.accessor('Banknumber', {
+    //   header: t('member.columns.banknumber'),
+    //   cell: info => info.getValue(),
+    // }),
     // columnHelper.accessor('Password', {
     //   header: t('columns.username'),
     //   cell: info => info.getValue(),
     // }),
-    columnHelper.accessor('Balance', {
-      header: t('member.columns.balance'),
+    // columnHelper.accessor('Balance', {
+    //   header: t('member.columns.balance'),
+    //   cell: info => {
+    //     const value = info.getValue();
+    //     return formatNumber(parseFloat(value?.toString()), 2);
+    //   }
+    // }),
+    columnHelper.accessor('Turnover', {
+      header: t('member.columns.turnover'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+    columnHelper.accessor('Totalcommission', {
+      header: t('member.columns.totalcommission'),
       cell: info => {
         const value = info.getValue();
         return formatNumber(parseFloat(value?.toString()), 2);
@@ -214,14 +229,14 @@ export default function MemberListDataTable({
     //     return value === 1 ? t('active') : value === 0 ? t('inactive') : t('maintenance');
     //   }
     // }),
-    columnHelper.accessor('ProStatus', {
-      header: t('member.columns.prostatus'),
-      cell: info => info.getValue(),
-    }),
-    columnHelper.accessor('ProActive', {
-      header: t('member.columns.proactive'),
-      cell: info => info.getValue(),
-    }),
+    // columnHelper.accessor('ProStatus', {
+    //   header: t('member.columns.prostatus'),
+    //   cell: info => info.getValue(),
+    // }),
+    // columnHelper.accessor('ProActive', {
+    //   header: t('member.columns.proactive'),
+    //   cell: info => info.getValue(),
+    // }),
     // columnHelper.accessor('position', {
     //   header: t('columns.position'),
     //   cell: info => info.getValue(),
@@ -267,23 +282,23 @@ export default function MemberListDataTable({
     //   header: t('termsAndConditions'),
     //   cell: info => info.getValue(),
     // }),
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const member = row.original as iMember;
-        return (
-          <div>
-            <Button 
-              variant="ghost" 
-              onClick={() => openEditPanel(member)}
-            >
-              {t('member.edit.title')}
-            </Button>
-          </div>
-        );
-      },
-    },
+    // {
+    //   id: "actions",
+    //   enableHiding: false,
+    //   cell: ({ row }) => {
+    //     const member = row.original as iMember;
+    //     return (
+    //       <div>
+    //         <Button 
+    //           variant="ghost" 
+    //           onClick={() => openEditPanel(member)}
+    //         >
+    //           {t('member.edit.title')}
+    //         </Button>
+    //       </div>
+    //     );
+    //   },
+    // },
   ], [])
 
   const table = useReactTable({
@@ -329,12 +344,14 @@ export default function MemberListDataTable({
     setEditingGame(member.ID);
     setIsAddingGame(false);
     setShowTable(false);
+    setPrefix(member.Prefix)
   };
 
   const closeEditPanel = () => {
     setEditingGame(null);
     setIsAddingGame(false);
     setShowTable(true);
+    setPrefix("")
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -346,9 +363,9 @@ export default function MemberListDataTable({
     <div className="w-full">
       {showTable ? (
         <>
-          <div className="flex items-center justify-between mt-4 mb-4">
+          {/* <div className="flex items-center justify-between mt-4 mb-4">
             <Button onClick={handleAddGame}>{t('member.add.title')}</Button>
-          </div>
+          </div> */}
           <div className="flex items-center py-4">
             <Input
               placeholder={t('member.columns.search')}

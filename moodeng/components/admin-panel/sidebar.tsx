@@ -47,7 +47,7 @@ export function Sidebar() {
                   : "translate-x-0 opacity-100"
               )}
             >
-              Monkey Gangs
+              Partner Gangs
             </h1>
           </Link>
         </Button>

@@ -17,6 +17,7 @@ export interface AuthStore {
     init: () => void;
     clearTokens: () => void;
     lng: string;
+    prefix:string;
     setLng: (lng: string) => void;
 }
 
@@ -44,6 +45,7 @@ const useAuthStore = create<AuthStore>()(
       accessTokenData: null,
       refreshToken: null,
       customerCurrency: "THB",
+      prefix:"",
       Signin: async (body: User) => {
       //  const router = useRouter()
         try {
@@ -57,11 +59,12 @@ const useAuthStore = create<AuthStore>()(
           });
 
           const data = await response.json();
-          
+          //console.log(data)
           if (data.Status) {
             set({
               isLoggedIn: true,
-              accessToken: data?.token,
+              accessToken: data?.Token,
+              prefix:data?.Partner.Prefix
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";
@@ -82,7 +85,7 @@ const useAuthStore = create<AuthStore>()(
       },
       Logout: () => {
        // const router = useRouter()
-        set({ isLoggedIn: false, accessToken: null });
+        set({ isLoggedIn: false, accessToken: null ,prefix:""});
         document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
        //  router.push("/"); 
         // location.replace("/"); // แนะนำให้ใช้ใน context ที่ปลอดภัย เช่นใน useEffect หรือ handle event
@@ -102,7 +105,8 @@ const useAuthStore = create<AuthStore>()(
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';
         const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
-        const lng = getCookie('lng') || 'en'; // Get language from cookie or use default
+        const lng = getCookie('lng') || 'en';
+         // Get language from cookie or use default
         setIsLoggedIn(isloggedIn);
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);

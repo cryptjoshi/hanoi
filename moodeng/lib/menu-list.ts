@@ -53,22 +53,40 @@ import {
         menus: [
           {
             href: "",
-            label: "agent",
+            label: "members",
             icon: SquarePen,
-            active: isActive(`/${language}/dashboard/agents`, pathname),
+            active: isActive(`/${language}/dashboard/members`, pathname),
             submenus: [
               {
-                href: `/${language}/dashboard/agents`,
-                label: "all_agents",
-                active: isActive(`/${language}/dashboard/agents`, pathname)
+                href: `/${language}/dashboard/members`,
+                label: "all_users",
+                active: isActive(`/${language}/dashboard/members`, pathname)
               },
-              {
-                href: `/${language}/dashboard/agents/new`,
-                label: "new_agent",
-                active: pathname === `/${language}/dashboard/agents/new`
-              }
+              // {
+              //   href: `/${language}/dashboard/agents/new`,
+              //   label: "new_agent",
+              //   active: pathname === `/${language}/dashboard/agents/new`
+              // }
             ]
           },
+          // {
+          //   href: "",
+          //   label: "agent",
+          //   icon: SquarePen,
+          //   active: isActive(`/${language}/dashboard/agents`, pathname),
+          //   submenus: [
+          //     {
+          //       href: `/${language}/dashboard/agents`,
+          //       label: "all_agents",
+          //       active: isActive(`/${language}/dashboard/agents`, pathname)
+          //     },
+          //     {
+          //       href: `/${language}/dashboard/agents/new`,
+          //       label: "new_agent",
+          //       active: pathname === `/${language}/dashboard/agents/new`
+          //     }
+          //   ]
+          // },
           // {
           //   href: "/dashboard/categories",
           //   label: "Categories",

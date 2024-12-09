@@ -73,7 +73,8 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
         Bankname:data.Data.bankname,
         Banknumber:data.Data.banknumber,
         Balance:data.Data.balance,
-        Status:data.Data.status
+        Status:data.Data.status,
+
 
       }
       const { ID, ...formData } = formattedData;
@@ -160,7 +161,8 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     name:data.Fullname.toString(),    
     bankname:data.Bankname.toString(),    
     banknumber:data.Banknumber.toString(),    
-    status:data.Status.toString()
+    status:data.Status.toString(),
+    prefix:prefix
   };
  // console.log("format values:"+JSON.stringify(formattedValues))
    

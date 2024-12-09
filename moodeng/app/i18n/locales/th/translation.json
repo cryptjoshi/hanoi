@@ -299,7 +299,9 @@
             "minturnover_def":"เทิร์นเครดิตต่ำสุด เริ่มต้น",
             "refferalcode":"โค๊ดอ้างอิง",
             "refferedcode":"อ้างอิง",
-            "referralcode":"โค๊ดอ้างอิง"
+            "referralcode":"โค๊ดอ้างอิง",
+            "turnover":"เทิร์นโอเวอร์",
+            "totalcommission":"คอมมิชชั่นทั้งหมด"
         }
     },
     "partner": {
@@ -392,6 +394,9 @@
         "edit": "แก้ไข",
         "games": "เกม",
         "members": "สมาชิก",
+        "all_members": "สมาชิกทั้งหมด",
+        "users": "สมาชิก",
+        "all_users": "สมาชิกทั้งหมด",
         "setting": "ตั้งค่า",
         "settings": "ตั้งค่า",
         "disable_sidebar": "ปิดซ้าย",

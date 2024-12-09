@@ -299,7 +299,9 @@
             "minturnover_def":"Minimum TurnCredit Default",
             "refferalcode":"Refferal code",
             "refferedcode":"Reffered by",
-            "referralcode":"Refferal code"
+            "referralcode":"Refferal code",
+            "turnover":"Turn Over",
+            "totalcommission":"Total Commission"
         }
     },
     "partner": {
@@ -393,6 +395,9 @@
         "contents": "Contents",
         "games": "Game",
         "members": "Member",
+        "all_members": "All Member",
+        "users": "Member",
+        "all_users": "All Member",
         "setting": "Settings",
         "settings": "Settings",
         "home": "Home",

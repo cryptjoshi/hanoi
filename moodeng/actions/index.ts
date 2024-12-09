@@ -104,7 +104,18 @@ export const GetPartnerSeed = async (prefix:string) =>{
 })
 return response.json()
 }
-
+export const GetPartner = async (token:string) =>{
+  
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+     // body: JSON.stringify({"prefix":prefix,"ID":id})
+})
+return response.json()
+}
 export const GetPartnerById = async (prefix:string,id:number) =>{
   
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/byid`, { method: 'POST',
@@ -140,14 +151,15 @@ export const UpdatePartner = async (prefix:string,id:any,body:any) =>{
     return response.json()
 }
 
-export const GetMemberList = async (prefix:string) =>{
+export const GetMemberList = async (token:string) =>{
  
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/all`, { method: 'POST',
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/bypartner`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
       },
-      body: JSON.stringify({"prefix":prefix})
+      //body: JSON.stringify({"prefix":prefix})
 })
 return response.json()
 }

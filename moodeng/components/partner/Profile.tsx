@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 //import { GameStatus } from "@/lib/zod/gameStatus";
 import { useTranslation } from "@/app/i18n/client";
-import { AddPartner,UpdatePartner,GetPartnerById,GetPartnerSeed} from "@/actions";
+import { AddPartner,UpdatePartner,GetPartnerById,GetPartnerSeed, GetPartner} from "@/actions";
 import { useEffect,useState,useRef } from "react";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
@@ -43,10 +43,10 @@ const formSchema = z.object({
 })
 
 
-function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { partnerId: iPartners, lng: string, prefix: string, onClose: () => void, onCancel: () => void, isAdd: boolean }) {
+function Profile({ lng,isAdd }: {  lng: string,  isAdd: boolean }) {
  
   const { t } = useTranslation(lng, 'translation', undefined);
-  const { customerCurrency } = useAuthStore();
+  const { customerCurrency,accessToken } = useAuthStore();
  
   const isSeedFetchedRef = useRef(false);
    
@@ -56,13 +56,13 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     defaultValues: {} as z.infer<typeof formSchema>
   });
 
-  const fetchPartner = async (prefix:string,id:any) => {
+  const fetchPartner = async ( ) => {
    
     
       try {
       //  console.log("prefix:",prefix,",id:",id)
-    const data = await GetPartnerById(prefix, id);
-   // console.log(data)
+    const data = await GetPartner(accessToken);
+    //console.log(data)
     if(data.Status){
       const formattedData = {
         ...data.Data,
@@ -73,7 +73,8 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
         Bankname:data.Data.bankname,
         Banknumber:data.Data.banknumber,
         Balance:data.Data.balance,
-        Status:data.Data.status
+        Status:data.Data.status,
+
 
       }
       const { ID, ...formData } = formattedData;
@@ -84,6 +85,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
         description: data.Message,
         variant: "destructive",
       })
+      location.replace(`/${lng}/login`)
     }
     } catch (error) {
       //console.error("Error fetching promotion:", error);
@@ -104,19 +106,19 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
 
 
   useEffect(() => {
-    if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
-      fetchSeed(prefix);
-      isSeedFetchedRef.current = true;
-      //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
-  }
-  if (partnerId) {
+//     if (isAdd && !form.getValues("RefferalCode") && !isSeedFetchedRef.current) {
+//       fetchSeed(prefix);
+//       isSeedFetchedRef.current = true;
+//       //// ตั้งค่าให้เป็น true หลังจากเรียก fetchSeed
+//   }
+  
     
      
-      fetchPartner(prefix, partnerId.id);
+      fetchPartner();
       
-    }
+  
    
-  }, [partnerId, prefix]);
+  }, []);
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
      
@@ -144,6 +146,10 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     //   })
     // }
     //data.Status = JSON.parse(data.Status?.toString());
+   // if (isAdd) {
+      // Combine prefix and username when saving
+    //  data.Username = `${prefix}${data.Username}`;
+   // }  
    
    //console.log("isAdd:",isAdd)
    //data.Status = JSON.parse(data.Status?.toString());//JSON.parse(data.Status?.toString() || '{}').name
@@ -152,56 +158,48 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
     //...data,
     affiliateKey:data.RefferalCode.toString(),
     username:data.Username.toString(),    
-    Preferredname:data.Username.toString(),
     password:data.Password.toString(),      
     name:data.Fullname.toString(),    
     bankname:data.Bankname.toString(),    
     banknumber:data.Banknumber.toString(),    
     status:data.Status.toString(),
-    prefix:prefix
+   // prefix:prefix
   };
-  if (isAdd) {
-    // Combine prefix and username when saving
-    formattedValues.username = `${prefix}${data.Username}`;
-  }  
- 
  // console.log("format values:"+JSON.stringify(formattedValues))
    
-  if (partnerId) {
-    const data = await UpdatePartner(prefix, partnerId.id, formattedValues)
-    if (data.Status) {
-      toast({
-        title: t("partner.edit.success"),
-        description: t("partner.edit.success_description"),
-        variant: "default",
-      })
-     // queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      onClose();
-    } else {
-      toast({
-        title: t("promotion.edit.error"),
-        description: t("promotion.edit.error_description") + data.Message,
-        variant: "destructive",
-      })
-    }
-  } else {
-    const data = await AddPartner(prefix, formattedValues)
-    if (data.Status) {
-      toast({
-        title: t("promotion.add.success"),
-        description: data.Message,
-        variant: "default",
-      })
-     // queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      onClose();
-    } else {
-      toast({
-        title: t("promotion.add.error"),
-        description: t("promotion.add.error_description") + data.Message,
-        variant: "destructive",
-      })
-    }
-  }
+//   if (partnerId) {
+//     const data = await UpdatePartner(prefix, partnerId.id, formattedValues)
+//     if (data.Status) {
+//       toast({
+//         title: t("partner.edit.success"),
+//         description: t("partner.edit.success_description"),
+//         variant: "default",
+//       })
+ 
+//     } else {
+//       toast({
+//         title: t("promotion.edit.error"),
+//         description: t("promotion.edit.error_description") + data.Message,
+//         variant: "destructive",
+//       })
+//     }
+//   } else {
+//     const data = await AddPartner(prefix, formattedValues)
+//     if (data.Status) {
+//       toast({
+//         title: t("promotion.add.success"),
+//         description: data.Message,
+//         variant: "default",
+//       })
+ 
+//     } else {
+//       toast({
+//         title: t("promotion.add.error"),
+//         description: t("promotion.add.error_description") + data.Message,
+//         variant: "destructive",
+//       })
+//     }
+//   }
 };
    
    
@@ -210,7 +208,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
       <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
-          <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
+          <h2 className="text-2xl font-bold mb-4">{ t('partner.title')}</h2>
           <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
         
             <FormField
@@ -246,14 +244,14 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
                     <FormLabel>{t('partner.columns.username')}</FormLabel>
                     <FormControl>
                       <div className="flex">
-                        <Input
+                        {/* <Input
                           value={prefix}
                           readOnly
                           className={cn(
                             "rounded-r-none border-r-0 w-[5ch]",
                             isAdd ? "bg-muted" : "hidden"
                           )}
-                        />
+                        /> */}
                         <Input
                           {...field}
                           className={cn(
@@ -262,14 +260,14 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
                           )}
                           disabled={!isAdd}
                         />
-                          <Input
+                          {/* <Input
                           value={customerCurrency?.toLowerCase()}
                           readOnly
                           className={cn(
                             "rounded-l-none border-l-0 w-[7ch]",
                             isAdd ? "bg-muted" : "hidden"
                           )}
-                        />
+                        /> */}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -377,7 +375,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
               />
                
               <div className="flex justify-end space-x-2 mt-6">
-              <Button type="submit" onClick={async () => {
+              {/* <Button type="submit" onClick={async () => {
               const result = await form.trigger();
               if (!result) {
                 const errors = form.formState.errors;
@@ -394,7 +392,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
                 })
               }
             }}>{t('common.save')}</Button>
-                <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
+                <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button> */}
               </div>
            
         </div>
@@ -403,4 +401,4 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
       );
 }
 
-export default EditPartner;
+export default Profile;

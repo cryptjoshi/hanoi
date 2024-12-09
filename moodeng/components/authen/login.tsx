@@ -48,7 +48,7 @@ export default function Login({lng}:{lng:string}) {
       const response = await Signin(data);  
     
      
-     if (response) {
+     if (response.Status) {
   
       router.push(`/${lng}/dashboard`);
     } else {
@@ -56,10 +56,12 @@ export default function Login({lng}:{lng:string}) {
       toast({
         variant: "destructive",
         title: t('login.error'),
-        description: t('login.error_message'),
-        action: <ToastAction altText={t('login.error')}>{t('login.error')}</ToastAction>,
+        description: response.Message,
+       // action: <ToastAction altText={t('login.error')}>{t('login.error')}</ToastAction>,
       })
+      //location.replace(`/${lng}/login`)
     }
+
     } catch (error) {
       console.error("Login error:", error);
       toast({

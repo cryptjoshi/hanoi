@@ -246,7 +246,7 @@ func GetPartners(c *fiber.Ctx) error {
 // @Param user body models.Partner true "Partner registration info"
 func Register(c *fiber.Ctx) error {
 
-	//var currency = os.Getenv("CURRENCY")
+	var currency = os.Getenv("CURRENCY")
 	// type RequestBody struct {
 	// 	Prefix string      `json:"prefix"`
 	// 	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
@@ -300,22 +300,22 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	} else {
 
-		// updates := map[string]interface{}{
-		// 	"Partnerid":      user.ID,
-		// 	"Preferredname": user.Name,
-		// 	"Username":      strings.ToUpper(user.Prefix) + user.Name + currency,
-		// 	"Currency":      currency,
-		// 	//"Actived": nil,
-		// 	"AffiliateKey": user.AffiliateKey,
-		// }
-		// if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
-		// 	response := ErrorResponse{
-		// 		Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-		// 		Status:  false,
-		// 	}
+		updates := map[string]interface{}{
+			"Partnerid":      partner.Body.ID,
+			"Preferredname": partner.Body.Name,
+			"Username":      strings.ToUpper(partner.Prefix) + partner.Body.Name + currency,
+			"Currency":      currency,
+			//"Actived": nil,
+			"AffiliateKey": partner.Body.AffiliateKey,
+		}
+		if err := db.Debug().Model(&models.Partner{}).Updates(updates).Error; err != nil {
+			response := ErrorResponse{
+				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+				Status:  false,
+			}
 
-		// 	return c.Status(fiber.StatusBadRequest).JSON(response)
-		// }
+			return c.Status(fiber.StatusBadRequest).JSON(response)
+		}
 
 		response := fiber.Map{
 			"Message": "เพิ่มยูสเซอร์สำเร็จ!",

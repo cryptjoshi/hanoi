@@ -8,7 +8,7 @@ export interface AuthStore {
     accessTokenData: string | null;
     refreshToken: string | null;
     customerCurrency: string | null;
-    Signin: (body: User) => Promise<boolean>;   
+    Signin: (body: User) => Promise<any>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
     setAccessToken: (accessToken: string | null) => void;
@@ -57,7 +57,7 @@ const useAuthStore = create<AuthStore>()(
           });
 
           const data = await response.json();
-          console.log(data.Status)
+          
           if (data.Status) {
             set({
               isLoggedIn: true,
@@ -67,12 +67,12 @@ const useAuthStore = create<AuthStore>()(
             document.cookie = "isLoggedIn=true; path=/";
            // router.redirect("/");
             // location.replace("/dashboard"); // หากต้องการ redirect ควรพิจารณาให้แน่ใจว่าใช้งานใน context ที่ถูกต้อง
-            return true
+            return data
           } else {
             set({ isLoggedIn: false, accessToken: null });
             localStorage.setItem('isLoggedIn', JSON.stringify(false));
             document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-            return false
+            return data
           }
          // return false
         } catch (error) {

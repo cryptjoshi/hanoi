@@ -56,7 +56,7 @@ type Users struct {
 	PartnerID int `gorm:"column:partner_id"` // ใช้บันทึก ID ของ partner ที่เชื่อมโยง
 	AffiliateLink string `gorm:"type:varchar(255);column:affiliate_link"` // ใช้บันทึกลิงค์ที่ใช้
 	ReferralCode  string          `gorm:"column:referral_code;unique;not null"` // รหัสแนะนำ
-	ReferredBy    string          `gorm:"column:referred_by"` // ผู้แนะนำ (User ID)
+	ReferredBy    string          `gorm:"column:referred_by" json:"referred_by"` // ผู้แนะนำ (User ID)
 	TotalEarnings decimal.Decimal `gorm:"column:total_earnings;type:decimal(10,2);default:0"` // ค่าคอมมิชชั่นสะสม
 }
 

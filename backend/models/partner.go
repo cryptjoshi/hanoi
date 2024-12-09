@@ -27,6 +27,7 @@ type Partner struct {
 	Bankname        string          `gorm:"type:varchar(250);column:bankname" json:"bankname"`
 	Banknumber      string          `gorm:"type:varchar(50);column:banknumber;NOT NULL" json:"banknumber"`
 	Balance         decimal.Decimal  `gorm:"type:numeric(8,2);column:balance;default:0" json:"balance"`
+	Currency         string    `gorm:"type:varchar(50)";column:currency;"`
 }
 
 // type Partner struct {

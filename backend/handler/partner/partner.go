@@ -299,16 +299,16 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	} else {
-
+		fmt.Printf("Result : %+v \n",result)
 		updates := map[string]interface{}{
-			"Partnerid":      partner.Body.ID,
-			"Preferredname": partner.Body.Name,
-			"Username":      strings.ToUpper(partner.Prefix) + partner.Body.Name + currency,
+			//"Partnerid":      partner.Body.ID,
+			//"Preferredname": partner.Body.Name,
+			"Username":      strings.ToUpper(partner.Body.Username) + currency,
 			"Currency":      currency,
 			//"Actived": nil,
-			"AffiliateKey": partner.Body.AffiliateKey,
+			//"AffiliateKey": partner.Body.AffiliateKey,
 		}
-		if err := db.Debug().Model(&models.Partner{}).Updates(updates).Error; err != nil {
+		if err := db.Debug().Model(&models.Partner{}).Where("id = ?",partner.Body.ID).Updates(updates).Error; err != nil {
 			response := ErrorResponse{
 				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 				Status:  false,

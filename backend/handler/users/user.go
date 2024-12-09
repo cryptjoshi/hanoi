@@ -226,6 +226,9 @@ func Register(c *fiber.Ctx) error {
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(200).SendString(err.Error())
 	}
+
+	// ตรวจสอบว่า user.ReferredBy ไม่พบใน Partner
+
 	// fmt.Printf(" %s ",user)
 	db, conn := database.ConnectToDB(user.Prefix)
 	if conn != nil {
@@ -236,17 +239,26 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
+	
+	var partner models.Partner // สมมุติว่า models.Partner คือโมเดลที่ใช้สำหรับ Partner
+	if err := db.Debug().Where("affiliatekey = ?", user.ReferredBy).First(&partner).Error; err != nil {
+		// ถ้าไม่พบให้ตั้งค่า ReferredBy เป็นค่าว่าง
+		user.ReferredBy = ""
+	}
+	//fmt.Printf(" partner: %+v \n",partner)
+
 	seedPhrase  := CheckSeed(db)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
-	fmt.Printf("SeedPhase  %s\n", seedPhrase) 
+	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
 
 	user.ReferralCode = seedPhrase
 
-	fmt.Printf("user: %s \n",user)
+	//fmt.Printf("user: %s \n",user)
 	result := db.Debug().Create(&user)
 
 	if result.Error != nil {
+		fmt.Printf(" Error: %+v \n",result.Error)
 		response := ErrorResponse{
 			Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 			Status:  false,
@@ -263,7 +275,7 @@ func Register(c *fiber.Ctx) error {
 			"Actived": nil,
 			"ReferredBy": user.ReferredBy,
 		}
-		if err := db.Debug().Model(&user).Updates(updates).Error; err != nil {
+		if err := db.Debug().Model(&user).Where("id = ?",user.ID).Updates(updates).Error; err != nil {
 			response := ErrorResponse{
 				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 				Status:  false,

@@ -130,7 +130,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	//var setting Setting
 
-	setting,_ := getMaster(prefix)
+	setting,_ := GetMaster(prefix)
 
 	// Determine the database name based on the retrieved value
 	dbName := fmt.Sprintf("%s_%s", prefix, setting.Value)
@@ -197,15 +197,4 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func connectDBP(prefix string) (*gorm.DB, error) {
-	// สร้าง DSN สำหรับการเชื่อมต่อฐานข้อมูล
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, prefix)
-
-	// เชื่อมต่อกับฐานข้อมูล
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("ไม่สามารถเชื่อมต่อกับฐานข้อมูล: %v", err)
-	}
-
-	return db, nil
-}
+ 

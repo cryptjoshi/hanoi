@@ -11,7 +11,8 @@ import (
 	// 	// "github.com/tdewolff/minify/v2"
 	// 	// "github.com/tdewolff/minify/v2/js"
 	// 	// "github.com/valyala/fasthttp"
-	// 	// _ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
 	jtoken "github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 	"hanoi/database"
@@ -36,6 +37,10 @@ import (
 	"strings"
 	//"errors"
 )
+var mysql_host = os.Getenv("MYSQL_HOST")
+var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
+var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
 type ErrorResponse struct {
 	Status  bool   `json:"Status"`
@@ -81,7 +86,7 @@ type RequestBody struct {
 	Body   models.Partner    `json:"body"` // หรือใช้โครงสร้างที่เหมาะสมกับข้อมูลใน body
 }
 
-var jwtSecret = os.Getenv("PASSWORD_SECRET")
+//var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
 // @Summary Login user
 // @Description Get a list of all users in the database.
@@ -222,7 +227,7 @@ func Login(c *fiber.Ctx) error {
 	// }
 
 	// fmt.Printf(" %s ",settings)
-	var databaseList,err := getDataList()
+	var databaseList,err = getDataList()
 	var t string
 	if err != nil || len(databaseList) == 0 {
 		response := fiber.Map{
@@ -231,7 +236,7 @@ func Login(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
-
+	var partner models.Partner
 	for _, dbInfo := range databaseList {
 		dbConnection, connErr := database.ConnectToDB(dbInfo.Prefix) // เรียกใช้ connectDBP
 		if connErr == nil {
@@ -239,8 +244,8 @@ func Login(c *fiber.Ctx) error {
 			c.Locals("db", dbConnection)
 
 			// ค้นหาผู้ใช้ใน partners
-			var partner models.Partner
-			err = dbConnection.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&partner).Error
+			
+			err = dbConnection.Debug().Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&partner).Error
 			if err == nil {
 				// ผู้ใช้พบแล้ว ทำการดำเนินการต่อ
 
@@ -249,7 +254,7 @@ func Login(c *fiber.Ctx) error {
 					//"Walletid":    user.Walletid,
 					"Username":    partner.Name,
 					//"Role":        user.Role,
-					"PartnersKey": partner.AffiliateKey,
+					"AffiliateKey": partner.AffiliateKey,
 					"Prefix":      partner.Prefix,
 					//"exp":   time.Now().Add(day * 1).Unix(),
 				}
@@ -298,13 +303,7 @@ func Login(c *fiber.Ctx) error {
 	// var partner models.Partner
 	// err = dbConnection.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&partner).Error;
 	 
-	// if err != nil {
-	// 	response := fiber.Map{
-	// 		"Message": "ไม่พบรหัสผู้ใช้งาน!!",
-	// 		"Status":  false,
-	// 	}
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(response)
-	// }
+	
 
 	// if err != nil {
 	// 	response := fiber.Map{
@@ -348,10 +347,17 @@ func Login(c *fiber.Ctx) error {
 	// } else {
 	// 	fmt.Println("User fields updated successfully")
 	// }
-
+	if t == "" {
+		response := fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+		}
+		return c.Status(fiber.StatusUnauthorized).JSON(response)
+	}
 
 	response := fiber.Map{
 		"Token":  t,
+		"Partner":partner, 
 		"Status": true,
 	}
 	return c.JSON(response)
@@ -519,6 +525,8 @@ func Register(c *fiber.Ctx) error {
 // @param Authorization header string true "Bearer token"
 func GetPartner(c *fiber.Ctx) error {
 
+
+	
 	var users models.Partner
 
 	db, _err := handler.GetDBFromContext(c)
@@ -665,12 +673,13 @@ func GetPartner(c *fiber.Ctx) error {
 		"Message": "สำเร็จ",
 		"Data": fiber.Map{
 			"id":         users.ID,
-			"fullname":   users.Name,
+			"name":   users.Name,
 			"banknumber": users.Banknumber,
 			"bankname":   users.Bankname,
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
+			"status": users.Status,
 			"affiliatekey": users.AffiliateKey,
 		}}
 	return c.JSON(response)

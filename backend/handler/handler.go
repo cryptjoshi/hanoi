@@ -1809,6 +1809,10 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	//database.CheckAndCreateTable(db, models.Users{})
+
+
+
+
 	games := []models.Users{}
 	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
 	if err != nil {
@@ -1819,6 +1823,10 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
+
+	
+
+
 	response := fiber.Map{
 		"Message": "ดึงข้อมูลสำเร็จ",
 		"Status":  true,

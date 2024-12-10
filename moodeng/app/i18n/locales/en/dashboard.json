@@ -1,0 +1,8 @@
+{
+    "title":"Dashboard",
+    "welcome":" Hi, Welcome back 👋",
+    "overview":"Overview",
+    "button":{
+        "refresh":"Refresh"
+    }
+}

@@ -77,7 +77,9 @@ export interface iMember {
 	PartnersKey:string,    
 	ProStatus:string,    
   ProActive:string,
-  Prefix:string
+  Prefix:string,
+  TotalTurnover:number
+  TotalEarnings:number
 
 
   // Add other properties as needed
@@ -148,7 +150,7 @@ export default function MemberListDataTable({
       setIsLoading(true);
       try {
         const fetchedGames = await GetMemberList(accessToken);
-       // console.log(fetchedGames)
+        console.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
         console.error('Error fetching games:', error);
@@ -198,14 +200,14 @@ export default function MemberListDataTable({
     //     return formatNumber(parseFloat(value?.toString()), 2);
     //   }
     // }),
-    columnHelper.accessor('Turnover', {
+    columnHelper.accessor('TotalTurnover', {
       header: t('member.columns.turnover'),
       cell: info => {
         const value = info.getValue();
         return formatNumber(parseFloat(value?.toString()), 2);
       }
     }),
-    columnHelper.accessor('Totalcommission', {
+    columnHelper.accessor('TotalEarnings', {
       header: t('member.columns.totalcommission'),
       cell: info => {
         const value = info.getValue();

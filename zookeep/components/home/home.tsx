@@ -102,7 +102,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
-        console.log(user)
+      
         if(user.Status){
           setBalance(user.Data.balance);
        
@@ -110,7 +110,19 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           setCurrency(userLoginStatus.state.customerCurrency);
           setPrefix(user.Data.prefix);
            
-        }  
+         } else {
+          
+          toast({title: t('unsuccess'),
+            description: user.Message,
+            variant: "destructive",
+          });
+         // console.log(user.Data)
+          setBalance(user.Data.balance);
+       
+          setUser(user.Data);
+          setCurrency(userLoginStatus.state.customerCurrency);
+          setPrefix(user.Data.prefix);
+         }  
      
       } else {
         router.push(`/${lng}/login`);

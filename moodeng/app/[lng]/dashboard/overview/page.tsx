@@ -1,4 +1,4 @@
- 
+ 'use client'
 import Link from "next/link";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
@@ -25,11 +25,11 @@ import { useTranslation } from "@/app/i18n/client";
 
 import OverViewPage from './_components/overview';
 
-export const metadata = {
-  title: 'Dashboard : Overview'
-};
+// export const metadata = {
+//   title: 'Dashboard : Overview'
+// };
 
-export default  function DashboardPage({ params: { lng } }) {
+export default  function DashboardPage({ params: { lng } }:{params:{lng:string}}) {
   //const { t } = await useTranslation(lng)
   const { t } =  useTranslation(lng,'translation' ,'menu');
   const sidebar = useStore(useSidebar, (x) => x);
@@ -86,7 +86,7 @@ export default  function DashboardPage({ params: { lng } }) {
           </Tooltip>
         </div> 
       </TooltipProvider>
-      <OverViewPage />;
+      <OverViewPage lng={lng} />
 
     </ContentLayout>
    );

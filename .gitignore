@@ -8,7 +8,7 @@
 **/.pnpm-store/*
 .pnpm-store
 .pnpm-store/v3/files/
-
+.env
 # testing
 /coverage
 

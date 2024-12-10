@@ -1,0 +1,19 @@
+{
+    "welcome": "ยินดีต้อนรับสู่เว็บไซต์ของเรา",
+    "description": "นี่คือตัวอย่างการแปลภาษาใน Next.js",
+    "agents": {
+        "title": "สมาชิก",
+        "description":"รายละเอียดสมาชิก"
+    },
+    "login": {
+        "title": "Login",
+        "username": "Username",
+        "password": "Password",
+        "submit": "Submit"
+      },
+    "columns":{
+        "search": "ค้นหา"
+    }
+
+}
+  

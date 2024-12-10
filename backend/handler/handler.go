@@ -1785,6 +1785,48 @@ func GetGameStatus(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+
+func GetMemberByPartner(c *fiber.Ctx) error {
+	
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": "รับข้อมูลผิดพลาด",
+	// 		"Status":  false,
+	// 		"Data":    err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	db, err := GetDBFromContext(c)
+ 
+	//db, err := database.ConnectToDB(body.Prefix)
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//database.CheckAndCreateTable(db, models.Users{})
+	games := []models.Users{}
+	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data":    games,
+	}
+	return c.JSON(response)
+}
+
 func GetMemberList(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {

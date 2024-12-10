@@ -1,12 +1,13 @@
 import Register from '@/components/authen/register'
+ 
 
-
-export default  function RegisterPage({ params: { lng } }: { params: { lng: string } }) {
-   
-
+export default function RegisterPage({ params: { lng }, searchParams }: { params: { lng: string }, searchParams: { code?: string } }) {
+    // ดึง referralCode จาก searchParams
+    const { code } = searchParams;
+ 
     return (
         <>
-        <Register lng={lng} />
+        <Register lng={lng} refferedcode={code} />
         </>
     )
 }

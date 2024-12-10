@@ -11,6 +11,7 @@ type Partner struct {
 	ID              int             `gorm:"column:id;primaryKey;autoIncrement;NOT NULL" json:"id"` // รหัส Partner
 	Name            string          `gorm:"type:varchar(255);column:name;NOT NULL" json:"name"`      // ชื่อ Partner
 	Username        string          `gorm:"index:idx_username,unique;type:varchar(255);column:username;NOT NULL" json:"username"`
+	Preferredname    string    `gorm:"type:varchar(250);column:preferredname" json:"preferredname"`
 	Password        string          `gorm:"type:text;column:password;NOT NULL" json:"password"`
 	Email           string          `gorm:"type:varchar(255);column:email;unique;NOT NULL" json:"email"` // อีเมล
 	Phone           string          `gorm:"type:varchar(50);column:phone" json:"phone"`              // เบอร์โทร
@@ -27,6 +28,7 @@ type Partner struct {
 	Bankname        string          `gorm:"type:varchar(250);column:bankname" json:"bankname"`
 	Banknumber      string          `gorm:"type:varchar(50);column:banknumber;NOT NULL" json:"banknumber"`
 	Balance         decimal.Decimal  `gorm:"type:numeric(8,2);column:balance;default:0" json:"balance"`
+	Currency         string    `gorm:"type:varchar(50)";column:currency;"`
 }
 
 // type Partner struct {

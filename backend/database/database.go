@@ -95,7 +95,7 @@ type Setting struct {
 	Value string `gorm:"column:value"` // Adjust the struct according to your table schema
 }
 
-func getMaster(prefix string) (Setting,error) {
+func GetMaster(prefix string) (Setting,error) {
 
 	masterDSN := fmt.Sprintf(baseDSN, "master") // Assuming 'master' is the database name for settings
 	masterDB, err := gorm.Open(mysql.Open(masterDSN), &gorm.Config{
@@ -130,7 +130,7 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	//var setting Setting
 
-	setting,_ := getMaster(prefix)
+	setting,_ := GetMaster(prefix)
 
 	// Determine the database name based on the retrieved value
 	dbName := fmt.Sprintf("%s_%s", prefix, setting.Value)
@@ -196,3 +196,5 @@ func contains(slice []string, item string) bool {
 	}
 	return false
 }
+
+ 

@@ -61,7 +61,7 @@ const useAuthStore = create<AuthStore>()(
           if (data.Status) {
             set({
               isLoggedIn: true,
-              accessToken: data?.token,
+              accessToken: data?.Token,
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";

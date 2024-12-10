@@ -56,6 +56,7 @@ type Claims struct {
 	Role string `json:"role"`
 	Prefix string `json:"prefix"`
 	Walletid int `json:"walletid"`
+	AffiliateKey string `json:"affiliatekey"`
 	Checker string `json:"checker"`
     jwt.RegisteredClaims
 }
@@ -259,6 +260,58 @@ func ExtractPrefixFromToken(c *fiber.Ctx) (string, error) {
 
 	return "", fmt.Errorf("โทเคน ผิดผลาด!")
 }
+func JwtPMiddleware(c *fiber.Ctx) error {
+	
+	claims := &Claims{}
+	tokenString := c.Get("Authorization")[7:]
+	//fmt.Printf("token : %s",tokenString)
+ 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+    })
+	fmt.Printf("Claims: %+v \n",claims)
+ 	if err==nil {
+		db, _ := database.ConnectToDB(claims.Prefix)
+        
+		//fmt.Println("claims",claims.Prefix) 
+		//fmt.Printf("claims : %s",claims)
+		c.Locals("Walletid", claims.Id)
+        c.Locals("ID", claims.Id)
+        c.Locals("username", claims.Username)
+		c.Locals("AffiliateKey",claims.AffiliateKey)
+		//c.Locals("role", claims.Role)
+        c.Locals("prefix", claims.Prefix)
+		c.Locals("db", db)
+		//dbInterface := c.Locals("db")
+		
+		// var users models.Partner
+		// if err_ := db.Debug().Select("id as ID,role,prefix,pro_status,deposit,actived").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
+		// 	//fmt.Println("ID:",users.ID)
+		// 	c.Locals("ID",users.ID)
+		// 	c.Locals("Walletid", users.ID)
+		// 	c.Locals("role", users.Role)
+		// 	c.Locals("prefix", users.Prefix)
+		// 	c.Locals("deposit",users.Deposit)
+		// 	c.Locals("actived",users.Actived)
+		// 	c.Locals("prostatus",users.ProStatus)
+		// }
+		db, ok := c.Locals("db").(*gorm.DB)
+		if db == nil {
+			fmt.Printf("db is null")
+		}
+		if ok {
+			c.Locals("db",db)
+			 
+		}
+	
+       // c.Locals("PartnersKey",claims.PartnersKey)
+   
+	 	
+        return c.Next()
+    } else {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "โทเคน ผิดผลาด!"})
+    } 
+	 
+}
 func JwtMiddleware(c *fiber.Ctx) error {
 	
 	claims := &Claims{}
@@ -306,7 +359,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
 	 	
         return c.Next()
     } else {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "โทเคน ผิดผลาด!"})
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "โทเคน ผิดผลาด!"})
     } 
 	 
 }

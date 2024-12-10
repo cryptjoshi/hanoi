@@ -425,7 +425,7 @@ func Deposit(c *fiber.Ctx) error {
     }
 	pro_setting, err := CheckPro(db, &users) 
 
-	fmt.Printf("343 line Deposit\n")
+	fmt.Printf("343 line Deposit %+v \n",BankStatement)
 	fmt.Printf("pro_setting: %v \n",pro_setting)
 
 
@@ -445,8 +445,11 @@ func Deposit(c *fiber.Ctx) error {
 	BankStatement.Walletid = id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
+	if BankStatement.Amount.GreaterThan(decimal.Zero) {
 	BankStatement.Transactionamount = BankStatement.Amount
+	}
 	deposit := BankStatement.Transactionamount
+	fmt.Printf("450 line Deposit %v \n",deposit)
 	//BankStatement.ProID = users.ProStatus
 	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
 	//var result decimal.Decimal
@@ -800,6 +803,12 @@ func Deposit(c *fiber.Ctx) error {
 	if err != nil {
 		// จัดการข้อผิดพลาดที่เกิดขึ้น
 		fmt.Println("Error in paying:", err)
+		response := fiber.Map{
+			"Message": "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+			"Status":  false,
+			"Data":    "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+		}
+		return c.JSON(response)
 	}
 	
 	
@@ -1018,7 +1027,7 @@ func Withdraw(c *fiber.Ctx) error {
 
         switch turnType {
         case "turnover":
-            totalTurnover,_ := checkTurnover(db, &users, pro_setting);  
+            totalTurnover,_ := CheckTurnover(db, &users, pro_setting);  
 			minTurnover := pro_setting["MinTurnover"].(string)
 			var baseAmount decimal.Decimal
             if pro_setting["MinSpendType"] == "deposit" {
@@ -1198,10 +1207,10 @@ func Webhook(c *fiber.Ctx) error {
 
   		var bankstatement models.BankStatement
 
-    	if err_ := db.Debug().Where("Uid = ?",requestBody.TransactionID).First(&bankstatement).Error; err_ != nil {
-			return c.JSON(fiber.Map{
+    	if err_ := db.Debug().Where("Uid = ? and status = ?",requestBody.TransactionID,"waiting").First(&bankstatement).Error; err_ != nil {
+			return c.Status(200).JSON(fiber.Map{
 				"Status": false,
-				"Message": err_,
+				"Message":  "ไม่พบรายการ หรือ มีการปรับปรุงรายการไปแล้ว!",
 				"Data": fiber.Map{ 
 					"id": -1,
 				}})
@@ -1376,7 +1385,7 @@ func calculatePercentage(minTurnover string) (decimal.Decimal, error) {
 }
 
 // ฟังก์ชั่นช่วยตรวจสอบ turnover
-func checkTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]interface{}) (decimal.Decimal,error) {
+func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]interface{}) (decimal.Decimal,error) {
 
 	var promotionLog models.PromotionLog
 	db.Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).

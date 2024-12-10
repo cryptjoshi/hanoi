@@ -400,10 +400,16 @@ func GetUser(c *fiber.Ctx) error {
 	if err != nil {
 		fmt.Printf("388 error: %s \n",err)
 		return c.JSON(fiber.Map{
-			"status": false,
-			"message":  err.Error(),
-			"data": fiber.Map{
-				"id": -1,
+			"Status": false,
+			"Message":  err.Error(),
+			"Data": fiber.Map{
+				"id":         users.ID,
+				"fullname":   users.Fullname,
+				"banknumber": users.Banknumber,
+				"bankname":   users.Bankname,
+				"username":   strings.ToUpper(users.Username),
+				"balance":    users.Balance,
+				"prefix":     users.Prefix,
 			}})
 	}
 
@@ -466,8 +472,8 @@ func GetUser(c *fiber.Ctx) error {
 	}
 	if err := db.Debug().Model(&users).Where("id=? and pro_status=?",users.ID,users.ProStatus).Updates(updates).Error; err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"status": false,
-				"message": err.Error(),
+				"Status": false,
+				"Message": err.Error(),
 			})
 		}
 

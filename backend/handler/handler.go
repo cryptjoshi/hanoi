@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"hanoi/database"
 	"hanoi/repository"
+	 "hanoi/common"
 	"crypto/md5"
 	"io/ioutil"
 	"log"
@@ -1810,9 +1811,18 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 	}
 	//database.CheckAndCreateTable(db, models.Users{})
 
+	var partner models.Partner
 
-
-
+	if err = db.Debug().Where("affiliateKey = ?",c.Locals("AffiliateKey")).Find(&partner).Error; err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	fmt.Printf("Partner: %+v \n",partner)
+		
 	games := []models.Users{}
 	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
 	if err != nil {
@@ -1824,7 +1834,39 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 
+	// var settings []models.Settings
+
+	// dbm := ConnectMaster()
+
+	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+
+	// defer dbm.Close()
 	
+
+	for i := range games {
+		
+		pro_setting,_ := GetProdetail(db,games[i].ProStatus)
+		fmt.Printf(" pro_setting: %+v",pro_setting)
+		turnType, ok := pro_setting["TurnType"].(string)
+        if !ok {
+            return c.JSON(fiber.Map{
+                "Status": false,
+                "Message": "รูปแบบ TurnType ไม่ถูกต้อง",
+                "Data": fiber.Map{"id": -1},
+            })
+        }
+		commissionRate,_ := common.GetCommissionRate(partner.Prefix)
+        if turnType == "turnover" {
+		totalTurnover, err := common.CheckTurnover(db,&games[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
+		totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+		if err == nil {
+			games[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+			games[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
+		
+			}	
+		}
+		
+	}
 
 
 	response := fiber.Map{
@@ -2013,6 +2055,7 @@ func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 			response["MinTurnover"] = promotion.MinSpend
 			response["Formular"] = promotion.Example
 		    response["Name"] = promotion.Name
+			response["TurnType"]=promotion.TurnType
 		if ProItem.ProType.Type == "weekly" {
 			response["Week"] = ProItem.ProType.DaysOfWeek
 		}

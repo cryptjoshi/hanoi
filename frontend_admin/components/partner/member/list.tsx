@@ -162,7 +162,7 @@ export default function MemberListDataTable({
   }, [ refreshTrigger])
 
   const columnHelper = createColumnHelper<iMember>()
-
+  
   const columns = useMemo(() => [
     columnHelper.accessor('ID', {
       header: t('member.columns.id'),

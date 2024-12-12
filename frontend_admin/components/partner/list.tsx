@@ -213,7 +213,8 @@ export default function PartnerList({
         header: t('partner.columns.status'),
         cell: info => {
           const value = info.getValue();
-          return value === 1 ? t('common.active') :  t('common.inactive') ;
+          
+          return value === "1" ? t('common.active') :  t('common.inactive') ;
         //  console.log('Raw specificTime value:', value); // For debugging
          
         }
@@ -362,7 +363,7 @@ export default function PartnerList({
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
-            <Button onClick={handleAddGame}>{t('partner.add.title')}</Button>
+             
           </div>
           <div className="flex items-center py-4">
             <Input

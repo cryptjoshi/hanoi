@@ -115,21 +115,22 @@ export function AccountForm({ lng,prefix }: { lng: string,prefix:string }) {
     const fetchSettings = async (prefix: string) => {
       try {
         const data = await  GetCommission(prefix)
+        //console.log(data)
         if(data.Status){
-          
+         // form.Set()
         //setSettings(data.Data)
         // console.log(data.Data[1].key,data.Data[1].value)
-        // z.Set("partner_commission",data.Data[1].value)
+        //z.Set("partner_commission",data.Data[1].value)
         // console.log(data.Data[2].key,data.Data[2].value)
-        // z.Set("user_commission",data.Data[2].value)
+       //z.Set("user_commission",data.Data[2].value)
 
         //console.log(data.Data.filter((obj:any)=>obj.key.indexOf("partner_commission"))[1])
         //console.log(data.Data.filter((obj:any)=>obj.key.indexOf("user_commission"))[1])
         
        // console.log(data.Data)
         
-       // form.set("partner_commission",data.Data[1].pertner_commission)
-       // form.set("user_commission",data.Data[1].pertner_commission)
+        form.setValue("partner_commission",data.Data[1].value)
+        form.setValue("user_commission",data.Data[2].value)
         
 
 

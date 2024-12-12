@@ -125,10 +125,9 @@ function formatSpecificTime(jsonString: string,lng:string): string {
 // console.log(formatSpecificTime(jsonString));
 
 export default function MemberListDataTable({
-  id,
   data,
   lng,
-}: { id:string,data:DataTableProps<iMember>, lng:string}) {
+}: { data:DataTableProps<iMember>, lng:string}) {
   const [games, setGames] = useState<iMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])

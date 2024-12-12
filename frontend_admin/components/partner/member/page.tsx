@@ -17,9 +17,13 @@ import Profile from "../partner/Profile"
 
 export default function EditMemberSettings({ params: { lng,id } }: { params: { lng: string,id: string } }) {
   const {t} =  useTranslation(lng,'translation','')
-  const [data, setData] = useState<DataTableProps<iMember>>({ columns: [], data: [] }); 
+  
+  //const [data, setData] = useState<DataTableProps<iMember>>({}); 
+  const data: DataTableProps<iMember> = []; 
   const closeEditPanel = () => {
-    setData({ columns: [], data: [] });
+    // setParnerId(null);
+    // setIsAddingGame(false);
+    // setShowTable(true);
     // setRefreshTrigger((prev:any) => prev + 1);
   };
 
@@ -40,7 +44,7 @@ export default function EditMemberSettings({ params: { lng,id } }: { params: { l
           />
         </TabsContent>
         <TabsContent value="member">
-          <MemberList id={id} data={data} lng={lng} />
+          <MemberList prefix={id} data={data} lng={lng} />
         </TabsContent>
         
         <TabsContent value="settings">

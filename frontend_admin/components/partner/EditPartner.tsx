@@ -3,7 +3,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 //import { useQuery } from '@tanstack/react-query';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch";
 import { partnerSchema, Partner } from "@/lib/zod/partner";
 import { Input } from "@/components/ui/input";
 //import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 //import { GameStatus } from "@/lib/zod/gameStatus";
 import { useTranslation } from "@/app/i18n/client";
-import { AddPartner,UpdatePartner,GetPartnerById,GetPartnerSeed} from "@/actions";
+import { AddPartner,UpdatePartner,GetPartnerById,GetPartnerSeed,GetGameStatus} from "@/actions";
 import { useEffect,useState,useRef } from "react";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
@@ -23,11 +24,15 @@ import { cn } from "@/lib/utils";
 // import { Calendar } from "@/components/ui/calendar";
 import useAuthStore from "@/store/auth";
 import { iPartners } from "./list";
-
+import MemberList from "./list"
+import { DataTableProps, iMember } from "./member/list";
 // const gametype = [
 //     { id: '1', name: 'Slot' },
 //     { id: '2', name: 'Live Casino' },
 // ];
+import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+
 
 const formSchema = z.object({
   ID:z.number().optional(),     
@@ -50,11 +55,18 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
  
   const isSeedFetchedRef = useRef(false);
    
-
+  const [data, setData] = useState<DataTableProps<iMember>>({ columns: [], data: [] }); 
   const form = useForm<Partner>({
     resolver: zodResolver(formSchema),
     defaultValues: {} as z.infer<typeof formSchema>
   });
+
+  const queryClient = useQueryClient();
+  const { data: gameTypes, isLoading: gameStatusLoading } = useQuery({
+    queryKey: ['gameTypes'],
+    queryFn: async () => await GetGameStatus(prefix),
+  });
+
 
   const fetchPartner = async (prefix:string,id:any) => {
    
@@ -207,12 +219,19 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
    
     
     return (
+     
       <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
+        <div className="p-6 bg-white rounded-lg shadow-md md:max-w-full">
           <h2 className="text-2xl font-bold mb-4">{partnerId ? t('partner.edit.title') : t('partner.add.title')}</h2>
           <p className="text-gray-600 mb-6">{t('partner.edit.description')}</p>
-        
+          <Tabs defaultValue="account" className="w-full h-auto md:h-full">
+          <TabsList className="w-full flex-wrap justify-start">
+          <TabsTrigger value="account" className="flex-grow md:flex-grow-0">{t('promotion.account')}</TabsTrigger>
+          <TabsTrigger value="member" className="flex-grow md:flex-grow-0">{t('member.title')}</TabsTrigger>
+          <TabsTrigger value="games" className="flex-grow md:flex-grow-0">{t('games.title')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="account" className="md:max-w-md">
             <FormField
                 control={form.control}
                 name="RefferalCode"
@@ -396,10 +415,85 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
             }}>{t('common.save')}</Button>
                 <Button type="button" variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
               </div>
+              </TabsContent>
+              <TabsContent value="member">
+          <MemberList 
+            lng={lng} data={data} prefix={prefix} />
+          </TabsContent>
+          <TabsContent value="games" className="md:max-w-md">
+          <div className="flex flex-col justify-between space-y-4">
+        <Button type="button"
+          onClick={() => {
+            const allGameIds = gameTypes?.Data?.map((item: any) => {
+              try {
+                return item.status.id.toString();
+              } catch {
+                return null;
+              }
+            }).filter(Boolean) || [];
            
+            const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
+            const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
+            
+            // Check if all games are currently included
+            if (currentIncludeGames.length === allGameIds.length && allGameIds.length > 0) {
+              // If all games are currently included, exclude all
+              form.setValue('includegames', '');
+              form.setValue('excludegames', allGameIds.join(','));
+            } else {
+              // Otherwise, include all games
+              form.setValue('includegames', allGameIds.join(','));
+              form.setValue('excludegames', '');
+            }
+          }}
+          variant="outline"
+          className="w-full"
+          disabled={!gameTypes?.Data?.length}
+        >
+          {((form.watch('includegames')?.split(',').filter(Boolean).length || 0) === (gameTypes?.Data?.length || 0)) && gameTypes?.Data?.length > 0
+            ? t('promotion.deselectAll') 
+            : t('promotion.selectAll')}
+        </Button>
+
+        <div className="space-y-4">
+          {gameTypes?.Data?.map((item: any) => {
+            const status = item.status;
+            
+            const isIncluded = form.watch('includegames')?.split(',').includes(status.id.toString());
+
+            function handleGameTypeToggle(id: string): void {
+              const currentIncludeGames = form.watch('includegames')?.split(',').filter(Boolean) || [];
+              const currentExcludeGames = form.watch('excludegames')?.split(',').filter(Boolean) || [];
+
+              if (isIncluded) {
+                form.setValue('includegames', currentIncludeGames.filter(gameId => gameId !== id).join(','));
+                form.setValue('excludegames', [...currentExcludeGames, id].join(','));
+              } else {
+                form.setValue('excludegames', currentExcludeGames.filter(gameId => gameId !== id).join(','));
+                form.setValue('includegames', [...currentIncludeGames, id].join(','));
+              }
+            }
+
+            return (
+              <div key={status.name} className="flex items-center justify-between p-2 border rounded">
+                <span>{t(`games.${status.name}`)}</span>
+                <Switch
+                  checked={isIncluded}
+                  onCheckedChange={() => handleGameTypeToggle(status.id.toString())}
+                />
+              </div>
+            );
+          })}
         </div>
+      </div>
+          </TabsContent>
+           </Tabs>
+        </div>
+        
         </form>
-          </Form>
+        </Form>
+         
+          
       );
 }
 

@@ -113,6 +113,9 @@ type ResponseBalance struct {
 	BeforeBalance decimal.Decimal `json:"beforebalance"`
 	Balance decimal.Decimal `json:"balance"`
 }
+
+
+
 func InitAMQP() {
 	fmt.Println("Init AMQP RABBIT")
 	fmt.Println("channel")
@@ -1752,6 +1755,7 @@ func GetGameStatus(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	var products []Product
+	
 	// Cache the result in Redis with a 1-day expiration
 	statusJSON, err := json.Marshal(gameStatus)
 	if err != nil {
@@ -1786,21 +1790,25 @@ func GetGameStatus(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
-
-func GetMemberByPartner(c *fiber.Ctx) error {
-	
-	// body := new(Dbstruct)
-	// if err := c.BodyParser(body); err != nil {
-	// 	response := fiber.Map{
-	// 		"Message": "รับข้อมูลผิดพลาด",
-	// 		"Status":  false,
-	// 		"Data":    err.Error(),
-	// 	}
-	// 	return c.JSON(response)
-	// }
-	db, err := GetDBFromContext(c)
+func GetMemberByPartnerId(c *fiber.Ctx) error {
+	type Body struct {
+		Prefix string `json:"prefix"`
+		Id  string   `json:"id"`
+	}
+	body := new(Body)
+	if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//db, err := GetDBFromContext(c)
  
-	//db, err := database.ConnectToDB(body.Prefix)
+	fmt.Printf("Body: %+v \n",body)
+
+	db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
@@ -1809,11 +1817,12 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
+	
 	//database.CheckAndCreateTable(db, models.Users{})
 
 	var partner models.Partner
 
-	if err = db.Debug().Where("affiliateKey = ?",c.Locals("AffiliateKey")).Find(&partner).Error; err != nil {
+	if err = db.Debug().Where("id = ?",body.Id).Find(&partner).Error; err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
 			"Status":  false,
@@ -1823,8 +1832,10 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 	}
 	fmt.Printf("Partner: %+v \n",partner)
 		
+	//games := []models.Users{}
 	games := []models.Users{}
-	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
+
+	err = db.Debug().Where("referred_by = ?",partner.AffiliateKey).Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1866,6 +1877,105 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 			}	
 		}
 		
+	}
+
+
+	response := fiber.Map{
+		"Message": "ดึงข้อมูลสำเร็จ",
+		"Status":  true,
+		"Data":    games,
+	}
+	return c.JSON(response)
+}
+func GetMemberByPartner(c *fiber.Ctx) error {
+	
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": "รับข้อมูลผิดพลาด",
+	// 		"Status":  false,
+	// 		"Data":    err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+	db, err := GetDBFromContext(c)
+ 
+	//db, err := database.ConnectToDB(body.Prefix)
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ติดต่อฐานข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	
+	//database.CheckAndCreateTable(db, models.Users{})
+
+	var partner models.Partner
+
+	if err = db.Debug().Where("affiliateKey = ?",c.Locals("AffiliateKey")).Find(&partner).Error; err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+	//fmt.Printf("Partner: %+v \n",partner)
+		
+	games := []models.Users{}
+	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	// var settings []models.Settings
+
+	// dbm := ConnectMaster()
+
+	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+
+	// defer dbm.Close()
+	
+
+	for i := range games {
+		
+		pro_setting,_ := GetProdetail(db,games[i].ProStatus)
+		fmt.Printf(" pro_setting: %+v",pro_setting)
+		if pro_setting != nil {
+		turnType, ok := pro_setting["TurnType"].(string)
+        if !ok {
+            return c.JSON(fiber.Map{
+                "Status": false,
+                "Message": "รูปแบบ TurnType ไม่ถูกต้อง",
+                "Data": fiber.Map{"id": -1},
+            })
+        }
+		commissionRate,_ := common.GetCommissionRate(partner.Prefix)
+        if turnType == "turnover" {
+		totalTurnover, err := common.CheckTurnover(db,&games[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
+		totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+		if err == nil {
+			games[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+			games[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
+		
+			}	
+			}
+		} else {
+			games[i].TotalEarnings = decimal.NewFromFloat(0.0) //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+			games[i].TotalTurnover = decimal.NewFromFloat(0.0)
+			games[i].TDeposit = decimal.NewFromFloat(0.0)
+			games[i].TWithdraw = decimal.NewFromFloat(0.0)
+			games[i].Crdb = decimal.NewFromFloat(0.0)
+			games[i].SumProamount = decimal.NewFromFloat(0.0)
+			
+		}
 	}
 
 

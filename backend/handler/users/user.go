@@ -254,7 +254,8 @@ func Register(c *fiber.Ctx) error {
 
 	user.ReferralCode = seedPhrase
 
-	//fmt.Printf("user: %s \n",user)
+	fmt.Printf("user: %s \n",user)
+	
 	result := db.Debug().Create(&user)
 
 	if result.Error != nil {

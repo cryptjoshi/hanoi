@@ -27,7 +27,7 @@ import (
    //"github.com/solrac97gr/basic-jwt-auth/models"
    //"github.com/solrac97gr/basic-jwt-auth/repository"
    //"hanoi/repository"
-   //"encoding/json"
+   "encoding/json"
    //"log"
    // "net"
    // "net/http"
@@ -39,6 +39,86 @@ import (
    "errors"
    //"github.com/go-resty/resty/v2"
 )
+
+type Times struct {
+		
+	Type       string `json:"type"`
+	Hours      string `json:"hours"`
+	Minute     string `json:"minute"`
+	DaysOfWeek []string `json:"daysofweek"`
+}
+
+
+var ProItem struct {
+	UsageLimit int `json:"usagelimit"`
+	ProType  Times `json:"protype"`
+	Example string `json:"example"`
+	Name string `json:"name"`
+}
+
+type PartnerMember struct {
+	ID              int             // ID ของสมาชิก
+	WalletID        int             // ID ของกระเป๋าเงิน
+	Username        string          // ชื่อผู้ใช้
+	Password        string          // รหัสผ่าน
+	ProviderPassword string          // รหัสผ่านจากผู้ให้บริการ
+	Fullname        string          // ชื่อจริง
+	Bankname        string          // ชื่อธนาคาร
+	Banknumber      string          // หมายเลขบัญชีธนาคาร
+	Balance         decimal.Decimal  // ยอดเงินในกระเป๋าเงิน
+	Beforebalance   decimal.Decimal  // ยอดเงินก่อนหน้า
+	Currency        string          // สกุลเงิน
+	Token           string          // โทเค็น
+	Role            string          // บทบาท
+	Salt            string          // salt
+	Status          int             // สถานะ
+	Betamount       decimal.Decimal  // จำนวนเงินที่เดิมพัน
+	Commission      decimal.Decimal  // ค่าคอมมิชชั่น
+	Win             decimal.Decimal  // จำนวนเงินที่ชนะ
+	Lose            decimal.Decimal  // จำนวนเงินที่แพ้
+	Turnover        decimal.Decimal  // ยอดเดิมพันรวม
+	TotalEarnings   decimal.Decimal  // ยอดรวมกำไร
+	TotalTurnover   decimal.Decimal  // ยอดรวมการหมุนเวียน
+	ProID           string          // ID ของโปรเจ็กต์
+	PartnersKey     string          // คีย์ของพันธมิตร
+	ProStatus       string          // สถานะของโปร
+	ProActive       string          // สถานะการทำงานของโปร
+	Prefix          string          // ค่าพรีฟิก
+}
+
+// type ParnterMember struct {
+// 	//gorm.Model               // ใช้สำหรับให้ GORM จัดการฟิลด์ ID, CreatedAt, UpdatedAt, DeletedAt
+// 	ID      int       `gorm:"column:id"`
+// 	WalletID      int       `gorm:"column:walletid"`
+// 	Username      string    `gorm:"column:username"`
+// 	Password      string    `gorm:"column:password"`
+// 	ProviderPassword string   `gorm:"column:provider_password"`
+// 	Fullname      string    `gorm:"column:fullname"`
+// 	Bankname      string    `gorm:"column:bankname"`
+// 	Banknumber    string    `gorm:"column:banknumber"`
+// 	Balance       decimal.Decimal   `gorm:"column:balance"`      // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Beforebalance decimal.Decimal   `gorm:"column:beforebalance"` // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Currency      string    `gorm:"column:currency"`
+// 	Token         string    `gorm:"column:token"`
+// 	Role          string    `gorm:"column:role"`
+// 	Salt          string    `gorm:"column:salt"`
+// 	Status        int       `gorm:"column:status"`
+// 	Betamount     decimal.Decimal   `gorm:"column:betamount"`    // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Commission    decimal.Decimal   `gorm:"column:commission"`   // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Win           decimal.Decimal   `gorm:"column:win"`          // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Lose          decimal.Decimal   `gorm:"column:lose"`         // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	Turnover      decimal.Decimal   `gorm:"column:turnover"`     // แนะนำให้ใช้ decimal.Decimal สำหรับค่าเงิน
+// 	TotalEarnings decimal.Decimal   `gorm:"column:totalEarnings"`
+// 	TotalTurnover decimal.Decimal   `gorm:"column:totalTurnover"`
+// 	ProID         string    `gorm:"column:pro_id"`
+// 	PartnersKey   string    `gorm:"column:partners_key"`
+// 	ProStatus     string    `gorm:"column:pro_status"`
+// 	ProActive     string    `gorm:"column:pro_active"`
+// 	Prefix        string    `gorm:"column:prefix"`
+//  }
+
+
+
 var mysql_host = os.Getenv("MYSQL_HOST")
 var mysql_user = os.Getenv("MYSQL_ROOT_USER")
 var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
@@ -142,4 +222,37 @@ func CalculatePartnerCommission(commissionRate decimal.Decimal, userTurnover dec
 	// //db.Save(&partner)
 
 	  
+}
+
+func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
+	var promotion models.Promotion
+	if err := db.Debug().Where("id = ?", procode).Find(&promotion).Error; err != nil {
+		fmt.Printf("Error unmarshalling JSON: %v", err)
+		return nil, err
+	}
+	if promotion.SpecificTime != "" {
+			if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
+			//log.Fatalf("Error unmarshalling JSON: %v", err)
+			fmt.Printf("Error unmarshalling JSON: %v", err)
+			return nil, err
+			}
+		} else {
+			return nil, nil
+		}
+	
+		 
+		response := make(map[string]interface{}) 
+		//fmt.Printf(" %s ",promotion)
+			response["Type"] = ProItem.ProType.Type
+			response["count"] = ProItem.UsageLimit
+			response["MinTurnover"] = promotion.MinSpend
+			response["Formular"] = promotion.Example
+		    response["Name"] = promotion.Name
+			response["TurnType"]=promotion.TurnType
+		if ProItem.ProType.Type == "weekly" {
+			response["Week"] = ProItem.ProType.DaysOfWeek
+		}
+	 
+		return response, nil
+	
 }

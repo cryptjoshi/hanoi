@@ -19,6 +19,7 @@ import (
 	"hanoi/handler"
 	"hanoi/handler/jwtn"
 	"hanoi/models"
+	"hanoi/common"
 	//wallet "hanoi/handler/wallet"
 	// 	//"github.com/golang-jwt/jwt"
 	// 	//jtoken "github.com/golang-jwt/jwt/v4"
@@ -32,7 +33,7 @@ import (
 	// 	// "net/http"
 	"os"
 	// 	// "strconv"
-	//"time"
+	"time"
 	"fmt"
 	"strings"
 	//"errors"
@@ -1349,4 +1350,169 @@ func getDataList() ([]DatabaseInfo,error) {
 	}
 	return databaseList,nil
 
+}
+
+
+
+
+func Overview(c *fiber.Ctx) (error) {
+type OBody struct {
+	Startdate string `json:"startdate"`
+}
+
+	var body OBody
+
+	if err := c.BodyParser(&body); err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+
+	startDate, err := time.Parse("01/02/2006", body.Startdate)
+	if err != nil {
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถแปลงวันที่ได้: " + err.Error(),
+		}
+		return c.JSON(response)
+	}
+	formattedDate := startDate.Format("2006-01-02")
+	fmt.Printf("Startdate: %s \n", formattedDate)
+
+
+	var partner models.Partner
+
+	db, _err := handler.GetDBFromContext(c)
+	prefix := c.Locals("Prefix")
+	fmt.Println("prefix:", prefix)
+	if _err != nil {
+
+		// response := fiber.Map{
+		// "Message": "โทเคนไม่ถูกต้อง!!",
+		// "Status":  false,
+		// "Data": fiber.Map{
+		// "prefix": prefix,
+		// 	},
+		// }
+		// return c.JSON(response)
+		db, _ = database.ConnectToDB(prefix.(string))
+	}
+	id := c.Locals("Walletid")
+	u_err := db.Debug().Where("id= ?", id).Find(&partner).Error
+
+	if u_err != nil {
+
+		response := fiber.Map{
+			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+			"Status":  false,
+			"Data": fiber.Map{
+				"prefix": prefix,
+			},
+		}
+
+		return c.JSON(response)
+	}
+
+	fmt.Printf(" Partner: %+v \n",partner)
+
+	member := []models.Users{}
+
+	result := db.Debug().Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	if result.Error != nil {
+		response := fiber.Map{
+			"Message": "ดึงข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    result.Error.Error(),
+		}
+		return c.JSON(response)
+	}
+	memberCount := result.RowsAffected
+	fmt.Printf("จำนวนสมาชิก: %d\n", memberCount) // แสดงจำนวนสมาชิก
+	
+	// var settings []models.Settings
+
+	// dbm := ConnectMaster()
+
+	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+
+	// defer dbm.Close()
+	
+
+	for i := range member {
+		
+		pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
+		fmt.Printf(" pro_setting: %+v",pro_setting)
+		//turnType, ok := pro_setting["TurnType"].(string)
+        // if !ok {
+        //     return c.JSON(fiber.Map{
+        //         "Status": false,
+        //         "Message": "รูปแบบ TurnType ไม่ถูกต้อง",
+        //         "Data": fiber.Map{"id": -1},
+        //     })
+        // }
+		// commissionRate,_ := common.GetCommissionRate(partner.Prefix)
+        // if turnType == "turnover" {
+		// totalTurnover, err := common.CheckTurnover(db,&member[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
+		// totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+		// if err == nil {
+		// 	member[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+		// 	member[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
+		
+		// 	}	
+		// }
+		
+	}
+
+
+	type Overview struct {
+		Allmembers decimal.Decimal `json:"allmembers"`
+		Newcomer decimal.Decimal `json:"newcomer"`
+		FirstDept decimal.Decimal `json:"firstdept"`
+		Deposit decimal.Decimal `json:"deposit"`
+		Withdrawl decimal.Decimal `json:"withdrawl"`
+		TotalDeposit decimal.Decimal `json:"totaldeposit"`
+		TotalWithdrawl decimal.Decimal `json:"totalwithdrawl"`
+		Winlose decimal.Decimal `json:"winlose"`
+		Totalprofit decimal.Decimal `json:"totalprofit"`
+		Provider []struct {
+			Name string `json:"name"`
+			Total decimal.Decimal `json:"total"`
+		}
+	}
+
+
+	//allmembers := db.Debug()
+
+
+	overview := Overview{
+		Allmembers:    decimal.NewFromInt(memberCount),
+		Newcomer:      decimal.NewFromFloat(150.00),
+		FirstDept:     decimal.NewFromFloat(75.00),
+		Deposit:       decimal.NewFromFloat(5000.00),
+		Withdrawl:     decimal.NewFromFloat(2000.00),
+		TotalDeposit:  decimal.NewFromFloat(30000.00),
+		TotalWithdrawl: decimal.NewFromFloat(15000.00),
+		Winlose:       decimal.NewFromFloat(2500.00),
+		Totalprofit:   decimal.NewFromFloat(10000.00),
+		Provider: []struct {
+			Name  string          `json:"name"`
+			Total decimal.Decimal `json:"total"`
+		}{
+			{Name: "PGSoft", Total: decimal.NewFromFloat(1000.00)},
+			{Name: "Efinity", Total: decimal.NewFromFloat(2000.00)},
+			{Name: "GCLUB", Total: decimal.NewFromFloat(4000.00)},
+		},
+	}
+
+
+	return c.JSON(fiber.Map{
+		"Status":  true,
+		"Message": "สำเร็จ!",
+		"Data": overview,
+	})
+
+	return nil
 }

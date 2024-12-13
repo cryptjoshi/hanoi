@@ -41,13 +41,17 @@ type Users struct {
 	Firstname        string    `gorm:"type:varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:firstname"`
 	Lastname         string    `gorm:"type:varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:lastname"`
 	Deposit          decimal.Decimal   `gorm:"type:decimal(10,2);column:deposit;default:0"`
+	TDeposit		 decimal.Decimal   `gorm:"type:decimal(10,2);column:tdeposit;default:0"`
 	Withdraw         decimal.Decimal   `gorm:"type:decimal(10,2);column:withdraw;default:0"`
+	TWithdraw         decimal.Decimal   `gorm:"type:decimal(10,2);column:twithdraw;default:0"`
 	Credit           decimal.Decimal   `gorm:"type:decimal(10,2);column:credit;default:0"`
+	Crdb           decimal.Decimal   `gorm:"type:decimal(10,2);column:crdb;default:0"`
 	Prefix           string    `gorm:"type:varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";gorm:"column:prefix;NOT NULL"`
 	Actived          *time.Time `gorm:"default:current_timestamp(3)";gorm:"column:actived;NOT NULL"`
 	TempSecret       string    `gorm:"type:varchar(50)";gorm:"column:temp_secret"`
 	Secret           string    `gorm:"type:text";gorm:"column:secret"`
 	OtpAuthUrl       string    `gorm:"type:text";gorm:"column:otpAuthUrl"`
+	SumProamount      decimal.Decimal   `gorm:"type:decimal(10,2);column:sumproamount;default:0"`
 	LastProamount      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastproamount;default:0"`
 	LastDeposit      decimal.Decimal   `gorm:"type:decimal(10,2);column:lastdeposit;default:0"`
 	LastWithdraw     decimal.Decimal   `gorm:"type:decimal(10,2);column:lastwithdraw;default:0"`

@@ -47,8 +47,9 @@ function EditMember({ memberId, lng, prefix, onClose, onCancel, isAdd }: { membe
 
   const fetchMember = async (prefix:string,id:number) => {
     const data = await GetMemberById(prefix, id);
-   // console.log(data)
+  // console.log(data)
     form.reset(data.Data as z.infer<typeof memberSchema>);
+    form.setValue("RefferedCode",data.Data.referred_by)
   };
 
   useEffect(() => {

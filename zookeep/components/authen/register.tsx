@@ -109,6 +109,7 @@ export default function RegisterComponent({lng,refferedcode}:{lng:string,reffere
       body.referred_by = refferedcode; // ใส่ค่า refferedcode ลงใน referred_by
     }
    console.log(body)
+   
    RegisterUser("ckd",body).then((response) =>{
  
     if(!response.Status){

@@ -11,13 +11,14 @@ import { CalendarIcon } from '@radix-ui/react-icons';
 import { addDays, format } from 'date-fns';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
+import th from "date-fns/locale/th"
 
 export function CalendarDateRangePicker({
   className
 }: React.HTMLAttributes<HTMLDivElement>) {
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 20),
-    to: addDays(new Date(2023, 0, 20), 20)
+    from: new Date(), // ใช้วันที่ปัจจุบัน
+    to: addDays(new Date(), 20) // วันที่ 20 วันหลังจากวันที่ปัจจุบัน
   });
 
   return (
@@ -54,7 +55,11 @@ export function CalendarDateRangePicker({
             defaultMonth={date?.from}
             selected={date}
             onSelect={setDate}
-            numberOfMonths={2}
+            numberOfMonths={1}
+            locale={th}
+            weekStartsOn={0} 
+            dir="ltr"
+            className="ltr-calendar" 
           />
         </PopoverContent>
       </Popover>

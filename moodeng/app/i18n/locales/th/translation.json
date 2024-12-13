@@ -301,7 +301,16 @@
             "refferedcode":"อ้างอิง",
             "referralcode":"โค๊ดอ้างอิง",
             "turnover":"เทิร์นโอเวอร์",
-            "totalcommission":"คอมมิชชั่นทั้งหมด"
+            "totalcommission":"คอมมิชชั่นทั้งหมด",
+             "win":"ชนะ",
+            "lose":"แพ้",
+            "deposit":"ฝาก",
+            "withdraw":"ถอน",
+            "trxdeposit":"ฝาก TRX",
+            "trxwithdraw":"ถอน TRX",
+            "drdb":"ฝาก/ถอนทั้งหมด",
+            "promotion":"โปรโมชั่น"
+
         }
     },
     "partner": {

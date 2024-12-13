@@ -14,20 +14,19 @@ import {
 import { useTranslation } from "@/app/i18n";
 import EditMemberSettings from "@/components/member/page";
 import MemberListDataTable, { DataTableProps } from "@/components/member/list";
-import { GroupedDatabase } from "../agents/data-table";
+import PromotionListDataTable, { GroupedDatabase } from "@/components/promotion/list";
 
 
-export default async function MembersPage({ params }: { params: {  prefix: string,lng:string } }){
-  const { prefix,lng } = params;
-    
+export default async function PromotionPage({ params }: { params: { prefix: string, lng: string } }){
+  const { prefix, lng } = params;
   let data: DataTableProps<GroupedDatabase> = {
     data: [],
     columns: [],
     rows: []
   };
   console.log(lng);
-    
-  const {t} = await useTranslation(lng,'translation');
+  
+  const { t } = await useTranslation(lng, 'translation');
   return (
     <ContentLayout title="Users" children={undefined}>
       <Breadcrumb>
@@ -50,7 +49,7 @@ export default async function MembersPage({ params }: { params: {  prefix: strin
         </BreadcrumbList>
       </Breadcrumb>
       <PlaceholderContent children={undefined}>
-        <MemberListDataTable lng={lng} data={data} id={prefix} />
+        <PromotionListDataTable lng={lng} data={data} prefix={prefix} />
           {/* <EditMemberSettings params={{
             lng: lng,id:prefix
           }} /> */}

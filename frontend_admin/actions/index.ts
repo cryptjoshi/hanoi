@@ -148,6 +148,19 @@ export const GetMemberList = async (prefix:string) =>{
 return response.json()
 }
 
+export const GetMemberPartnerList = async (id:string,prefix:string) =>{
+ 
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/bypartnerid`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      //'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify({"prefix":prefix,id:id})
+})
+return response.json()
+}
+
 export const GetMemberById = async (prefix:string,id:number) =>{
  
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/byid`, { method: 'POST',

@@ -29,6 +29,7 @@ import {
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { CalendarDateRangePicker } from '@/components/date-range-picker';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -78,8 +79,15 @@ export interface iMember {
 	ProStatus:string,    
   ProActive:string,
   Prefix:string,
-  TotalTurnover:number
-  TotalEarnings:number
+  TotalTurnover:number,
+  TotalEarnings:number,
+  TDeposit:number,
+  Deposit:number,
+  Withdraw:number,
+  TWithdraw:number,
+  Crdb:number,
+  Winlose:number,
+  SumProamount:number
 
 
   // Add other properties as needed
@@ -87,6 +95,7 @@ export interface iMember {
 export interface DataTableProps<TData> {
   columns: ColumnDef<TData, any>[]
   data: TData[]
+  rows: []
 }
 
 import { ArrowLeftIcon } from "@radix-ui/react-icons"
@@ -126,9 +135,9 @@ function formatSpecificTime(jsonString: string,lng:string): string {
 
 export default function MemberListDataTable({
   id,
- 
+  data,
   lng,
-}: { id:string,lng:string}){ //data:DataTableProps<iMember>, lng:string}) {
+}: { id:string,data:DataTableProps<iMember>, lng:string}) {
   const [games, setGames] = useState<iMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -150,9 +159,14 @@ export default function MemberListDataTable({
       
       setIsLoading(true);
       try {
+      
+        if(accessToken){
         const fetchedGames = await GetMemberList(accessToken);
         console.log(fetchedGames)
         setGames(fetchedGames.Data);
+        } else {
+          router.replace(`/${lng}/login`)
+        }
       } catch (error) {
         console.error('Error fetching games:', error);
       } finally {
@@ -165,11 +179,11 @@ export default function MemberListDataTable({
   const columnHelper = createColumnHelper<iMember>()
 
   const columns = useMemo(() => [
-    columnHelper.accessor('ID', {
-      header: t('member.columns.id'),
-      cell: info => info.getValue(),
-      enableHiding: false,
-    }),
+    // columnHelper.accessor('ID', {
+    //   header: t('member.columns.id'),
+    //   cell: info => info.getValue(),
+    //   enableHiding: false,
+    // }),
     // columnHelper.accessor('ReferralCode', {
     //   header: t('member.columns.referralcode'),
     //   cell: info => info.getValue(),
@@ -194,36 +208,79 @@ export default function MemberListDataTable({
     //   header: t('columns.username'),
     //   cell: info => info.getValue(),
     // }),
-    // columnHelper.accessor('Balance', {
-    //   header: t('member.columns.balance'),
+
+    columnHelper.accessor('Deposit', {
+      header: t('member.columns.deposit'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+         columnHelper.accessor('TDeposit', {
+      header: t('member.columns.trxdeposit'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+     columnHelper.accessor('Withdraw', {
+      header: t('member.columns.withdraw'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+     columnHelper.accessor('TWithdraw', {
+      header: t('member.columns.trxwithdraw'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+      columnHelper.accessor('Crdb', {
+      header: t('member.columns.drdb'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+    columnHelper.accessor('SumProamount', {
+      header: t('member.columns.promotion'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+      columnHelper.accessor('Win', {
+      header: t('member.columns.win'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+    columnHelper.accessor('Lose', {
+      header: t('member.columns.lose'),
+      cell: info => {
+        const value = info.getValue();
+        return formatNumber(parseFloat(value?.toString()), 2);
+      }
+    }),
+    // columnHelper.accessor('TotalEarnings', {
+    //   header: t('member.columns.totalcommission'),
     //   cell: info => {
     //     const value = info.getValue();
     //     return formatNumber(parseFloat(value?.toString()), 2);
     //   }
     // }),
-    columnHelper.accessor('TotalTurnover', {
-      header: t('member.columns.turnover'),
-      cell: info => {
-        const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
-      }
-    }),
-    columnHelper.accessor('TotalEarnings', {
-      header: t('member.columns.totalcommission'),
-      cell: info => {
-        const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
-      }
-    }),
-      columnHelper.accessor('Status', {
-        header: t('member.columns.status'),
-        cell: info => {
-          const value = info.getValue();
-          return value === 1 ? t('common.active') : value === 0 ? t('common.inactive') : t('common.maintenance');
-        //  console.log('Raw specificTime value:', value); // For debugging
+      // columnHelper.accessor('Status', {
+      //   header: t('member.columns.status'),
+      //   cell: info => {
+      //     const value = info.getValue();
+      //     return value === 1 ? t('common.active') : value === 0 ? t('common.inactive') : t('common.maintenance');
+      //   //  console.log('Raw specificTime value:', value); // For debugging
          
-        }
-      }),
+      //   }
+      // }),
  
     // columnHelper.accessor('Active', {
     //   header: t('columns.active'),
@@ -369,15 +426,22 @@ export default function MemberListDataTable({
           {/* <div className="flex items-center justify-between mt-4 mb-4">
             <Button onClick={handleAddGame}>{t('member.add.title')}</Button>
           </div> */}
-          <div className="flex items-center py-4">
+          <div className="flex items-center justify-between gap-4 py-4">
             <Input
               placeholder={t('member.columns.search')}
               value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
                 table.getColumn("Username")?.setFilterValue(event.target.value)
               }
-              className="max-w-sm"
+              className="max-w"
             />
+               
+                
+                
+                <CalendarDateRangePicker />
+                
+               
+        
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">

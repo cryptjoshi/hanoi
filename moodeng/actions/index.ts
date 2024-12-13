@@ -151,6 +151,18 @@ export const UpdatePartner = async (prefix:string,id:any,body:any) =>{
     return response.json()
 }
 
+export const GetOverview = async (token:string,startdate:string)=>{
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/partner/overview`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify({"startdate":startdate})
+    })
+    return response.json()
+}
+
 export const GetMemberList = async (token:string) =>{
  
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/member/bypartner`, { method: 'POST',

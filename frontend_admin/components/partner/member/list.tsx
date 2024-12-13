@@ -48,7 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
  
-import { GetMemberList } from '@/actions'
+import { GetMemberPartnerList,GetMemberList } from '@/actions'
 import { useTranslation } from '@/app/i18n/client';
  
  
@@ -125,9 +125,10 @@ function formatSpecificTime(jsonString: string,lng:string): string {
 // console.log(formatSpecificTime(jsonString));
 
 export default function MemberListDataTable({
-  data,
-  lng,
-}: { data:DataTableProps<iMember>, lng:string}) {
+  prefix,
+  id,
+  lng
+}: { prefix:string,id:string, lng:string}) {
   const [games, setGames] = useState<iMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -139,17 +140,19 @@ export default function MemberListDataTable({
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showTable, setShowTable] = useState(true);
-  const [prefix,setPrefix] = useState(null)
+  //const [prefix,setPrefix] = useState(null)
   const router = useRouter()
   const { customerCurrency,accessToken } = useAuthStore();
   const {t} = useTranslation(lng,'translation',undefined)
 
   useEffect(() => {
+
     const fetchGames = async () => {
       
       setIsLoading(true);
       try {
-        const fetchedGames = await GetMemberList(accessToken);
+       
+        const fetchedGames = await GetMemberPartnerList(id,prefix);
         console.log(fetchedGames)
         setGames(fetchedGames.Data);
       } catch (error) {
@@ -158,7 +161,12 @@ export default function MemberListDataTable({
         setIsLoading(false);
       }
     };
+
+   // if(accessToken){
     fetchGames();
+   //// }else {
+  //    router.replace(`/${lng}/login`)
+   // }
   }, [ refreshTrigger])
 
   const columnHelper = createColumnHelper<iMember>()

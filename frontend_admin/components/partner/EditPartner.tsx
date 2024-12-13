@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 // import { Calendar } from "@/components/ui/calendar";
 import useAuthStore from "@/store/auth";
 import { iPartners } from "./list";
-import MemberList from "./list"
+import MemberList from "./member/list"
 import { DataTableProps, iMember } from "./member/list";
 // const gametype = [
 //     { id: '1', name: 'Slot' },
@@ -55,7 +55,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
  
   const isSeedFetchedRef = useRef(false);
    
-  const [data, setData] = useState<DataTableProps<iMember>>({ columns: [], data: [] }); 
+  const [data, setData] = useState<DataTableProps<iMember>>({ data: [] }); 
   const form = useForm<Partner>({
     resolver: zodResolver(formSchema),
     defaultValues: {} as z.infer<typeof formSchema>
@@ -418,7 +418,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
               </TabsContent>
               <TabsContent value="member">
           <MemberList 
-            lng={lng} data={data} prefix={prefix} />
+            lng={lng} prefix={prefix} id={partnerId.id.toString()} />
           </TabsContent>
           <TabsContent value="games" className="md:max-w-md">
           <div className="flex flex-col justify-between space-y-4">

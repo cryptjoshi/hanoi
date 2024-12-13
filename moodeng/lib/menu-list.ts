@@ -45,30 +45,43 @@ import {
             icon: LayoutGrid,
             active: isActive(`/${language}/dashboard`, pathname),
             submenus: []
-          }
+          },
+          {
+            href: `/${language}/dashboard/members`,
+            label: "members",
+            icon: Users,
+            active: isActive(`/${language}/dashboard/members`, pathname)
+          },
+          {
+            href: `/${language}/dashboard/promotion`,
+            label: "promotion",
+            icon: Bookmark,
+            active: isActive(`/${language}/dashboard/promotion`, pathname)
+          },
         ]
       },
-      {
-        groupLabel: "contents",
-        menus: [
-          {
-            href: "",
-            label: "members",
-            icon: SquarePen,
-            active: isActive(`/${language}/dashboard/members`, pathname),
-            submenus: [
-              {
-                href: `/${language}/dashboard/members`,
-                label: "all_users",
-                active: isActive(`/${language}/dashboard/members`, pathname)
-              },
-              // {
-              //   href: `/${language}/dashboard/agents/new`,
-              //   label: "new_agent",
-              //   active: pathname === `/${language}/dashboard/agents/new`
-              // }
-            ]
-          },
+      //{
+       // groupLabel: "contents",
+      //  menus: [
+           
+          // {
+          //   href: "",
+          //   label: "members",
+          //   icon: SquarePen,
+          //   active: isActive(`/${language}/dashboard/members`, pathname),
+          //   submenus: [
+          //     {
+          //       href: `/${language}/dashboard/members`,
+          //       label: "all_users",
+          //       active: isActive(`/${language}/dashboard/members`, pathname)
+          //     },
+          //     // {
+          //     //   href: `/${language}/dashboard/agents/new`,
+          //     //   label: "new_agent",
+          //     //   active: pathname === `/${language}/dashboard/agents/new`
+          //     // }
+          //   ]
+          // },
           // {
           //   href: "",
           //   label: "agent",
@@ -97,8 +110,8 @@ import {
           //   label: "Tags",
           //   icon: Tag
           // }
-        ]
-      },
+       // ]
+     // },
       {
         groupLabel: "settings",
         menus: [

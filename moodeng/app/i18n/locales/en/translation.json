@@ -301,7 +301,15 @@
             "refferedcode":"Reffered by",
             "referralcode":"Refferal code",
             "turnover":"Turn Over",
-            "totalcommission":"Total Commission"
+            "totalcommission":"Total Commission",
+            "win":"Win",
+            "lose":"Lose",
+            "deposit":"Deposit",
+            "withdraw":"withdraw",
+            "trxdeposit":"TRX Deposit",
+            "trxwithdraw":"TRX withdraw",
+            "drdb":"Credit/Debit",
+            "promotion":"Promotion"
         }
     },
     "partner": {

@@ -2,22 +2,6 @@ version: "3.3"
  
 services:
 
-  # apigateway:
-  #   container_name: api_gateway
-  #   build:
-  #     context: ./apigateway
-  #     dockerfile: dev.Dockerfile
-  #   ports:
-  #     - "4005:8050"
-  #   env_file: .env
-  #   # environment:
-  #   #   - VIRTUAL_HOST=stagging.tsxbet.com
-  #   #   - VIRTUAL_PORT=4007
-  #   volumes:
-  #     - ./apigateway/:/app
-  #   networks:
-  #       - proxy-net
-
   whoami2:
     image: traefik/whoami
     networks:
@@ -174,6 +158,22 @@ services:
     env_file: .env
     networks:
       - proxy-net
+
+  reportservice:
+    container_name: king_report_service
+    build:
+      context: ./report
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4005:8050"
+    env_file: .env
+    # environment:
+    #   - VIRTUAL_HOST=stagging.tsxbet.com
+    #   - VIRTUAL_PORT=4007
+    volumes:
+      - ./report/:/app
+    networks:
+        - proxy-net
 
   backendservice:
     image: king_backend_service

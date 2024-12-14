@@ -38,7 +38,7 @@ func UpdateUserFields(db *gorm.DB, userID int, updates map[string]interface{}) e
     // ดึงข้อมูลของยูสเซอร์ที่ต้องการแก้ไขจากฐานข้อมูล
     var user models.Users
 
-	if err := db.Debug().Where("walletid = ? ", userID).First(&user).Error; err != nil {
+	if err := db.Debug().Where("id = ? ", userID).First(&user).Error; err != nil {
     //if err := db.First(&user, userID).Error; err != nil {
         return errors.New("มีข้อผิดพลาด")
     }

@@ -315,7 +315,13 @@ func JwtPMiddleware(c *fiber.Ctx) error {
 func JwtMiddleware(c *fiber.Ctx) error {
 	
 	claims := &Claims{}
-	tokenString := c.Get("Authorization")[7:]
+	//tokenString := c.Get("Authorization")[7:]
+	authHeader := c.Get("Authorization")
+	if len(authHeader) < 8 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "Invalid Authorization header"})
+	}
+	tokenString := authHeader[7:]
+
 	//fmt.Printf("token : %s",tokenString)
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil

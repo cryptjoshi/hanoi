@@ -1858,6 +1858,7 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 		
 		pro_setting,_ := GetProdetail(db,games[i].ProStatus)
 		fmt.Printf(" pro_setting: %+v",pro_setting)
+		if pro_setting != nil {
 		turnType, ok := pro_setting["TurnType"].(string)
         if !ok {
             return c.JSON(fiber.Map{
@@ -1875,6 +1876,15 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 			games[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
 		
 			}	
+		}
+		} else {
+			games[i].TotalEarnings = decimal.NewFromFloat(0.0) //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+			games[i].TotalTurnover = decimal.NewFromFloat(0.0)
+			games[i].TDeposit = decimal.NewFromFloat(0.0)
+			games[i].TWithdraw = decimal.NewFromFloat(0.0)
+			games[i].Crdb = decimal.NewFromFloat(0.0)
+			games[i].SumProamount = decimal.NewFromFloat(0.0)
+			
 		}
 		
 	}

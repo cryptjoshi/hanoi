@@ -118,6 +118,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/member/byid", handler.GetMemberById)
 	app.Post("/db/member/update", handler.UpdateMember)
 	app.Post("/db/member/bypartner",jwt.JwtPMiddleware,handler.GetMemberByPartner)
+	app.Post("/db/member/bypartnerid",handler.GetMemberByPartnerId)
 
 	app.Post("/db/master/update", handler.UpdateMaster)
 	app.Post("/db/master/commission", handler.GetCommission)
@@ -163,6 +164,8 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/partner/create",partner.Register)
 	app.Post("/db/partner/update",partner.UpdatePartner)
 	app.Post("/db/partner/checkseed",partner.GetSeed)
+	app.Post("/db/partner/overview",jwt.JwtPMiddleware,partner.Overview)
+
 	// app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
 	// app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
 	// app.Post("/users/info",jwt.JwtMiddleware,users.GetUser)

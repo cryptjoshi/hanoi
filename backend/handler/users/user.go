@@ -108,6 +108,7 @@ func Login(c *fiber.Ctx) error {
 		"ID":          user.ID,
 		"Walletid":    user.Walletid,
 		"Username":    user.Username,
+		"Fullname":    user.Fullname,
 		"Role":        user.Role,
 		"PartnersKey": user.PartnersKey,
 		"Prefix":      user.Prefix,
@@ -147,6 +148,7 @@ func Login(c *fiber.Ctx) error {
 	}
 	response := fiber.Map{
 		"Token":  t,
+		"Data": user,
 		"Status": true,
 	}
 	return c.JSON(response)
@@ -250,11 +252,12 @@ func Register(c *fiber.Ctx) error {
 	seedPhrase  := CheckSeed(db)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
-	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
-
+	fmt.Printf("SeedPhase  %s\n", strings.ToUpper(user.Prefix) + user.Username + currency) 
+   
 	user.ReferralCode = seedPhrase
 
-	//fmt.Printf("user: %s \n",user)
+	fmt.Printf("user: %s \n",user)
+	
 	result := db.Debug().Create(&user)
 
 	if result.Error != nil {

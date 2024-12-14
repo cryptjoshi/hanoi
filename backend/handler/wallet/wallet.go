@@ -365,11 +365,11 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 	return response, nil
 }
 
-func checkActived(db *gorm.DB,user *models.Users) error {
+func checkActived(db *gorm.DB,ID int) error { //user *models.Users) error {
 
 	var bankstatement []models.BankStatement
 	var RowsAffected int64
-	 db.Debug().Model(&bankstatement).Where("userid=? or walletid=?",user.ID,user.ID).Order("id ASC").Scan(&bankstatement).Count(&RowsAffected)
+	 db.Debug().Model(&bankstatement).Where("userid=? or walletid=?",ID,ID).Order("id ASC").Scan(&bankstatement).Count(&RowsAffected)
 	
 	if RowsAffected >= 1 {
 		updates := map[string]interface{}{
@@ -378,7 +378,7 @@ func checkActived(db *gorm.DB,user *models.Users) error {
 				}
 	
 		//db, _ = database.ConnectToDB(BankStatement.Prefix)
-		_err := repository.UpdateUserFields(db, user.ID, updates) 
+		_err := repository.UpdateUserFields(db, ID, updates) 
 		if _err != nil {
 			return _err
 		}
@@ -789,6 +789,17 @@ func Deposit(c *fiber.Ctx) error {
 	// 	"bankAccountNo":  users.Banknumber,
 	// 	"merchantURL":    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
 	// }
+
+	if users.Bankname == "" && users.Banknumber == "" {
+		response := fiber.Map{
+			"Message": "หมายเลขบัญชีไม่ถูกต้อง",
+			"Status":  false,
+			"Data":    "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+		}
+		return c.JSON(response)
+	}
+
+
 	request := &PayInRequest{
 		Ref:            users.Username,
 		BankAccountName: users.Fullname,
@@ -828,6 +839,7 @@ func Deposit(c *fiber.Ctx) error {
 	
 	BankStatement.Status = "waiting"
 	BankStatement.StatementType = "Deposit"
+	BankStatement.Detail = result.Link
 	// event statement log
 
 	resultz := db.Debug().Create(&BankStatement); 
@@ -893,6 +905,7 @@ func Deposit(c *fiber.Ctx) error {
 		"Status": true,
 		"Data": fiber.Map{ 
 			"id": BankStatement.Uid,
+			"link": BankStatement.Detail,
 			"beforebalance":BankStatement.Beforebalance,
 			"balance": BankStatement.Balance,
 		},
@@ -1203,12 +1216,15 @@ func Webhook(c *fiber.Ctx) error {
 		}
 
   		//db,_ := handler.GetDBFromContext(c)
+
+		fmt.Printf("Body : %+v \n",&requestBody)
+
   		db,_ := database.ConnectToDB(requestBody.MerchantID)
 
   		var bankstatement models.BankStatement
 
     	if err_ := db.Debug().Where("Uid = ? and status = ?",requestBody.TransactionID,"waiting").First(&bankstatement).Error; err_ != nil {
-			return c.Status(200).JSON(fiber.Map{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"Status": false,
 				"Message":  "ไม่พบรายการ หรือ มีการปรับปรุงรายการไปแล้ว!",
 				"Data": fiber.Map{ 
@@ -1236,7 +1252,7 @@ func Webhook(c *fiber.Ctx) error {
 					
 					 _err := repository.UpdateUserFields(db, bankstatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 					if _err != nil {
-					return c.Status(200).JSON(fiber.Map{
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 						"Status": false,
 						"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 						"Data": fiber.Map{ 
@@ -1244,7 +1260,7 @@ func Webhook(c *fiber.Ctx) error {
 						}})
 					}
 					if err := db.Save(&bankstatement).Error; err != nil { // ใช้ db.Save เพื่ออัปเดต bankstatement
-						return c.JSON(fiber.Map{
+						return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 							"Status": false,
 							"Message": "เกิดข้อผิดพลาดในการอัปเดตข้อมูล",
 							"Data": fiber.Map{ 
@@ -1281,7 +1297,7 @@ func Webhook(c *fiber.Ctx) error {
 			
 			 _err := repository.UpdateUserFields(db, bankstatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 			if _err != nil {
-			return c.Status(200).JSON(fiber.Map{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"Status": false,
 				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 				"Data": fiber.Map{ 
@@ -1289,7 +1305,7 @@ func Webhook(c *fiber.Ctx) error {
 				}})
 			}
 			if err := db.Save(&bankstatement).Error; err != nil { // ใช้ db.Save เพื่ออัปเดต bankstatement
-				return c.JSON(fiber.Map{
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"Status": false,
 					"Message": "เกิดข้อผิดพลาดในการอัปเดตข้อมูล",
 					"Data": fiber.Map{ 
@@ -1300,33 +1316,37 @@ func Webhook(c *fiber.Ctx) error {
 		}
 
 
-		
+		updates := map[string]interface{}{
+			//"Balance": bankstatement.Balance,
+			//"LastWithdraw": BankStatement.Transactionamount,
+			//"LastDeposit": BankStatement.Transactionamount,
+			}
 
-//     //  if BankStatement.Transactionamount.LessThan(decimal.Zero) {
-// 	// 	updates["LastWithdraw"] = BankStatement.Transactionamount
-// 	//  } else {
-// 		updates["LastDeposit"] = BankStatement.Transactionamount
-// 		updates["LastProamount"] = BankStatement.Balance.Sub(BankStatement.Transactionamount)
-// 	 //}
-// 	 	_err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
-// 		if _err != nil {
-// 			return c.Status(200).JSON(fiber.Map{
-// 				"Status": false,
-// 				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-// 				"Data": fiber.Map{ 
-// 					"id": -1,
-// 				}})
-// 		} 
+     if bankstatement.Transactionamount.LessThan(decimal.Zero) {
+		updates["LastWithdraw"] = bankstatement.Transactionamount
+	 } else {
+		updates["LastDeposit"] = bankstatement.Transactionamount
+		updates["LastProamount"] = bankstatement.Balance.Sub(bankstatement.Transactionamount)
+	 }
+	 	_err := repository.UpdateUserFields(db, bankstatement.Userid, updates)
+		if _err != nil {
+			return c.Status(200).JSON(fiber.Map{
+				"Status": false,
+				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
+		} 
 
  
-// 		if err := checkActived(db,&users); err != nil {
-// 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 				"Status": false,
-// 				"Message":  "actived deposit ข้อมูลไม่ได้!",
-// 				"Data": fiber.Map{ 
-// 					"id": -1,
-// 				}})
-// 		}
+		if err := checkActived(db,bankstatement.Userid); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Status": false,
+				"Message":  "actived deposit ข้อมูลไม่ได้!",
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
+		}
 
 		
 

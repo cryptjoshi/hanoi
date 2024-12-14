@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // นำเข้า Dialog
+
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
 import { useTranslation } from '@/app/i18n/client';
 import { formatNumber } from '@/lib/utils';
@@ -71,6 +73,9 @@ function TransactionForm({lng,slug}:TransProps) {
     //    router.push(`${lng}/login`)
     const [promotions, setPromotions] = React.useState<any>();
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false); // สถานะสำหรับเปิดปิด Dialog
+    const [qrCodeLink, setQrCodeLink] = useState<string | null>(null); // สถานะสำหรับเก็บลิงก์ QR Code
+
     //const [minTurnover, setMinTurnover] = React.useState<number>(0);
     const [bonus, setBonus] = React.useState<number>(0);
 
@@ -190,15 +195,19 @@ function TransactionForm({lng,slug}:TransProps) {
              if(accessToken){
 
                 const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
-                console.log(response)
+                
                 if(response.Status){
-                    toast({
-                        title: t("promotion.edit.success"),
-                        description: response.Message,
-                        variant: "default",
-                      })
-        
-                      router.push(`/${lng}/home`)
+                  //const link = response.Data.link;
+                  // toast({
+                  //       title: t("promotion.edit.success"),
+                  //       description: response.Message,
+                  //       variant: "default",
+                  //     })
+                      setQrCodeLink(response.Data.link);
+                      setIsDialogOpen(true);
+                   
+              
+                     // router.push(`/${lng}/home`)
                 }  else {
                    // console.log(response)
                     toast({
@@ -230,6 +239,7 @@ function TransactionForm({lng,slug}:TransProps) {
     };
     
      return loading ? <div>Loading...</div> : (
+ 
         <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4 max-w-md mx-auto">
       
@@ -300,7 +310,7 @@ function TransactionForm({lng,slug}:TransProps) {
                         )
                     }}
                 /> */}
-                   <Button type="submit" onClick={async () => {
+            <Button type="submit" onClick={async () => {
               const result = await form.trigger();
               if (!result) {
                 const errors = form.formState.errors;
@@ -317,10 +327,31 @@ function TransactionForm({lng,slug}:TransProps) {
                 })
               }
             }}>{t(`${slug}`)}</Button>
+
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                    router.push(`/${lng}/home`); // เปลี่ยนเส้นทางเมื่อ Dialog ถูกปิด
+                }}}>
+            <DialogContent 
+                    closeButton={false}
+                    >
+                <DialogDescription>
+                {qrCodeLink && (
+                    <iframe 
+                    src={qrCodeLink}  
+                    style={{ width: '100%', height: '100vh',border:'none' }}
+                    ></iframe>
+                )}
+              </DialogDescription>
+              </DialogContent>
+            </Dialog>
              
             </form>
             </Form>
-        
+         
+         
+     
     );
 };
 

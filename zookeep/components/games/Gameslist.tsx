@@ -66,7 +66,7 @@ const openInNewTab = (url:string) => {
     //console.log("product:"+product+"id:"+id)
     switch(id){
       case "8888":
-         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken }
+         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
         getGameUrl("http://152.42.185.164:4007/api/v1/pg/launchgame",data).then((gameurl)=>{
         if(gameurl.Status){
          // url=gameurl.Data.url
@@ -82,6 +82,19 @@ const openInNewTab = (url:string) => {
       
      break;
      case "9999":
+      data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
+      getGameUrl("http://152.42.185.164:4007/api/v1/gc/launchgame",data).then((gameurl)=>{
+      if(gameurl.Status){
+       // url=gameurl.Data.url
+      openInNewTab(gameurl.Data.url)
+      }else {
+        toast({
+          title: t("common.error"),
+          description: t("common.error"),
+          variant: "destructive",
+        });
+      }
+      })
       break;
       default:
        
@@ -96,7 +109,7 @@ const openInNewTab = (url:string) => {
         }
 
          getGameUrl("http://152.42.185.164:4007/api/v1/ef/launchgame",data).then((gameurl)=>{
-          
+          console.log(gameurl)
           if(gameurl.Data.errorcode == "0"){
            // url=gameurl.Data.url
          

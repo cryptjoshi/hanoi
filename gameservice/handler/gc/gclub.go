@@ -155,9 +155,20 @@ func CheckUser(c *fiber.Ctx) error {
 	var sessionToken,_ = Gsign(request.Account,1,"SessionToken")
 	
 	var users models.Users
+
+	fmt.Printf("Username : %s \n",strings.ToUpper(request.Account))
+
+	db,_ := database.GetDatabaseConnection(strings.ToUpper(request.Account))
 	//users = handler.ValidateJWTReturn(request.SessionToken);
-	var rowsAffected = database.Database.Debug().Where("username = ? AND g_token = ?", strings.ToUpper(request.Account),request.Token).First(&users).RowsAffected
-  
+	//var rowsAffected = db.Debug().Where("username = ? AND g_token = ?", strings.ToUpper(request.Account),request.Token).First(&users).RowsAffected
+	var rowsAffected int64
+	var err error
+	rowsAffected = db.Debug().Where("username = ? AND g_token = ?", strings.ToUpper(request.Account), request.Token).First(&users).RowsAffected
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้",
+		})
+	}
 	if rowsAffected == 0 {
 		var response = fiber.Map{
 			"msgId": 4,
@@ -199,7 +210,8 @@ func GetBalance(c *fiber.Ctx) error {
 	fmt.Println(claims)
 	//users,_err = handler.Gverify(tokenString);
 	var user models.Users
-	database.Database.Where("username = ?", claims.MemberAccount).First(&user)
+	db,_ := database.GetDatabaseConnection(claims.MemberAccount)
+	db.Where("username = ?", claims.MemberAccount).First(&user)
     balanceFloat, _ := user.Balance.Float64()
 	var response = fiber.Map{
 		"msgId": 0,
@@ -263,21 +275,30 @@ func Login(c *fiber.Ctx) (error) {
 		})
 	}
 	var users models.Users
-
-	tokenString := c.Get("Authorization")[7:] 
+	authHeader := c.Get("Authorization")
+	if len(authHeader) < 8 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "Invalid Authorization header"})
+	}
+	tokenString := authHeader[7:]
+	//tokenString := c.Get("Authorization")[7:] 
 	claims, _ :=  Gverify(tokenString)
 	
 	if claims != nil {
 	fmt.Println(claims)
 	}
-	database.Database.Where("username = ?", strings.ToUpper(request.Account)).First(&users)
+	db,err := database.GetDatabaseConnection(strings.ToUpper(request.Account))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+	db.Where("username = ?", strings.ToUpper(request.Account)).First(&users)
 	//fmt.Println(users)
 	loginResponse,err := loging(request.Account)
 
 	//loginResponse, err := parseLoginResponse(responseString)
 	if err != nil {
-		
-		log.Fatal("Post Error",err)
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		//log.Fatal("Post Error",err)
 	 	 
 	}
 
@@ -337,6 +358,7 @@ func LaunchGame(c *fiber.Ctx) error {
 	resp,err := makePostRequest("http://gservice:9003/LaunchGame",strdata)
 	if err != nil {
 		log.Fatalf("Error making POST request: %v", err)
+		return err
 	}
 	bodyBytes := resp.Body()
 	bodyString := string(bodyBytes)
@@ -708,3 +730,103 @@ func GPostRequest(url ,clienid string,ecresult *encrypt.ECResult) (*fasthttp.Res
 	
 	return resp, nil
 }
+
+// func gposting(url ,clienid string,ecresult *encrypt.ECResult) (error) {
+// 	client := resty.New().
+// 		SetTimeout(30 * time.Second).
+// 		SetDebug(true) // ตั้งค่า timeout เป็น 30 วินาที
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+// 	defer cancel()
+
+
+// 	url := "https://service.1stpay.co/api/payin"
+// 	token := getToken()
+// 	if token.Status {
+// 		fmt.Println("Token received:", token.Data)
+// 	} else {
+// 		fmt.Println("Failed to get token")
+// 	}
+// 	var response PayInResponse
+
+// 	authToken := fmt.Sprintf("%s %s", "Bearer", token.Data.(string))
+ 
+// 	num, _ := strconv.Atoi(request.Amount)
+// 	// สร้างคำร้อง
+// 	resp, err := client.R().
+// 		SetContext(ctx).
+// 		SetHeader("Content-Type", "application/json").
+// 		//SetHeader("Authorization", authToken).
+// 		//SetBody(string(body)). // ใช้ body ที่แปลงแล้ว
+// 		// SetBody(map[string]interface{}{
+// 		// 	"ref":            request.Ref,
+// 		// 	"bankAccountName": request.BankAccountName,
+// 		// 	"amount":         num,
+// 		// 	"bankCode":       request.BankCode,
+// 		// 	"bankAccountNo":  request.BankAccountNo,
+// 		// 	"merchantURL":    request.MerchantURL,
+// 		// }).
+// 		SetResult(&response).
+// 		Post(url)
+
+// 	if err != nil {
+// 		fmt.Println("Error making request:", err)
+// 		return response, err
+// 	}
+
+	 
+// 	return response, nil
+// }
+
+// func payout(request *PayInRequest) (PayInResponse, error) {
+// 	client := resty.New().
+// 		SetTimeout(30 * time.Second).
+// 		SetDebug(true) // ตั้งค่า timeout เป็น 30 วินาที
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+// 	defer cancel()
+
+
+// 	url := "https://service.1stpay.co/api/payout"
+// 	token := getToken()
+// 	if token.Status {
+// 		fmt.Println("Token received:", token.Data)
+// 	} else {
+// 		fmt.Println("Failed to get token")
+// 	}
+// 	var response PayInResponse
+
+// 	authToken := fmt.Sprintf("%s %s", "Bearer", token.Data.(string))
+ 
+// 	num, _ := strconv.Atoi(request.Amount)
+// 	// สร้างคำร้อง
+// 	resp, err := client.R().
+// 		SetContext(ctx).
+// 		SetHeader("Content-Type", "application/json").
+// 		SetHeader("Authorization", authToken).
+// 		//SetBody(string(body)). // ใช้ body ที่แปลงแล้ว
+// 		SetBody(map[string]interface{}{
+// 			"ref":            request.Ref,
+// 			"bankAccountName": request.BankAccountName,
+// 			"amount":         num,
+// 			"bankCode":       request.BankCode,
+// 			"bankAccountNo":  request.BankAccountNo,
+// 			"merchantURL":    request.MerchantURL,
+// 		}).
+// 		SetResult(&response).
+// 		Post(url)
+
+// 	if err != nil {
+// 		fmt.Println("Error making request:", err)
+// 		return response, err
+// 	}
+
+// 	if resp.IsSuccess() && response.Link != "" {
+// 		fmt.Println("Payment link:", response.Link)
+// 		fmt.Println("Provider:", response.Provider)
+// 		fmt.Println("Response data:", response.Data)
+// 	} else {
+// 		fmt.Println("Failed to get payment link")
+// 	}
+// 	return response, nil
+// }

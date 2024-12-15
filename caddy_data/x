@@ -1,0 +1,4 @@
+{$URL_BACKEND} {
+  reverse_proxy backendservice:4006
+  tls internal
+}

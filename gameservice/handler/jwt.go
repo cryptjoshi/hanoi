@@ -18,6 +18,7 @@ import (
 	//"log"
 	// "net"
 	// "net/http"
+	"gorm.io/gorm"
 	"encoding/json"
 	"os"
 	//"strconv"
@@ -106,6 +107,8 @@ func ValidateJWTReturn(tokenString string) models.Users {
 	}
 
 	 
+
+	
 	return user
 	 
 }
@@ -233,7 +236,63 @@ func createJWT(username string) (string, error) {
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
     return token.SignedString(jwtKey)
 }
+func JwtMiddleware(c *fiber.Ctx) error {
+	
+	claims := &Claims{}
+	//tokenString := c.Get("Authorization")[7:]
+	authHeader := c.Get("Authorization")
+	if len(authHeader) < 8 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "Invalid Authorization header"})
+	}
+	tokenString := authHeader[7:]
 
+	//fmt.Printf("token : %s",tokenString)
+ 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+    })
+	fmt.Println(claims.Prefix)
+ 	if err==nil {
+		db, _ := database.ConnectToDB(claims.Prefix)
+        
+		//fmt.Println("claims",claims.Prefix) 
+		//fmt.Printf("claims : %s",claims)
+		c.Locals("Walletid", claims.Walletid)
+        c.Locals("ID", claims.ID)
+        c.Locals("username", claims.Username)
+		c.Locals("role", claims.Role)
+        c.Locals("prefix", claims.Prefix)
+		c.Locals("db", db)
+		//dbInterface := c.Locals("db")
+		
+		var users models.Users
+		if err_ := db.Debug().Select("id as ID,role,prefix,pro_status,deposit,actived").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
+			//fmt.Println("ID:",users.ID)
+			c.Locals("ID",users.ID)
+			c.Locals("Walletid", users.ID)
+			c.Locals("role", users.Role)
+			c.Locals("prefix", users.Prefix)
+			c.Locals("deposit",users.Deposit)
+			c.Locals("actived",users.Actived)
+			c.Locals("prostatus",users.ProStatus)
+		}
+		db, ok := c.Locals("db").(*gorm.DB)
+		if db == nil {
+			fmt.Printf("db is null")
+		}
+		if ok {
+			c.Locals("db",db)
+			 
+		}
+	
+       // c.Locals("PartnersKey",claims.PartnersKey)
+   
+	 	
+        return c.Next()
+    } else {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Status":false,"Message": "โทเคน ผิดผลาด!"})
+    } 
+	 
+}
 
 // func pad(data []byte, blockSize int) []byte {
 // 	padding := blockSize - len(data)%blockSize

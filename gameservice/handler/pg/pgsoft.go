@@ -13,9 +13,9 @@ import
 	
 	//jtoken "github.com/golang-jwt/jwt/v4"
 	"fmt"
-	"log"
+	//"log"
 	"encoding/json"
-	"os"
+	//"os"
 	"strings"
 )
 type Response struct {
@@ -131,7 +131,7 @@ func PlaceBet(c *fiber.Ctx) error {
 	
 	request := new(PgRequest)
 	if err := c.BodyParser(request); err != nil {
-		return c.Status(200).SendString(err.Error())
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	response := fiber.Map{
 		"statusCode": 0,
@@ -144,13 +144,13 @@ func PlaceBet(c *fiber.Ctx) error {
 	}
 	prefix,perr := handler.GetPrefix(request.Username)
 	if perr != nil {
-			fmt.Println(perr)
+		return c.Status(fiber.StatusInternalServerError).SendString(perr.Error())
 			
 	}
 	var user models.Users
 	db,cnn := database.ConnectToDB(prefix) 
 	if cnn != nil {
-		fmt.Printf("error: %s \n",cnn)
+		return c.Status(fiber.StatusInternalServerError).SendString("cnn is nil")
 	}
 		 dberr := db.Debug().Select("id,balance,pro_status as ProStatus").Where("username = ?", request.Username).First(&user).Error
 		 if dberr != nil {
@@ -205,7 +205,7 @@ func PlaceBet(c *fiber.Ctx) error {
 				"Status":0,//status-0=SETTLED,
 				//BeforeBalance:beforeBalance,
 			   // Balance:beforeBalance-betAmount,
-				"OperatorCode":pg_prod_code,
+				"OperatorCode":common.PG_PROD_CODE,
 				"OperatorID":1,//1=PGGAME
 				"ProviderLineID":1,//1-PGAME
 				"GameType":1,//1=PGGAME
@@ -227,7 +227,7 @@ func PlaceBet(c *fiber.Ctx) error {
 				"ProID":user.ProStatus,
 			  } 
 
-			
+			  fmt.Printf("Xtransaction : %+v \n",xtransaction)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
 
@@ -331,14 +331,14 @@ func PlaceBet(c *fiber.Ctx) error {
 		 return c.JSON(response)		 
 }
 
-var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
-var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
+// var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
+// var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
 
-var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
-var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
-var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
-var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
-var PG_PROD_URL = "https://api.hentory.io" 
+// var OPERATOR_CODE = "sunshinetest" //"sunshinepgthb"//"sunshinetest",
+// var SECRET_API_KEY = os.Getenv("PG_API_KEY") //"9dc857f4-2225-45ef-bf0f-665bcf7d4a1b" //os.Getenv("PG_API_KEY")
+// var PG_PROD_CODE= os.Getenv("PG_PRODUCT_ID")
+// var PG_API_URL = "https://test.ambsuperapi.com"//os.Getenv("PG_API_URL") //"https://prod_md.9977997.com"
+// var PG_PROD_URL = "https://api.hentory.io" 
 
 
 func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, error) {
@@ -357,6 +357,7 @@ func makePostRequest(url string, bodyData interface{}) (*fasthttp.Response, erro
 	req.Header.SetMethod("POST")
 	req.Header.SetContentType("application/json")
 	authHeader := common.CreateBasicAuthHeader(common.OPERATOR_CODE, common.SECRET_API_KEY)
+	
 	req.Header.Add("Authorization", authHeader)
 	req.SetBody(jsonData)
 
@@ -410,6 +411,7 @@ func LaunchGame(c *fiber.Ctx) error {
 		GameID string `json:"gameid"`
 		GameType string `json:"gametype"`
 		callbackUrl string `json:"callbackurl"`
+		 
 	}
 
 	type PgRequest struct {
@@ -451,7 +453,7 @@ func LaunchGame(c *fiber.Ctx) error {
 	//var tokenString := c.Get("Authorization")[7:]
 	request := new(PgRequest)
 	if err := c.BodyParser(request); err != nil {
-		return c.Status(200).SendString(err.Error())
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	var users models.Users
 	users = handler.ValidateJWTReturn(request.SessionToken);
@@ -477,14 +479,14 @@ func LaunchGame(c *fiber.Ctx) error {
 		"isMobileLogin": true,
 		"sessionToken": request.SessionToken,
 		//"betLimit": [],
-		"callbackUrl":"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
+		"callbackUrl": request.callbackUrl,//"https://www.โชคดี789.com/lobby/slot/game?id=8888&type=1", //`${req.protocol}://${req.get('host')}${req.originalUrl}`
 	}
 	
-	//fmt.Printf(" args : %s ",args)
+	//fmt.Printf(" args : %+v \n",args)
 	
 	resp,err := makePostRequest(common.PG_API_URL+"/seamless/login",args)		
 	if err != nil {
-		log.Fatalf("Error making POST request: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	resultBytes := resp.Body()
 	resultString := string(resultBytes)
@@ -494,9 +496,9 @@ func LaunchGame(c *fiber.Ctx) error {
 	err = json.Unmarshal([]byte(resultString), &response)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
-		return err
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
-
+ 
 	respon := fiber.Map{
 		"Status":  true,
 		"Message": response.Message,

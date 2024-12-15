@@ -2,12 +2,13 @@ version: "3.3"
  
 services:
 
-  whoami2:
+  whoami:
     image: traefik/whoami
     networks:
-      - proxy-net
+      - caddy
+      
     labels:
-      caddy: whoami2.paribrand.shop
+      caddy: whoami.tsxbet.net
       caddy.reverse_proxy: "{{upstreams 80}}"
       caddy.tls: "internal"
 
@@ -29,6 +30,9 @@ services:
     env_file: .env
     environment:
       - NEXT_PUBLIC_ENVIRONMENT=development
+    networks:
+      - caddy
+      
 
   moodeng:
     container_name: moodeng
@@ -57,7 +61,8 @@ services:
     #    - VIRTUAL_PORT=4001
     #    - NEXT_PUBLIC_PREFIX=PKD
     networks:
-        - proxy-net
+      - caddy
+      
 
   zookeep:
     container_name: zookeep
@@ -86,7 +91,8 @@ services:
     #    - VIRTUAL_PORT=4001
     #    - NEXT_PUBLIC_PREFIX=PKD
     networks:
-        - proxy-net
+      - caddy
+      
 
   frontend_admin:
     container_name: frontend_admin
@@ -105,15 +111,33 @@ services:
     working_dir: /app
     env_file: .env
     # labels:
-    #   caddy: paribrand.shop
+    #   caddy: admin.shop
     #   caddy.reverse_proxy: "{{upstreams 4001}}"
     #   caddy.tls: "internal"
     # environment:
-    #    - VIRTUAL_HOST=dashboard.tsxbet.com
+    #    - VIRTUAL_HOST=admin.tsxbet.com
     #    - VIRTUAL_PORT=4001
     #    - NEXT_PUBLIC_PREFIX=PKD
     networks:
-        - proxy-net
+      - caddy
+
+  backendservice:
+    image: king_backend_service
+    container_name: backend_service
+    build:
+      context: ./backend
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4006:8060"
+    env_file: .env
+    labels:
+      caddy: staging.tsxbet.net
+      caddy.reverse_proxy: "{{upstreams 8060}}"
+      caddy.tls: "internal"
+    volumes:
+      - ./backend/:/app
+    networks:
+      - caddy     
 
   gameservice:
     #image: king_game_service                                                                                                                                        
@@ -124,13 +148,15 @@ services:
     ports:
       - "4007:8070"
     env_file: .env
-    # environment:
-    #   - VIRTUAL_HOST=games.tsxbet.com
-    #   - VIRTUAL_PORT=4007
+    labels:
+      caddy: games.tsxbet.net
+      caddy.reverse_proxy: "{{upstreams 8070}}"
+      caddy.tls: "internal"
     volumes:
       - ./gameservice/:/app
     networks:
-        - proxy-net
+      - caddy
+      
 
 
 
@@ -157,7 +183,8 @@ services:
     #   - VIRTUAL_PORT=3003
     env_file: .env
     networks:
-      - proxy-net
+      - caddy
+      
 
   reportservice:
     container_name: king_report_service
@@ -167,30 +194,18 @@ services:
     ports:
       - "4005:8050"
     env_file: .env
-    # environment:
-    #   - VIRTUAL_HOST=stagging.tsxbet.com
-    #   - VIRTUAL_PORT=4007
+    labels:
+      caddy: report.tsxbet.net
+      caddy.reverse_proxy: "{{upstreams 8050}}"
+      caddy.tls: "internal"
     volumes:
       - ./report/:/app
     networks:
-        - proxy-net
+      - caddy
+      
 
-  backendservice:
-    image: king_backend_service
-    container_name: backend_service
-    build:
-      context: ./backend
-      dockerfile: dev.Dockerfile
-    ports:
-      - "4006:8060"
-    env_file: .env
-    # environment:
-    #   - VIRTUAL_HOST=stagging.tsxbet.com
-    #   - VIRTUAL_PORT=4007
-    volumes:
-      - ./backend/:/app
-    networks:
-      - proxy-net
+
+      
 
   swagger:
     image: swaggerapi/swagger-ui
@@ -201,12 +216,33 @@ services:
     volumes:
       - ./backend/docs:/app/docs  # แม็พโฟลเดอร์ docs จาก host (แก้ไขเป็น path ที่ถูกต้อง)
     networks:
-        - proxy-net
+        - caddy
+        
 
+  https:
+    image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    container_name: https
+    ports:
+      - 80:80
+      - 443:443
+    env_file: .env
+    environment:
+      - CADDY_INGRESS_NETWORKS=caddy
+      - CADDY_API=0.0.0.0:2019  # เปิดใช้งาน Caddy API
+      - CADDY_LOG_LEVEL=DEBUG  # ตั้งค่าระดับการบันทึก
+    networks:
+      - caddy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./caddy_data:/data
+    restart: unless-stopped
+
+volumes:
+  caddy_data: {}
 
 networks:
-  proxy-net:
-      name: app-net
-      external: true
-  # caddy:
+  # proxy-net:
+  #     name: app-net
   #     external: true
+  caddy:
+      external: true

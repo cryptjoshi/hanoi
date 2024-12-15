@@ -22,6 +22,8 @@ type User = {
   fullname:string
   prefix:string
   referred_by:string
+  bankname:string;
+  banknumber:string;
   
   
 }
@@ -180,6 +182,34 @@ export default function RegisterComponent({lng,refferedcode}:{lng:string,reffere
                 required
                 defaultValue=""  
                 {...register("fullname", { required: true })} 
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-gray-700" htmlFor="ิbankname">
+                Bankname
+              </label>
+              <Input
+                type="text"
+                id="fullname"
+                className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
+                placeholder=""
+                required
+                defaultValue=""  
+                {...register("bankname", { required: true })} 
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-gray-700" htmlFor="banknumber">
+                Banknumber
+              </label>
+              <Input
+                type="text"
+                id="fullname"
+                className="mt-2 rounded w-full px-3 py-2 text-gray-700 bg-gray-200 outline-none focus:bg-gray-300"
+                placeholder=""
+                required
+                defaultValue=""  
+                {...register("banknumber", { required: true })} 
               />
             </div>
             <div className="mt-4">

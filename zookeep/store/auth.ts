@@ -56,7 +56,12 @@ const useAuthStore = create<AuthStore>()(
        // const router = useRouter()
         try {
         
-          const data = await Signin({ username: body.username, password: body.password ,prefix:body.prefix,fullname:body.fullname});
+          const data = await Signin({
+            username: body.username, password: body.password, prefix: body.prefix, fullname: body.fullname,
+            referred_by: '',
+            banknumber: '',
+            bankname: ''
+          });
           // const response = await fetch(endpoint, {
           //   method: 'POST',
           //   headers: {
@@ -69,11 +74,12 @@ const useAuthStore = create<AuthStore>()(
            
          // console.log(data)
           if (data.Status) {
+            const user = data.Data
             set({
               isLoggedIn: true,
               accessToken: data?.Token,
               prefix:body.prefix,
-              user: {username:data.username,fullname:data.fullname,prefix:body.prefix,password:""}
+              user: {username:user.Username,fullname:user.Fullname,prefix:user.Prefix,password:""}
             });
             localStorage.setItem('isLoggedIn', JSON.stringify(true));
             document.cookie = "isLoggedIn=true; path=/";

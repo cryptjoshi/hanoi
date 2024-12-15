@@ -12,6 +12,8 @@ type User = {
     password: string;
     prefix:string;
     referred_by:string;
+    banknumber:string;
+    bankname:string;
 }
 
 type Dbstruct = {
@@ -425,8 +427,42 @@ export const RegisterUser = async (prefix:string,body:User)=>{
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       },
-      body:JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"role":"user","prefix":prefix,"referred_by":body.referred_by})
+      body:JSON.stringify({"username":body.username,"password":body.password,"fullname":body.fullname,"preferredname":body.username,"banknumber":body.banknumber,"bankname":body.bankname,"role":"user","prefix":prefix,"referred_by":body.referred_by})
  
     })
     return response.json()
+}
+
+export const Webhoook = async ( uid:string,username: string,isexpired:string,isverify: string, prefix: string,method: string) =>{
+ 
+  
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/statement/webhook`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      },
+      body:
+      JSON.stringify({
+            "TransactionID":uid,
+            "isExpired":isexpired,
+            "verify":isverify,
+            "ref":username,
+            "merchantID":prefix,
+            "type":method /* payin,payout */ 
+        })
+    })
+    
+    return response.json()
+
+
+  // const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/statement/webhook`, { method: 'POST',
+  //     headers: {   
+  //       'Accept': 'application/json',
+  //       'Content-Type': 'application/json',
+  //       },
+        // return 
+      
+  // })
+  // return response.json()
 }

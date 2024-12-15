@@ -169,6 +169,8 @@ func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]inte
 }
 func ConnectMaster() *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host, "master")
+	
+	fmt.Printf(" dsn: %s \n",dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil
@@ -178,6 +180,9 @@ func ConnectMaster() *gorm.DB {
 func GetCommissionRate(prefix string) (decimal.Decimal,error) {
 	var settings []models.Settings
 	db := ConnectMaster()
+	if db == nil {
+		return decimal.NewFromFloat(0.0),err.Error()
+	}
 	db.Debug().Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
 
 	var commissionRate decimal.Decimal

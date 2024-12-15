@@ -23,7 +23,7 @@ const CONFIG = {
   SYSTEMCODE: "ckthb01",
   WEBID: "ckdthb",
   API_URL_G: "http://rcgapiv2.rcg666.com/",
-  API_URL_PROXY: "http://api.tsxbet.info:8001"
+  API_URL_PROXY: "http://152.42.185.164:8001/" //"http://api.tsxbet.info:8001"
 }
 const levels = {
   http: 10,

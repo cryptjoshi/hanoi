@@ -24,8 +24,10 @@ import (
 	// 	//"github.com/solrac97gr/basic-jwt-auth/config"
 	// 	//"github.com/solrac97gr/basic-jwt-auth/models"
 	// 	//"github.com/solrac97gr/basic-jwt-auth/repository"
+	"github.com/go-redis/redis/v8" 
 	"hanoi/repository"
 	"hanoi/encrypt"
+	"context" 
 	//"log"
 	// 	// "net"
 	// 	// "net/http"
@@ -36,12 +38,13 @@ import (
 	"strings"
 	//"errors"
 )
-
+var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
+var redis_master_port = "6379"  //os.Getenv("REDIS_PORT")
 type ErrorResponse struct {
 	Status  bool   `json:"Status"`
 	Message string `json:"message"`
 }
-
+var ctx = context.Background() 
 type Body struct {
 	UserID   int    `json:"userid"`
 	Username string `json:"username"`
@@ -146,6 +149,41 @@ func Login(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
+	// เชื่อมต่อกับ Redis
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     redis_master_host + ":" + redis_master_port,
+		Password: "", //redis_master_password,
+		DB:       0,  // ใช้ database 0
+	})
+
+	pong, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		return  err
+		// อาจจะ return error หรือจัดการข้อผิดพลาดตามที่คุณต้องการ
+	} else {
+		fmt.Println("เชื่อมต่อ Redis สำเร็จ:", pong)
+	}
+
+	dbname,db_err := database.GetDBName(user.Prefix)
+	if db_err != nil {
+		fmt.Printf("Error %s",db_err.Error())
+	}
+	// บันทึกข้อมูลลง Redis
+	loginDate := time.Now().Format("2006-01-02 15:04:05") // กำหนดวันที่ login
+	loginData := map[string]interface{}{
+		"login_date": loginDate,
+		"username":   user.Username,
+		"prefix":     user.Prefix,
+		"database":   dbname, // หรือใช้ชื่อฐานข้อมูลที่ต้องการ
+	}
+
+	// อัปเดตข้อมูลใน Redis
+	err = rdb.HMSet(ctx,user.Username, loginData).Err()
+	if err != nil {
+		fmt.Println("Error saving to Redis:", err)
+	}
+
+
 	response := fiber.Map{
 		"Token":  t,
 		"Data": user,

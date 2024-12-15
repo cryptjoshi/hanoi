@@ -95,6 +95,33 @@ type Setting struct {
 	Value string `gorm:"column:value"` // Adjust the struct according to your table schema
 }
 
+func GetDBName(prefix string) (string,error) {
+
+	masterDSN := fmt.Sprintf(baseDSN, "master") // Assuming 'master' is the database name for settings
+	masterDB, err := gorm.Open(mysql.Open(masterDSN), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+		SkipDefaultTransaction:                   true,
+		PrepareStmt:                              true,
+	})
+	if err != nil {
+		fmt.Errorf("Error %s ",err)
+		return "", err// Return the error if connection to master fails
+	}
+	defer func() {
+		sqlDB, _ := masterDB.DB() // รับการเชื่อมต่อ SQL
+		sqlDB.Close()              // ปิดการเชื่อมต่อ
+	}()
+
+	var setting Setting
+	
+	if err := masterDB.Table("Settings").Where("`key` = ?", prefix).First(&setting).Error; err != nil {
+		return "", fmt.Errorf("failed to read setting for prefix '%s': %v", prefix, err)
+	}
+	dbName := fmt.Sprintf("%s_%s", prefix, setting.Value) 
+	return dbName,nil
+}
+
+
 func GetMaster(prefix string) (Setting,error) {
 
 	masterDSN := fmt.Sprintf(baseDSN, "master") // Assuming 'master' is the database name for settings

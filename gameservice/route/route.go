@@ -7,6 +7,7 @@ import (
 	//"github.com/golang-jwt/jwt/v4"
 	"pkd/handler"
 	//"pkd/middlewares"
+	 
 	"pkd/handler/ef" 
 	"pkd/handler/gc" 
 	"pkd/handler/pg" 
@@ -50,7 +51,7 @@ func SetupRoutes(app *fiber.App) {
 	app.Get("/api/Player/HelloWorld",gc.Index)
 	app.Post("/api/Auth/CheckUser",gc.CheckUser)
 	app.Post("/api/Auth/LaunchGame",gc.LaunchGame)
-	//app.Post("/api/Auth/Login",gc.Login)
+	app.Post("/api/Auth/Login",gc.Login)
 	app.Post("/api/Wallet/Balance",gc.GetBalance)
 	// app.Post("/api/Auth/RequestExtendToken",gc.GetBalance)
 	// app.Post("/api/Wallet/Debit",gc.GetBalance)
@@ -97,11 +98,10 @@ func SetupRoutes(app *fiber.App) {
 	// //app.Get("/api/transaction/all",handler.GetAllTransaction)
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
 	app.Post("/api/v1/pg/launchgame",pg.LaunchGame)
-	app.Post("/api/v1/ef/launchgame",ef.LaunchGame)
-	// app.Post("/api/v1/gc/launchgame",gc.LaunchGame)
+	app.Post("/api/v1/ef/launchgame",handler.JwtMiddleware,ef.LaunchGame)
+	app.Post("/api/v1/gc/launchgame",handler.JwtMiddleware,gc.LaunchGame)
 	app.Post("/api/v1/launchgame",handler.LaunchGame)
 	app.Post("/api/v1/transaction/add",handler.AddTransactions)
-
 
 	// // dashboard
 	// app.Post("/api/bank/statement",handler.GetBankStatement)

@@ -932,7 +932,8 @@ func AddTransactions(c *fiber.Ctx) error {
 	}
 
 	var users models.Users
-    if err_ := database.Database.Where("username = ? ", transactionRequest.Body.MemberName).First(&users).Error; err_ != nil {
+	db,_ := database.GetDatabaseConnection(transactionRequest.Body.MemberName)
+    if err_ := db.Where("username = ? ", transactionRequest.Body.MemberName).First(&users).Error; err_ != nil {
 		response = Response{
 			Status: false,
 			Message: "ไม่พบข้อมูล",
@@ -957,7 +958,7 @@ func AddTransactions(c *fiber.Ctx) error {
 
 	//fmt.Println(transactionsub)
 
-	result := database.Database.Debug().Create(&transactionsub); 
+	result := db.Debug().Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
 		response = Response{
@@ -998,6 +999,4 @@ func AddTransactions(c *fiber.Ctx) error {
  
 	return c.JSON(response)
 }
-
-
 

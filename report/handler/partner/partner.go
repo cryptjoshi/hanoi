@@ -32,7 +32,7 @@ import (
 	// 	// "net"
 	// 	// "net/http"
 	"os"
-	// 	// "strconv"
+	"strconv"
 	"time"
 	"fmt"
 	"strings"
@@ -1430,8 +1430,29 @@ type OBody struct {
 		return c.JSON(response)
 	}
 	memberCount := result.RowsAffected
-	fmt.Printf("จำนวนสมาชิก: %d\n", memberCount) // แสดงจำนวนสมาชิก
-	
+	fmt.Printf("จำนวนสมาชิก: %d\n", memberCount) 
+	// แสดงจำนวนสมาชิก
+	// ... existing code ...
+	var activeMembers []models.Users
+	for _, m := range member {
+		if m.Actived != nil && m.Actived.Format("2006-01-02") == startDate.Format("2006-01-02") { // เปรียบเทียบกับ startDate
+			activeMembers = append(activeMembers, m)
+		}
+	}
+	activeCount := len(activeMembers) 
+	activeCountStr := strconv.Itoa(activeCount) // นับจำนวนสมาชิกที่ Actived ไม่เป็น NULL และเท่ากับ startdate
+	// ... existing code ...
+	newcomerDecimal, err := decimal.NewFromString(activeCountStr)
+	if err != nil {
+		// จัดการกับข้อผิดพลาดที่เกิดขึ้น
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถแปลง activeCount เป็น decimal ได้: " + err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	fmt.Printf("จำนวนสมาชิก active: %d\n", newcomerDecimal) 
 	// var settings []models.Settings
 
 	// dbm := ConnectMaster()
@@ -1490,7 +1511,7 @@ type OBody struct {
 	overview := Overview{
 		Allmembers:    decimal.NewFromInt(memberCount),
 		Newcomer:      decimal.NewFromFloat(150.00),
-		FirstDept:     decimal.NewFromFloat(75.00),
+		FirstDept:     newcomerDecimal,
 		Deposit:       decimal.NewFromFloat(5000.00),
 		Withdrawl:     decimal.NewFromFloat(2000.00),
 		TotalDeposit:  decimal.NewFromFloat(30000.00),

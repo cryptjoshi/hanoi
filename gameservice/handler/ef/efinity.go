@@ -346,7 +346,7 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 }
 func AddTransactions(transactionsub models.TransactionSub,membername string) Response {
 
-	fmt.Println("Add transactionsub:",transactionsub)
+	//fmt.Printf("Add transactionsub: %+v \n",transactionsub)
 	response := Response{
 		Status: false,
 		Message:"Success",
@@ -373,6 +373,11 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
     transactionsub.MemberName = membername
 	transactionsub.ProductID = transactionsub.ProductID
 	transactionsub.BetAmount = transactionsub.BetAmount
+	// if transactionsub.TurnOver.IsZero() && transactionsub.Status == 100 {
+	// 	transactionsub.TurnOver = transactionsub.BetAmount
+	// } else if transactionsub.GameType == 1 && transactionsub.TurnOver.IsZero() && transactionsub.Status == 101 {
+	// 	transactionsub.TurnOver = transactionsub.BetAmount
+	// }
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
 	transactionsub.ProID = users.ProStatus
@@ -439,7 +444,7 @@ func PlaceBet(c *fiber.Ctx) error {
 		
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "PlaceBet"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -456,7 +461,9 @@ func PlaceBet(c *fiber.Ctx) error {
 				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
-
+							if transaction.TurnOver.IsZero() {
+								transaction.TurnOver = transaction.BetAmount
+							}
 							result := AddTransactions(transaction,request.MemberName)
 							responseBalance, _ := result.Data.(ResponseBalance)
 						
@@ -514,7 +521,7 @@ func GameResult(c *fiber.Ctx) error {
 
 	for _, transaction := range request.Transactions { 
 
- 
+ 	transaction.IsAction = "GameResult"
 
 	// ตรวจสอบ ว่า มี transactions เดิมอยู่มั้ย
     var _transaction_found models.TransactionSub
@@ -600,7 +607,7 @@ func RollBack(c *fiber.Ctx) error {
 		
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "Rollback"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -686,7 +693,7 @@ func CancelBet(c *fiber.Ctx) error {
 		
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "CancelBet"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -771,7 +778,7 @@ func Bonus(c *fiber.Ctx) error {
 		
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "Bonus"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -842,7 +849,7 @@ func Jackpot(c *fiber.Ctx) error {
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "JackPot"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -913,7 +920,7 @@ func PushBet(c *fiber.Ctx) error {
 		
 		db,_ := database.GetDatabaseConnection(request.MemberName)
 		 for _, transaction := range request.Transactions {
-			
+			transaction.IsAction = "PushBet"
 			db.Where("username = ?", request.MemberName).First(&user)
 	  		
 			if user.Balance.LessThan(transaction.BetAmount) {
@@ -930,7 +937,9 @@ func PushBet(c *fiber.Ctx) error {
 				rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 				if rowsAffected == 0 {
-
+							if transaction.TurnOver.IsZero() {
+								transaction.TurnOver = transaction.BetAmount
+							}
 							result := AddTransactions(transaction,request.MemberName)
 							responseBalance, _ := result.Data.(ResponseBalance)
 						
@@ -941,7 +950,10 @@ func PushBet(c *fiber.Ctx) error {
 								BeforeBalance: responseBalance.BeforeBalance,
 						}
 					} else {
-						multi_result := AddTransactions(transaction,request.MemberName)
+						if transaction.TurnOver.IsZero() {
+							transaction.TurnOver = transaction.BetAmount
+						}
+						    multi_result := AddTransactions(transaction,request.MemberName)
 							multi_responseBalance, _ := multi_result.Data.(ResponseBalance)
 						
 							response = EFResponse{

@@ -99,7 +99,7 @@ func SetupRoutes(app *fiber.App) {
 	// //app.Post("/api/status/statement",handler.UpdateStatement)
 	app.Post("/api/v1/pg/launchgame",pg.LaunchGame)
 	app.Post("/api/v1/ef/launchgame",handler.JwtMiddleware,ef.LaunchGame)
-	app.Post("/api/v1/gc/launchgame",handler.JwtMiddleware,gc.LaunchGame)
+	//app.Post("/api/v1/gc/launchgame",handler.JwtMiddleware,gc.LaunchGame)
 	app.Post("/api/v1/launchgame",handler.LaunchGame)
 	app.Post("/api/v1/transaction/add",handler.AddTransactions)
 

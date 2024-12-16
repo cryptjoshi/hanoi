@@ -174,6 +174,21 @@ export const GetGameByType = async (token:string,id:string) =>{
 })
 return response.json()
 }
+
+export const GetGameGC = async (token:string,body:any) =>{
+ 
+ 
+  const response = await fetch(`http://152.42.185.164:4005/api/Auth/LaunchGame`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  token
+      },
+      body: JSON.stringify(body)
+})
+return response.json()
+}
+
 export const GetGameByProvide = async (token:string,provider:string,body:any) =>{
  
  

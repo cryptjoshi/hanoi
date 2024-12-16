@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import useGameStore from "@/store/gameStore";
 import { useRouter } from "next/navigation";
-import { GetGameByProvide, getGameUrl } from "@/actions";
+import { GetGameByProvide, getGameUrl,GetGameGC } from "@/actions";
 import useAuthStore from "@/store/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
@@ -31,7 +31,7 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
             } else {
               provider = "ef"
             }
-            
+            if(id!='9999'){
             const body = {
               "ProductID": id,
               "GameType": product,
@@ -43,9 +43,23 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
           
              if(response.Status){
                  setGameList(response.Data?.games)
-             } else {
+             } 
+            }else {
+              const bodyx = {
+                "username":user.username
+              }
+              
+              const responseg = await GetGameGC(accessToken,bodyx)
+          
 
-             }
+               if(responseg.status){
+                const gameTokens: { token: string; url: string }[] = []; 
+                const { token, url } = responseg.data; // ดึง token และ url จาก response
+                gameTokens.push({ token, url }); 
+                   setGameList(gameTokens)
+               } 
+            }
+
         }
       //  console.log(product)
         fetchgame(id)
@@ -82,19 +96,20 @@ const openInNewTab = (url:string) => {
       
      break;
      case "9999":
-      data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
-      getGameUrl("http://152.42.185.164:4007/api/v1/gc/launchgame",data).then((gameurl)=>{
-      if(gameurl.Status){
+      // data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
+      // getGameUrl("http://152.42.185.164:4005/api/Auth/LaunchGame",data).then((gameurl)=>{
+      // if(gameurl.Status){
        // url=gameurl.Data.url
-      openInNewTab(gameurl.Data.url)
-      }else {
-        toast({
-          title: t("common.error"),
-          description: t("common.error"),
-          variant: "destructive",
-        });
-      }
-      })
+       console.log(gamelist[0].url)
+      openInNewTab(gamelist[0].url)
+      // }else {
+      //   toast({
+      //     title: t("common.error"),
+      //     description: t("common.error"),
+      //     variant: "destructive",
+      //   });
+      // }
+      //})
       break;
       default:
        

@@ -15,6 +15,7 @@ import (
 	"hanoi/handler/pg"
 	//"github.com/swaggo/fiber-swagger"
 	"os"
+	//"fmt"
 )
 
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
@@ -45,7 +46,7 @@ func ProviderMiddleware(c *fiber.Ctx) error {
 	}
 }
 
-func SetupRoutes(app fiber.Router) {
+func SetupRoutes(app fiber.Router, isV1 bool) {
 	// app.Use(etag.New())
 
 	//jwtm := middlewares.NewAuthMiddleware(jwtSecret)
@@ -57,8 +58,11 @@ func SetupRoutes(app fiber.Router) {
 	// เส้นทาง Swagger
 	//app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
+	 
 	// เส้นทาง API สำหรับดึงข้อมูลผู้ใช้งาน
 	// user
+	if isV1 {
+
 	app.Post("/users/all", jwt.JwtMiddleware, users.GetUsers)
 	app.Post("/users/login", users.Login)
 	app.Post("/users/register",users.Register)
@@ -165,6 +169,21 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/db/partner/update",partner.UpdatePartner)
 	app.Post("/db/partner/checkseed",partner.GetSeed)
 	app.Post("/db/partner/overview",jwt.JwtPMiddleware,partner.Overview)
+
+
+	} else  {
+
+	app.Post("/Auth",gc.Index)
+	//app.Get("/api/Player/HelloWorld",gc.Index)
+	app.Post("/Auth/CheckUser",gc.CheckUser)
+	app.Post("/Auth/LaunchGame",gc.LaunchGame)
+	app.Post("/Auth/Login",gc.Login)
+	app.Post("/Wallet/Balance",gc.GetBalance)
+	app.Post("/Wallet/Debit",gc.Debit)
+	app.Post("/Wallet/Credit",gc.Credit)
+	app.Post("/Wallet/Cancel",gc.CancelBet)
+	
+}
 
 	// app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
 	// app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)

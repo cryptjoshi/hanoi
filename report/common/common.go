@@ -181,7 +181,7 @@ func GetCommissionRate(prefix string) (decimal.Decimal,error) {
 	var settings []models.Settings
 	db := ConnectMaster()
 	if db == nil {
-		return decimal.NewFromFloat(0.0),err.Error()
+		return decimal.NewFromFloat(0.0), errors.New("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล")
 	}
 	db.Debug().Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
 

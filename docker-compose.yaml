@@ -195,7 +195,7 @@ services:
       - "4005:8050"
     env_file: .env
     labels:
-      caddy: report.tsxbet.net
+      caddy: gclub.tsxbet.net
       caddy.reverse_proxy: "{{upstreams 8050}}"
       caddy.tls: "internal"
     volumes:

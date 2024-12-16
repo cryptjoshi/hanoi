@@ -123,8 +123,12 @@ func main() {
 	//migrateAdmin()
 
 	 v1 := app.Group("/api/v1")
-	 route.SetupRoutes(v1)
+	 route.SetupRoutes(v1,true)
  
+	 // เพิ่มกลุ่มใหม่สำหรับ /api
+	 api := app.Group("/api")
+	 route.SetupRoutes(api,false) // เรียกใช้ฟังก์ชัน SetupRoutes สำหรับกลุ่มนี้
+
     // เรียกใช้ฟังก์ชันจาก efinity.go
 	log.Fatal(app.Listen(":8050"))
 	 

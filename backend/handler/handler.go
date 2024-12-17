@@ -79,7 +79,7 @@ var connection_timeout = os.Getenv("CONNECTION_TIMEOUT")
 var redis_database = getEnv("REDIS_DATABASE", "0")
 var go_pixel_log = os.Getenv("GO_PIXEL_LOG")
 var mysql_host = os.Getenv("MYSQL_HOST")
-var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_user = os.Getenv("MYSQL_USER")
 var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 

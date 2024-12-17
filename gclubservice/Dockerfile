@@ -1,17 +1,22 @@
-FROM node:14 as base
+FROM golang:1.23.0-alpine3.20 as builder
 
-WORKDIR /home/node/app
+ENV GO111MODULE=on
+ENV GOS=linux
+ENV GOARCH=amd64
+ENV CGO_ENABLED=0
+ADD . /src
+RUN cd /src && go build -o popmio -ldflags "-w -s" main.go
 
-ENV TZ="Asia/Bangkok"
+FROM alpine:latest
 
-COPY package*.json ./
+RUN apk update \
+        && apk upgrade \
+        && apk add --no-cache \
+        ca-certificates \
+        && update-ca-certificates 2>/dev/null || true
 
-RUN npm i
-
-COPY . .
-
-FROM base as production
-
-ENV NODE_PATH=./build
-
-RUN npm run build
+WORKDIR /app
+COPY --from=builder /src/js /app/js
+COPY --from=builder /src/css /app/css
+COPY --from=builder /src/popmio /app/
+CMD /app/popmio

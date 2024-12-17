@@ -39,7 +39,7 @@ import (
 	//"errors"
 )
 var mysql_host = os.Getenv("MYSQL_HOST")
-var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_user = "web" /// os.Getenv("MYSQL_ROOT_USER")
 var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 

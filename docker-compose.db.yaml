@@ -68,7 +68,8 @@ services:
     #command: --init-file /data/application/1.sql
     volumes:
       - ./database:/var/lib/mysql
-      - ./init:/docker-entrypoint-initdb.d/:ro"  
+      # - ./database:/docker-entrypoint-initdb.d
+      - ./init:/docker-entrypoint-initdb.d"  
       #- ./init/1.sql:/data/application/1.sql
       #- ./database/1.sql:/docker-entrypoint-initdb.d/1.sql
       #- ./database/2.sql:/docker-entrypoint-initdb.d/2.sql
@@ -78,6 +79,8 @@ services:
       retries: 10
     networks:
       - proxy-net
+ 
+
 
   pma:
     container_name: pma

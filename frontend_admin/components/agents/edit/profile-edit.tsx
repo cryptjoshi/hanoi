@@ -128,7 +128,7 @@ export function ProfileEdit({ lng, id }: ProfileEditProps) {
   useEffect(() => {
     const fetchData = async () => {
       const response = await GetDatabaseListByPrefix(id);
-     
+     console.log(response)
       if (response.Status) {
         // Response: {Databases: ["ckd_dev","ckd_prod"], Message: "ดึงรายชื่อฐานข้อมูลสำเร็จ", Status: true}
         const databases = response.Databases || [];

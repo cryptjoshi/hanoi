@@ -174,6 +174,8 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             endDate: data.Data.endDate ? format(new Date(data.Data.endDate), 'dd-MM-yyyy') : '',
             Zerobalance: data.Data.zerobalance
           };
+
+
           // Remove ID from formattedData before setting form values
           const { ID, ...formData } = formattedData;
           form.reset(formData as z.infer<typeof updatedFormSchema>);
@@ -219,6 +221,15 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       return; // Stop the submission
     }
 
+     let example_str
+      if (values.unit !== 'percent') {
+        //console.log(`deposit+((${percentDiscountValue}/100)*100)`)
+          example_str = `deposit+((${values.percentDiscount}/100)*100)`; // Update example in form
+      } else {
+        //console.log(`(1+(${percentDiscountValue}/100))*deposit`)
+         example_str =  `(1+(${values.percentDiscount}/100))*deposit`; // Update example in form
+      }
+
     const formattedValues = {
       ...values,
       startDate: values.startDate ? format(parse(values.startDate, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '',
@@ -230,12 +241,12 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       minSpend: values.minSpend?.toString(),
       minSpendType:values.minSpendType?.toString(),
       maxSpend: values.maxSpend?.toString(),
-      example: values.example.toString(),
+      example: example_str,
       minCredit: values.minCredit?.toString(),
       turntype: values.turnType.toString(),
       Zerobalance:values.Zerobalance
     };
-    console.log("format values:"+JSON.stringify(formattedValues))
+   // console.log("format values:"+JSON.stringify(formattedValues))
     if (promotionId) {
       const data = await UpdatePromotion(prefix, promotionId, formattedValues);
       if (data.Status) {
@@ -354,10 +365,13 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
                       onValueChange={(value) => {
                         // Get the current percentDiscount value
                         const percentDiscountValue = form.getValues('percentDiscount');
+                        //console.log("PercentDiscountValue:"+percentDiscountValue)
                         if(percentDiscountValue)
                         if (value !== 'percent') {
+                          //console.log(`deposit+((${percentDiscountValue}/100)*100)`)
                            form.setValue('example', `deposit+((${percentDiscountValue}/100)*100)`); // Update example in form
                         } else {
+                          //console.log(`(1+(${percentDiscountValue}/100))*deposit`)
                           form.setValue('example', `(1+(${percentDiscountValue}/100))*deposit`); // Update example in form
                         }
                         

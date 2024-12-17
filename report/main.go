@@ -130,7 +130,7 @@ func main() {
 	 route.SetupRoutes(api,false) // เรียกใช้ฟังก์ชัน SetupRoutes สำหรับกลุ่มนี้
 
     // เรียกใช้ฟังก์ชันจาก efinity.go
-	log.Fatal(app.Listen(":8050"))
+	log.Fatal(app.Listen(":8030"))
 	 
 	
 }

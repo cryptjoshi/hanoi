@@ -2,4 +2,4 @@ title="Configuration File For Socialproof"
 debug=true
 contextTimeout="2"
 [server]
-  address= ":8050"
+  address= ":8030"

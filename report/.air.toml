@@ -49,5 +49,5 @@ keep_scroll = true
 # Enable live-reloading on the browser.
 [proxy]
   enabled = true
-  proxy_port = 4005
-  app_port = 8050
+  proxy_port = 4003
+  app_port = 8030

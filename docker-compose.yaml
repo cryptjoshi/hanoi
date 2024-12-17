@@ -12,26 +12,26 @@ services:
       caddy.reverse_proxy: "{{upstreams 80}}"
       caddy.tls: "internal"
 
-  games:
-    container_name: games
-    build:
-        context: ./games
-        dockerfile: ./Dockerfile
-        target: development
-    volumes:
-        - ./games:/app
-        - /app/node_modules
-        #- /app/.next
-    expose:
-        - '5003'
-    ports:
-        - "5003:5003"
-    working_dir: /app
-    env_file: .env
-    environment:
-      - NEXT_PUBLIC_ENVIRONMENT=development
-    networks:
-      - caddy
+  # games:
+  #   container_name: games
+  #   build:
+  #       context: ./games
+  #       dockerfile: ./Dockerfile
+  #       target: development
+  #   volumes:
+  #       - ./games:/app
+  #       - /app/node_modules
+  #       #- /app/.next
+  #   expose:
+  #       - '5003'
+  #   ports:
+  #       - "5003:5003"
+  #   working_dir: /app
+  #   env_file: .env
+  #   environment:
+  #     - NEXT_PUBLIC_ENVIRONMENT=development
+  #   networks:
+  #     - caddy
       
 
   moodeng:
@@ -121,6 +121,24 @@ services:
     networks:
       - caddy
 
+  reportservice:
+    container_name: king_report_service
+    build:
+      context: ./report
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4003:8030"
+    env_file: .env
+    labels:
+      caddy: report.tsxbet.net
+      caddy.reverse_proxy: "{{upstreams 8030}}"
+      caddy.tls: "internal"
+    volumes:
+      - ./report/:/app
+    networks:
+      - caddy
+
+
   backendservice:
     image: king_backend_service
     container_name: backend_service
@@ -156,40 +174,36 @@ services:
       - ./gameservice/:/app
     networks:
       - caddy
+
+  # gservice:
+  #   # image: gclub
+  #   build:
+  #     context: ./gclubservice
+  #     dockerfile: Dockerfile
+  #     target: base
+  #   volumes:
+  #     - ./gclubservice/src:/home/node/app/src
+  #     - ./gclubservice/nodemon.json:/home/node/app/nodemon.json
+  #   container_name: gservice
+  #   expose:
+  #     - '9003'
+  #   ports:
+  #     - '9003:9003'
+  #   dns:
+  #     - 8.8.8.8
+  #     - 8.8.4.4
+  #   command: " npm run dev"
+  #   # environment:
+  #   #   - VIRTUAL_HOST=gclub.tsxbet.net
+  #   #   - VIRTUAL_PORT=3003
+  #   env_file: .env
+  #   networks:
+  #     - caddy
       
-
-
-
-  gservice:
-    # image: gclub
+  gclubservice:
+    container_name: gclub_service
     build:
       context: ./gclubservice
-      dockerfile: Dockerfile
-      target: base
-    volumes:
-      - ./gclubservice/src:/home/node/app/src
-      - ./gclubservice/nodemon.json:/home/node/app/nodemon.json
-    container_name: gservice
-    expose:
-      - '9003'
-    ports:
-      - '9003:9003'
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    command: " npm run dev"
-    # environment:
-    #   - VIRTUAL_HOST=gclub.tsxbet.net
-    #   - VIRTUAL_PORT=3003
-    env_file: .env
-    networks:
-      - caddy
-      
-
-  reportservice:
-    container_name: king_report_service
-    build:
-      context: ./report
       dockerfile: dev.Dockerfile
     ports:
       - "4005:8050"
@@ -199,9 +213,11 @@ services:
       caddy.reverse_proxy: "{{upstreams 8050}}"
       caddy.tls: "internal"
     volumes:
-      - ./report/:/app
+      - ./gclubservice/:/app
     networks:
       - caddy
+
+
       
 
 

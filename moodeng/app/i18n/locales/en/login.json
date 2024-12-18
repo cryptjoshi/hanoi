@@ -1,6 +1,6 @@
 {
     "login": {
-        "title": "Login",
+        "title": "Partner Control Login",
         "username": "Username",
         "password": "Password",
         "submit": "Submit",

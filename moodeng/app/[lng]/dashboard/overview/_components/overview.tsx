@@ -1,7 +1,7 @@
 import { AreaGraph } from './area-graph';
 import { BarGraph } from './bar-graph';
 import { PieGraph } from './pie-graph';
-import {useState,useEffect} from 'react'
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation'
 import { CalendarDateRangePicker } from '@/components/date-range-picker';
 import {CalendarDatePicker} from '@/components/date-picker'
@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -25,7 +26,7 @@ import { formatNumber } from '@/lib/utils'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
+import { io } from 'socket.io-client'; 
 import {
   Form,
   FormControl,
@@ -72,14 +73,57 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
  const [refreshTrigger, setRefreshTrigger] = useState(0);
  const { customerCurrency,accessToken } = useAuthStore();
  const router = useRouter()
-
-const form = useForm<z.infer<typeof FormSchema>>({
+ const [messages, setMessages] = useState([]);
+ const socketRef = useRef(null);
+ const [id,setId] = useState("");
+ const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
         startdate: tzDate, // ตั้งค่าเริ่มต้นให้กับ startdate
     },
   })
+  const connectWebSocket = () => {
+    socketRef.current = io('https://report.tsxbet.net', {
+      path: '/socket.io',
+      transports: ['websocket'], // บังคับให้ใช้ WebSocket
+      upgrade: false, // ป้องกันการ upgrade protocol
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+  });
 
+    
+    socketRef.current.on('connect', () => {
+      console.log('Socket.IO is connected.');
+      setId(socketRef.current.id);
+      console.log('Socket ID:', socketRef.current.id);
+
+  });
+
+  socketRef.current.on('message', (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      console.log('Received message:', newMessage);
+  });
+
+  socketRef.current.on('disconnect', () => {
+      console.log('Socket.IO is disconnected. Reconnecting...');
+      setTimeout(connectWebSocket, 5000); // reconnect after 5 seconds
+  });
+
+  socketRef.current.on('error', (error) => {
+      console.error('Socket.IO error observed:', error);
+  });
+};
+
+  useEffect(() => {
+    // สร้าง WebSocket connection
+    connectWebSocket();
+
+    // Cleanup function to close WebSocket connection
+    return () => {
+        socketRef.current.close();
+    };
+}, []);
 
    useEffect(() => {
     const fetchGames = async () => {
@@ -123,9 +167,40 @@ const form = useForm<z.infer<typeof FormSchema>>({
    
   }
 
+  const sendMessage = () => {
+    if (socketRef.current) {
+        const messageData = {
+            id: id,
+            message: "Hello Redis from Client!"
+        };
+        socketRef.current.emit('demo.hello', messageData);
+        setMessages((prevMessages) => [...prevMessages, messageData.message]);
+    } else {
+        console.error('Socket.IO is not connected.');
+    }
+}
+
   return (
    
     <PageContainer scrollable>
+      <>
+      <div className="grid grid-cols-1 ">
+      <Card className="bg-blue-600 text-white">
+            <CardHeader>
+              <CardTitle>WebSocket Client with Next.js</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <h2>Messages:</h2>
+            <ul>
+                {JSON.stringify(messages)}
+            </ul>
+            </CardContent>
+            <CardFooter> 
+            <button onClick={sendMessage}>Send Message</button>
+            </CardFooter>
+            </Card>
+        </div>
+      </>
       <div className="space-y-4">
          <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

@@ -88,7 +88,7 @@ export default function Login({lng}:{lng:string}) {
     <div className= "bg-gray-100 min-h-screen flex items-center justify-center p-6">
       <div className=" grow bg-white shadow-lg rounded-lg max-w-md mx-auto">
         <div className="px-6 py-4">
-          <h2 className="text-gray-700 text-3xl font-semibold">{t('login.title')}</h2>
+          <h2 className="text-gray-700 text-3xl font-semibold">{t('Agent Admin Control')}</h2>
           <p className="mt-1 text-gray-600">{t('login.description')}</p>
         </div>
         <div className="px-6 py-4">

@@ -43,7 +43,7 @@ interface DatabaseEntry {
 export default async function PostsPage({ params }: { params: { lng: string } }) {
   const { lng } = params;
   const data: DatabaseResponse = await GetDatabaseList();
-  console.log(data)
+ 
   const { t } = await useTranslation(lng, "translation")
   
   

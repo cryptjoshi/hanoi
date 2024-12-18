@@ -1,6 +1,6 @@
 {
     "login": {
-        "title": "Login",
+        "title": "Agent Control Login",
         "username": "Username",
         "password": "Password",
         "submit": "Submit",

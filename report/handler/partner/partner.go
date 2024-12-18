@@ -1,10 +1,10 @@
 package partner
 
 import (
-	// 	// "context"
+	//"context"
 	// 	// "fmt"
 	// 	// "github.com/amalfra/etag"
-	// 	// "github.com/go-redis/redis/v8"
+	// "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/shopspring/decimal"
 	// 	// "github.com/streadway/amqp"
@@ -39,9 +39,19 @@ import (
 	//"errors"
 )
 var mysql_host = os.Getenv("MYSQL_HOST")
-var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_user = os.Getenv("MYSQL_USER")
 var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
+
+
+
+ 
+
+
+
+
+
+
 
 type ErrorResponse struct {
 	Status  bool   `json:"Status"`
@@ -1354,11 +1364,12 @@ func getDataList() ([]DatabaseInfo,error) {
 
 
 
-
 func Overview(c *fiber.Ctx) (error) {
-type OBody struct {
-	Startdate string `json:"startdate"`
-}
+
+
+	type OBody struct {
+		Startdate string `json:"startdate"`
+	}
 
 	var body OBody
 
@@ -1382,6 +1393,7 @@ type OBody struct {
 	formattedDate := startDate.Format("2006-01-02")
 	fmt.Printf("Startdate: %s \n", formattedDate)
 
+	
 
 	var partner models.Partner
 

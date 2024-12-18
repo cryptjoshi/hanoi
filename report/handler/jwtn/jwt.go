@@ -27,6 +27,12 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"regexp"
+	"bytes"
+	"compress/gzip"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"io"
 	
 )
 var jwtKey  = []byte(os.Getenv("PASSWORD_SECRET"))
@@ -394,4 +400,80 @@ func jwtMiddleware(c *fiber.Ctx) error {
     } else {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
     }
+}
+
+
+
+func CompressData(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := gzip.NewWriter(&buf)
+	defer writer.Close()
+	if _, err := writer.Write(data); err != nil {
+		return nil, err
+	}
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func Encrypt(data []byte, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func DecompressData(compressedData []byte) ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(compressedData))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	decompressedData, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return decompressedData, nil
+}
+
+func Decrypt(encryptedData string, key []byte) ([]byte, error) {
+	// ถอดรหัสข้อมูลที่เข้ารหัส
+	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
 }

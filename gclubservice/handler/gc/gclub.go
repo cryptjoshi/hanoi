@@ -304,7 +304,7 @@ func GetBalance(c *fiber.Ctx) error {
 
 	tokenString := c.Get("Authorization")[7:] 
 	claims, _ :=  Gverify(tokenString)	
-	fmt.Printf("Claims: %+v \n",claims)
+	//fmt.Printf("Claims: %+v \n",claims)
 	//users,_err = handler.Gverify(tokenString);
 	var user models.Users
 	db,err := database.GetDatabaseConnection(strings.ToUpper(claims.MemberAccount))
@@ -312,7 +312,7 @@ func GetBalance(c *fiber.Ctx) error {
 		fmt.Printf("err: %+v \n",err)
 	}
 	//db, _ := database.ConnectToDB(claims.MemberAccount)
-	db.Where("username = ?", claims.MemberAccount).First(&user)
+	db.Debug().Where("username = ?", claims.MemberAccount).First(&user)
     balanceFloat, _ := user.Balance.Float64()
 	var response = fiber.Map{
 		"msgId": 0,
@@ -363,6 +363,10 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	// } else if transactionsub.GameType == 1 && transactionsub.TurnOver.IsZero() && transactionsub.Status == 101 {
 	// 	transactionsub.TurnOver = transactionsub.BetAmount
 	// }
+	if transactionsub.Status == 101 {
+		transactionsub.TurnOver =  decimal.Zero
+		transactionsub.BetAmount = decimal.Zero
+	}
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
 	transactionsub.ProID = users.ProStatus
@@ -380,8 +384,10 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 		updates := map[string]interface{}{
 			"Balance": transactionsub.Balance,
 				}
-	
-		 
+		one,_ := decimal.NewFromString("1") 
+		if transactionsub.Balance.LessThan(one) {
+			updates["pro_status"] = ""
+		}
 		_err :=  repository.UpdateFieldsUserString(db,membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
  
 		if _err != nil {
@@ -414,20 +420,23 @@ func Debit(c  *fiber.Ctx) error {
 
 	tokenString := c.Get("Authorization")[7:] 
 	claims, _ :=  Gverify(tokenString)	
-	fmt.Printf("Claims: %+v \n",claims)
+	
 	//users,_err = handler.Gverify(tokenString);
 	var user models.Users
 	db,err := database.GetDatabaseConnection(strings.ToUpper(claims.MemberAccount))
 	if err != nil {
-		fmt.Printf("err: %+v \n",err)
+		fmt.Printf(" 422 err: %+v \n",err)
 	}
 	//db, _ := database.ConnectToDB(claims.MemberAccount)
 	db.Where("username = ?", claims.MemberAccount).First(&user)
 
 
     balanceFloat, _ := user.Balance.Float64()
+
+	//fmt.Printf("Request: %+v \n",request)
+
 	var c_transaction_found models.TransactionSub
-	rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",request.Id).Find(&c_transaction_found).RowsAffected
+	rowsAffected := db.Debug().Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",request.Transaction.Id).Find(&c_transaction_found).RowsAffected
 
 
 
@@ -464,10 +473,14 @@ func Debit(c  *fiber.Ctx) error {
         c_transaction_found.Sign = ""
         c_transaction_found.RequestTime = time.Now().Format("20060102150405") // ใช้เวลาปัจจุบันในรูปแบบที่ต้องการ
 		c_transaction_found.IsAction = "Debit"
-		if user.Balance.GreaterThan(request.Transaction.Amount) {
+
+		fmt.Printf("467 request.Transaction.Amount %v \n",user.Balance)
+		fmt.Printf("468 request.Transaction.Amount %v \n",request.Transaction.Amount)
+
+		if user.Balance.GreaterThanOrEqual(request.Transaction.Amount) {
 
 			result := AddTransactions(c_transaction_found,user.Username)
-			fmt.Printf("Result: %+v \n",result)
+			fmt.Printf("Add Debit Result: %+v \n",result)
 			return c.Status(200).JSON(fiber.Map{
 				"msgId": 0,
 				"message": "OK",
@@ -531,7 +544,7 @@ func Credit(c  *fiber.Ctx) error {
 
 	tokenString := c.Get("Authorization")[7:] 
 	claims, _ :=  Gverify(tokenString)	
-	fmt.Printf("Claims: %+v \n",claims)
+	//fmt.Printf("Claims: %+v \n",claims)
 	//users,_err = handler.Gverify(tokenString);
 	var user models.Users
 	db,err := database.GetDatabaseConnection(strings.ToUpper(claims.MemberAccount))
@@ -542,9 +555,9 @@ func Credit(c  *fiber.Ctx) error {
 	db.Where("username = ?", claims.MemberAccount).First(&user)
 
 
-    balanceFloat, _ := user.Balance.Float64()
+   // balanceFloat, _ := user.Balance.Float64()
 	var c_transaction_found models.TransactionSub
-	rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",request.Id).Find(&c_transaction_found).RowsAffected
+	rowsAffected := db.Debug().Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",request.Transaction.Id).Find(&c_transaction_found).RowsAffected
 
 
 
@@ -584,7 +597,9 @@ func Credit(c  *fiber.Ctx) error {
 	 
 
 		result := AddTransactions(c_transaction_found,user.Username)
-		fmt.Printf("Result: %+v \n",result)
+		fmt.Printf("Credit Add Result: %+v \n",result)
+		//c_transaction_found.Balance 
+		balanceFloat, _ := c_transaction_found.Balance.Float64()
 			return c.Status(200).JSON(fiber.Map{
 				"msgId": 0,
 				"message": "OK",

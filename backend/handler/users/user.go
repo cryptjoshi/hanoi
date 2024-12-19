@@ -415,8 +415,8 @@ func GetUser(c *fiber.Ctx) error {
 	fmt.Printf("PromotionLog: %+v \n",promotionLog)
 
 	var totalTurnover decimal.Decimal
-	if err := db.Model(&models.TransactionSub{}).
-		Where("proid = ? AND membername = ? AND created_at >= ?", 
+	if err := db.Debug().Model(&models.TransactionSub{}).
+		Where("proid = ? AND membername = ? AND Date(created_at) >= Date(?)", 
 			users.ProStatus, 
 			users.Username, 
 			promotionLog.CreatedAt).
@@ -430,6 +430,38 @@ func GetUser(c *fiber.Ctx) error {
 			
 		
 	}
+
+	// type TurnoverResult struct {
+	// 	Turnover decimal.Decimal
+	// }
+	
+	//  //var lastWithdrawTurnover decimal.Decimal
+	//  subQuery := db.Debug().
+	// 	 Table("BankStatement").
+	// 	 Select("TurnOver").
+	// 	 Where("(userid = ? OR walletid = ?) AND statement_type = ?", users.ID, users.ID, "Withdraw").
+	// 	 Order("created_at DESC").
+	// 	 Limit(1)
+	 
+	//  // Query หลัก
+	//  var result TurnoverResult
+	//  err = db.Debug().
+	// 	 Table("TransactionSub").
+	// 	 Select("SUM(turnover) - COALESCE((?),0) as turnover", subQuery).
+	// 	 Where("MemberID = ?", users.ID).
+	// 	 Scan(&result).Error
+
+	// if err != nil {
+	// 	return c.JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message":  err,
+	// 		"Data": fiber.Map{"id": -1},
+	// 	})
+	// }
+	 
+	//  fmt.Printf(" Users TurnOver: %v \n",result.Turnover)
+	//  fmt.Printf(" minTurnover: %v \n",minTurnover)
+
 
 
 	var promotion models.Promotion
@@ -1156,6 +1188,20 @@ func UpdateUserPro(c *fiber.Ctx) error {
 				"Data": fiber.Map{"id": -1},
 			})
 		}
+
+		//fmt.Printf("Balance: %v \n",user.Balance)
+		//fmt.Printf("Round: %v \n",user.Balance.Floor())
+
+		one,_ := decimal.NewFromString("0")
+
+		if user.Balance.Floor().GreaterThan(one) {
+			return c.Status(400).JSON(fiber.Map{
+				"Message": "คุณมียอดคงเหลือมากกว่าศูนย์",
+				"Status":  false,
+				"Data":    "คุณมียอดคงเหลือมากกว่าศูนย์",
+			})
+		}
+
 	   updates := map[string]interface{}{
 		   "MinTurnover": prodetail["MinTurnover"],
 		   "ProStatus": proStatus,

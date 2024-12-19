@@ -1442,21 +1442,65 @@ func Overview(c *fiber.Ctx) (error) {
 		return c.JSON(response)
 	}
 	memberCount := result.RowsAffected
-	fmt.Printf("จำนวนสมาชิก: %d\n", memberCount) 
+	
 	// แสดงจำนวนสมาชิก
 	// ... existing code ...
 	var activeMembers []models.Users
+	var newMembers []models.Users
 	for _, m := range member {
 		if m.Actived != nil && m.Actived.Format("2006-01-02") == startDate.Format("2006-01-02") { // เปรียบเทียบกับ startDate
 			activeMembers = append(activeMembers, m)
 		}
+		if  m.CreatedAt.Format("2006-01-02") == startDate.Format("2006-01-02") {
+			newMembers = append(newMembers,m)
+		}
 	}
+
+
+
 	activeCount := len(activeMembers) 
 	activeCountStr := strconv.Itoa(activeCount) // นับจำนวนสมาชิกที่ Actived ไม่เป็น NULL และเท่ากับ startdate
-	// ... existing code ...
-	newcomerDecimal, err := decimal.NewFromString(activeCountStr)
+	firstDept,_ := decimal.NewFromString(activeCountStr)
+
+	newMembersCount := len(newMembers)
+	newMembersCountStr := strconv.Itoa(newMembersCount)
+	newcomerDecimal, _ := decimal.NewFromString(newMembersCountStr)
+	
+	
+	//var exists bool
+	//result := db.Debug().Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	type TransactionResult struct {
+		UserID      uint            `json:"userid"`
+		Username    string          `json:"username"`
+		UID         string          `json:"uid"`
+		Deposit     decimal.Decimal `json:"deposit"`
+		Withdraw    decimal.Decimal `json:"withdraw"`
+		CreatedAt   time.Time       `json:"created_at"`
+		StatementType string        `json:"statement_type"`
+	}
+	
+	// ใช้ GORM query
+	var results []TransactionResult
+	
+	err = db.Debug().Table("BankStatement").
+		Select(`
+			BankStatement.userid,
+			Users.username,
+			BankStatement.uid,
+			BankStatement.statement_type,
+			COALESCE(CASE WHEN BankStatement.transactionamount > 0 THEN BankStatement.transactionamount END, 0) as deposit,
+			COALESCE(CASE WHEN BankStatement.transactionamount < 0 THEN BankStatement.transactionamount END, 0) as withdraw,
+			BankStatement.createdAt
+		`).
+		Joins("JOIN Users ON BankStatement.userid = Users.id").
+		Where("Users.referred_by = ? AND BankStatement.channel = ? AND DATE(BankStatement.createdAt) = ?",
+			partner.AffiliateKey,
+			"1stpay",
+			startDate.Format("2006-01-02")).
+		Scan(&results).Error
+	
+	//	fmt.Printf("Results: %+v \n",results)
 	if err != nil {
-		// จัดการกับข้อผิดพลาดที่เกิดขึ้น
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถแปลง activeCount เป็น decimal ได้: " + err.Error(),
@@ -1464,7 +1508,42 @@ func Overview(c *fiber.Ctx) (error) {
 		return c.JSON(response)
 	}
 
-	fmt.Printf("จำนวนสมาชิก active: %d\n", newcomerDecimal) 
+	var withdrawRows []TransactionResult
+	var depositRows []TransactionResult 
+    var sumWithdraw decimal.Decimal
+	var sumDeposit decimal.Decimal 
+
+	for _, m := range results {
+	//	fmt.Printf(" m: %+v \n",m)
+		if m.StatementType == "Deposit" {
+			depositRows = append(depositRows,m)
+			sumDeposit = sumDeposit.Add(m.Deposit)
+		} else {
+			withdrawRows = append(withdrawRows,m)
+			sumWithdraw = sumWithdraw.Add(m.Withdraw.Abs())
+		}
+	}
+     depositCount := len(depositRows)
+	 withdrawCount := len(withdrawRows)
+	//memberCount := result.RowsAffected
+	//withdrawCount := len(withdrawMembers)
+	// fmt.Printf("จำนวนสมาชิกทั้งหมด: %v\n", memberCount) 
+	// fmt.Printf("จำนวนสมาชิกใหม่: %v\n", newcomerDecimal) 
+	// fmt.Printf("จำนวนสมาชิกฝากครั้งแรก: %v\n", firstDept) 
+	// fmt.Printf("จำนวนสมาชิกฝาก: %v\n", depositCount) 
+	// fmt.Printf("ยอดฝาก: %v\n", sumDeposit) 
+	// fmt.Printf("จำนวนสมาชิกถอน: %v\n", withdrawCount) 
+	// fmt.Printf("ยอดถอน: %v\n", sumWithdraw) 
+	
+	// if err != nil {
+	// 	// จัดการกับข้อผิดพลาดที่เกิดขึ้น
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "ไม่สามารถแปลง activeCount เป็น decimal ได้: " + err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+ 
 	// var settings []models.Settings
 
 	// dbm := ConnectMaster()
@@ -1522,12 +1601,12 @@ func Overview(c *fiber.Ctx) (error) {
 
 	overview := Overview{
 		Allmembers:    decimal.NewFromInt(memberCount),
-		Newcomer:      decimal.NewFromFloat(150.00),
-		FirstDept:     newcomerDecimal,
-		Deposit:       decimal.NewFromFloat(5000.00),
-		Withdrawl:     decimal.NewFromFloat(2000.00),
-		TotalDeposit:  decimal.NewFromFloat(30000.00),
-		TotalWithdrawl: decimal.NewFromFloat(15000.00),
+		Newcomer:      newcomerDecimal,
+		FirstDept:     firstDept,
+		Deposit:        decimal.NewFromInt(int64(depositCount)),    // แปลง int เป็น decimal
+		Withdrawl:      decimal.NewFromInt(int64(withdrawCount)),   // แปลง int เป็น decimal	
+		TotalDeposit:  sumDeposit,
+		TotalWithdrawl: sumWithdraw,
 		Winlose:       decimal.NewFromFloat(2500.00),
 		Totalprofit:   decimal.NewFromFloat(10000.00),
 		Provider: []struct {

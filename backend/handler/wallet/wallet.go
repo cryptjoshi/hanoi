@@ -521,7 +521,7 @@ func Deposit(c *fiber.Ctx) error {
 			//BankStatement.Proamount = BankStatement.Transactionamount
 			// Calculate the new balance using the example from pro_setting
 
-		
+			
 
 			
 			minDept := pro_setting["minDept"].(decimal.Decimal)
@@ -833,7 +833,7 @@ func Withdraw(c *fiber.Ctx) error {
             "Data": fiber.Map{"id": -1},
         })
     }
-
+	//fmt.Printf("Withdraw : %+v \n" ,BankStatement)
     //ตรวจสอบข้อมูลผู้ใช้
     if err := db.Where("walletid = ? or id = ?", id,id).First(&users).Error; err != nil {
         return c.JSON(fiber.Map{
@@ -842,7 +842,7 @@ func Withdraw(c *fiber.Ctx) error {
             "Data": fiber.Map{"id": -1},
         })
     }
-	BankStatement.Transactionamount = BankStatement.Amount
+	//BankStatement.Transactionamount = BankStatement.Amount
     withdraw := BankStatement.Transactionamount
 
 	withdrawAbs := withdraw.Abs()
@@ -997,7 +997,39 @@ func Withdraw(c *fiber.Ctx) error {
 				 "Data": fiber.Map{"id": -1},
 			 })
 		 }
-		 if users.Turnover.LessThan(minTurnover) {
+		 type TurnoverResult struct {
+			Turnover decimal.Decimal
+		}
+		
+		 //var lastWithdrawTurnover decimal.Decimal
+		 subQuery := db.Debug().
+			 Table("BankStatement").
+			 Select("TurnOver").
+			 Where("(userid = ? OR walletid = ?) AND statement_type = ?", users.ID, users.ID, "Withdraw").
+			 Order("created_at DESC").
+			 Limit(1)
+		 
+		 // Query หลัก
+		 var result TurnoverResult
+		 err = db.Debug().
+			 Table("TransactionSub").
+			 Select("SUM(turnover) - COALESCE((?),0) as turnover", subQuery).
+			 Where("MemberID = ?", users.ID).
+			 Scan(&result).Error
+
+		if err != nil {
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message":  err,
+				"Data": fiber.Map{"id": -1},
+			})
+		}
+		 
+		 fmt.Printf(" Users TurnOver: %v \n",result.Turnover)
+		 fmt.Printf(" minTurnover: %v \n",minTurnover)
+
+		 
+		 if result.Turnover.LessThan(minTurnover) {
 			 return c.JSON(fiber.Map{
 				 "Status": false,
 				 "Message": fmt.Sprintf("ยอดเทิร์นไม่เพียงพอ ต้องการ %v %v แต่มี %v %v", 
@@ -1020,7 +1052,7 @@ func Withdraw(c *fiber.Ctx) error {
     BankStatement.Userid = id
     BankStatement.Walletid = id
     BankStatement.Beforebalance = users.Balance
-	
+	 
     // ถ้ามีโปรโมชั่นให้ปรับเป็น 0
     BankStatement.Bankname = users.Bankname
     BankStatement.Accountno = users.Banknumber
@@ -1076,19 +1108,30 @@ func Withdraw(c *fiber.Ctx) error {
         "Balance": decimal.Zero,
         "LastWithdraw": withdraw,
     }
-
+    //fmt.Println(users.ProStatus)
     if users.ProStatus != "" {
         updates["ProStatus"] = ""
-    }
+		if err := tx.Model(&users).Updates(updates).Error; err != nil {
+			tx.Rollback()
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message": "ไม่สามารถอัพเดทข้อมูลผู้ใช้ได้",
+				"Data": fiber.Map{"id": -1},
+			})
+		}
+    } else {
+		updates["Balance"] = BankStatement.Balance
+		if err := tx.Model(&users).Updates(updates).Error; err != nil {
+			tx.Rollback()
+			return c.JSON(fiber.Map{
+				"Status": false,
+				"Message": "ไม่สามารถอัพเดทข้อมูลผู้ใช้ได้",
+				"Data": fiber.Map{"id": -1},
+			})
+		}
+	}
 
-    if err := tx.Model(&users).Updates(updates).Error; err != nil {
-        tx.Rollback()
-        return c.JSON(fiber.Map{
-            "Status": false,
-            "Message": "ไม่สามารถอัพเดทข้อมูลผู้ใช้ได้",
-            "Data": fiber.Map{"id": -1},
-        })
-    }
+    
 
     if err := tx.Commit().Error; err != nil {
         return c.JSON(fiber.Map{

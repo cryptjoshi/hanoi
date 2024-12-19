@@ -191,21 +191,23 @@ function TransactionForm({lng,slug}:TransProps) {
              };
     
             
+            //console.log(formattedValues)
 
              if(accessToken){
 
                 const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
                 
-                if(response.Status){
+                if(response.Status  ){
                   //const link = response.Data.link;
                   // toast({
                   //       title: t("promotion.edit.success"),
                   //       description: response.Message,
                   //       variant: "default",
                   //     })
+                  if( slug === "deposit"){
                       setQrCodeLink(response.Data.link);
                       setIsDialogOpen(true);
-                   
+                  }
               
                      // router.push(`/${lng}/home`)
                 }  else {

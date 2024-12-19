@@ -363,7 +363,9 @@ export default function PartnerList({
       {showTable ? (
         <>
           <div className="flex items-center justify-between mt-4 mb-4">
-             
+          
+            <Button onClick={handleAddGame}>{t('partner.add.title')}</Button>
+           
           </div>
           <div className="flex items-center py-4">
             <Input

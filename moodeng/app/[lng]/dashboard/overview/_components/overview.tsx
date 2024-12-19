@@ -9,6 +9,7 @@ import PageContainer from '@/components/layout/page-container';
 import { RecentSales } from './recent-sales';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 import {
   Card,
   CardContent,
@@ -72,10 +73,12 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
  const [overview,setOverView] = useState<IFinancialStats>({})
  const [refreshTrigger, setRefreshTrigger] = useState(0);
  const { customerCurrency,accessToken } = useAuthStore();
+ const [connected,setConncted] = useState(false)
  const router = useRouter()
  const [messages, setMessages] = useState([]);
+ const [isBlinking, setIsBlinking] = useState(false);
  const socketRef = useRef(null);
- const [id,setId] = useState("");
+ const [socketid,setSocketId] = useState("");
  const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -95,24 +98,53 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
     
     socketRef.current.on('connect', () => {
       console.log('Socket.IO is connected.');
-      setId(socketRef.current.id);
+      setSocketId(socketRef.current.id);
+      setConncted(true)
       console.log('Socket ID:', socketRef.current.id);
 
   });
 
   socketRef.current.on('message', (newMessage) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setIsBlinking(true);
+      // ตั้งเวลาให้หยุดกระพริบหลังจาก 3 วินาที
+      setTimeout(() => {
+        setIsBlinking(false);
+        fetchGames();
+      }, 3000);
+
       console.log('Received message:', newMessage);
   });
 
   socketRef.current.on('disconnect', () => {
       console.log('Socket.IO is disconnected. Reconnecting...');
+      setConncted(false)
       setTimeout(connectWebSocket, 5000); // reconnect after 5 seconds
   });
 
   socketRef.current.on('error', (error) => {
       console.error('Socket.IO error observed:', error);
   });
+};
+const fetchGames = async () => {
+      
+  setIsLoading(true);
+  try {
+  
+    if(accessToken){
+        //console.log(form.getValues("startdate").toLocaleDateString())
+    const fetchedGames = await GetOverview(accessToken,form.getValues("startdate").toLocaleDateString());
+    
+    setOverView(fetchedGames.Data);
+    console.log(fetchedGames)
+    } else {
+      router.replace(`/${lng}/login`)
+    }
+  } catch (error) {
+    console.error('Error fetching games:', error);
+  } finally {
+    setIsLoading(false);
+  }
 };
 
   useEffect(() => {
@@ -126,26 +158,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
 }, []);
 
    useEffect(() => {
-    const fetchGames = async () => {
-      
-      setIsLoading(true);
-      try {
-      
-        if(accessToken){
-            //console.log(form.getValues("startdate").toLocaleDateString())
-        const fetchedGames = await GetOverview(accessToken,form.getValues("startdate").toLocaleDateString());
-        
-        setOverView(fetchedGames.Data);
-        console.log(fetchedGames)
-        } else {
-          router.replace(`/${lng}/login`)
-        }
-      } catch (error) {
-        console.error('Error fetching games:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    
     fetchGames();
   }, [ refreshTrigger])
 
@@ -167,50 +180,34 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
    
   }
 
-  const sendMessage = () => {
-    if (socketRef.current) {
-        const messageData = {
-            id: id,
-            message: "Hello Redis from Client!"
-        };
-        socketRef.current.emit('demo.hello', messageData);
-        setMessages((prevMessages) => [...prevMessages, messageData.message]);
-    } else {
-        console.error('Socket.IO is not connected.');
-    }
-}
+//   const sendMessage = () => {
+//     if (socketRef.current) {
+//         const messageData = {
+//             id: socketid,
+//             message: "Hello Redis from Client!"
+//         };
+//         socketRef.current.emit('demo.hello', messageData);
+//         setMessages((prevMessages) => [...prevMessages, messageData.message]);
+//     } else {
+//         console.error('Socket.IO is not connected.');
+//     }
+// }
 
   return (
    
     <PageContainer scrollable>
-      <>
-      <div className="grid grid-cols-1 ">
-      <Card className="bg-blue-600 text-white">
-            <CardHeader>
-              <CardTitle>WebSocket Client with Next.js</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <h2>Messages:</h2>
-            <ul>
-                {JSON.stringify(messages)}
-            </ul>
-            </CardContent>
-            <CardFooter> 
-            <button onClick={sendMessage}>Send Message</button>
-            </CardFooter>
-            </Card>
-        </div>
-      </>
-      <div className="space-y-4">
+      <div className="space-y-4 ">
+      <Card className="bg-[#CFE2F3] text-black">
+            <CardContent className="item-center pt-4">
          <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} >
         {/* แถบการค้นหา */}
-          <FormField
+            <FormField
           control={form.control}
           name="startdate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
+             
         <div className="flex items-center justify-between">
         
           <div className="flex items-center space-x-2">
@@ -219,13 +216,32 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             initialDate={date}/>
             <Button type="submit">{t('button.refresh')}</Button>
           </div>
+          <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              "h-3 w-3 rounded-full transition-all duration-300",
+              connected ? "bg-green-500" : "bg-red-500",
+              isBlinking && "animate-pulse"
+            )}
+          />
+         <span className={cn(
+          "transition-opacity",
+          isBlinking && "animate-pulse"
+        )}>{connected ? "Online" : "Offline"}</span>
         </div>
+        </div>
+
         </FormItem>
           )}
           />
+            
           </form>
           </Form>
-
+          </CardContent>
+            {/* <CardFooter> 
+            <button onClick={sendMessage}>Send Message</button>
+            </CardFooter> */}
+            </Card>
 
                
 {/* เปรียบเทียบกับเดือนที่ผ่านมา */}
@@ -236,7 +252,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.allmembers?.toString()), 2)}</div>
-              <p className="text-xs text-red-500">↓ 99.99%</p>
+              <p className="text-md text-white">± 100%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -245,7 +261,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.firstdept?.toString()), 2)}</div>
-              <p className="text-xs">± 0.00%</p>
+              <p className="text-md">± 0.00%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -254,7 +270,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.withdrawl?.toString()), 2)}</div>
-              <p className="text-xs">± 0.00%</p>
+              <p className="text-md">± 0.00%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -263,7 +279,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.newcomer?.toString()), 2)}</div>
-              <p className="text-xs">± 0.00%</p>
+              <p className="text-md">± 0.00%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -271,8 +287,8 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
               <CardTitle>ฝาก</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.totaldeposit?.toString()), 2)}</div>
-              <p className="text-xs text-green-500">↑ 1,883.61%</p>
+              <div className="text-2xl font-bold text-green-500">{formatNumber(parseFloat(overview?.totaldeposit?.toString()), 2)}</div>
+              <p className="text-md text-green-500">↑ 1,883.61%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -280,8 +296,8 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
               <CardTitle>ถอน</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-{formatNumber(parseFloat(overview?.totalwithdrawl?.toString()), 2)}</div>
-              <p className="text-xs text-green-500">↑ 376.67%</p>
+              <div className="text-2xl font-bold text-red-500">-{formatNumber(parseFloat(overview?.totalwithdrawl?.toString()), 2)}</div>
+              <p className="text-md text-green-500">↑ 376.67%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -290,7 +306,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.winlose?.toString()), 2)}</div>
-              <p className="text-xs text-green-500">↑ 1,353.11%</p>
+              <p className="text-md text-green-500">↑ 1,353.11%</p>
             </CardContent>
           </Card>
           <Card className="bg-blue-600 text-white">
@@ -299,7 +315,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.totalprofit?.toString()), 2)}</div>
-              <p className="text-xs text-green-500">↑ 2,326.99%</p>
+              <p className="text-md text-green-500">↑ 2,326.99%</p>
             </CardContent>
           </Card>
         </div>

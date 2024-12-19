@@ -418,7 +418,7 @@ function EditPartner({ partnerId, lng, prefix, onClose, onCancel, isAdd }: { par
               </TabsContent>
               <TabsContent value="member">
           <MemberList 
-            lng={lng} prefix={prefix} id={partnerId.id.toString()} />
+            lng={lng} prefix={prefix} id={partnerId?.id.toString()} />
           </TabsContent>
           <TabsContent value="games" className="md:max-w-md">
           <div className="flex flex-col justify-between space-y-4">

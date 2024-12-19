@@ -120,7 +120,7 @@ type PartnerMember struct {
 
 
 var mysql_host = os.Getenv("MYSQL_HOST")
-var mysql_user = os.Getenv("MYSQL_ROOT_USER")
+var mysql_user = "web" //os.Getenv("MYSQL_ROOT_USER")
 var mysql_pass = os.Getenv("MYSQL_ROOT_PASSWORD")
 // ฟังก์ชั่นช่วยตรวจสอบ turnover
 func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]interface{}) (decimal.Decimal,error) {

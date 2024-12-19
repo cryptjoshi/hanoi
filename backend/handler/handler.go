@@ -2761,7 +2761,7 @@ func GetAllTransaction(c *fiber.Ctx) error {
     	})
 	}
 
-	err_ := db.Debug().Where("membername = ?", users.Username).Find(&transactionsub).Error
+	err_ := db.Debug().Where("membername = ?", users.Username).Order("id desc").Find(&transactionsub).Error
 	if err_ != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"Status": false,

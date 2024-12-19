@@ -461,7 +461,7 @@ func Register(c *fiber.Ctx) error {
 	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
 
 	//user.AffiliateKey = seedPhrase
-
+	partner.Body.Email = partner.Body.Username + currency + "@tsxbet.net" 
 	
 	if partner.Body.Name == "" {
 		response := ErrorResponse{

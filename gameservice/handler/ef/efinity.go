@@ -394,8 +394,11 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 
 		updates := map[string]interface{}{
 			"Balance": transactionsub.Balance,
-				}
-	
+		}
+		one,_ := decimal.NewFromString("1")
+		if transactionsub.Balance.LessThan(one) {
+			updates["pro_status"] = ""
+		}
 		 
 		_err :=  repository.UpdateFieldsUserString(membername, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
  
@@ -404,7 +407,7 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 		} else {
 			fmt.Println("User fields updated successfully")
 		}
-
+		
  
  
 	 

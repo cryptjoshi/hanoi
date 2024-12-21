@@ -83,6 +83,7 @@ func SetupRoutes(app fiber.Router) {
 	
 	app.Post("/db/promotion/all",handler.GetAllPromotion)
 	app.Post("/db/promotion/byuser",jwt.JwtMiddleware,handler.GetPromotionByUser)
+	//app.Post("/db/promotion/logs",jwt.JwtMiddleware,handler.GetPromotionsLogs)
 	app.Post("/db/promotion/byid",handler.GetPromotionById)
 	app.Post("/db/promotion/create",handler.CreatePromotion)
 	app.Post("/db/promotion/update",handler.UpdatePromotion)

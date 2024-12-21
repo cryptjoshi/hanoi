@@ -36,6 +36,7 @@ import (
 	"time"
 	"fmt"
 	"strings"
+	"encoding/json"
 	//"errors"
 )
 var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
@@ -85,8 +86,9 @@ func Login(c *fiber.Ctx) error {
 
 	db, err := database.ConnectToDB(loginRequest.Prefix)
 	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
-	//db.Migrator().CreateTable(&models.PromotionLog{})
-	//db.AutoMigrate(&models.Users{})
+	db.Migrator().CreateTable(&models.Promotion{},&models.PromotionLog{})
+	//db.AutoMigrate(&models.Promotion{})
+	//database.MigrationPromotion(db)
 	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
 	 
 	if err != nil {
@@ -383,7 +385,9 @@ func GetUser(c *fiber.Ctx) error {
 
 		return c.JSON(response)
 	}
-
+	// if err := db.AutoMigrate(&models.BankStatement{});err != nil {
+	// 	fmt.Errorf("Tables schema migration not successfully\n")
+	// }
 	// type Summary struct {
 	// 	Turnover decimal.Decimal `json:"turnover"`
 	// 	createdAt time.Time `json:"createdat"`
@@ -407,14 +411,28 @@ func GetUser(c *fiber.Ctx) error {
 	// 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
 	// }
 	
+	
+
 	var promotionLog models.PromotionLog
-	db.Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
+	promotionLogs,err := getPromotionsWithUserID(users.ID,db)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"Status": false,
+			"Message":  err,
+			"Data": fiber.Map{"id": -1},
+		})
+	}
+
+	//fmt.Printf("PromotionLogs : %+v \n",promotionLogs)
+
+	db.Debug().Model(&models.PromotionLog{}).Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
 		Order("created_at DESC").
 		First(&promotionLog)
+ 
 
-	fmt.Printf("PromotionLog: %+v \n",promotionLog)
 
 	var totalTurnover decimal.Decimal
+ 
 	if err := db.Debug().Model(&models.TransactionSub{}).
 		Where("proid = ? AND membername = ? AND Date(created_at) >= Date(?)", 
 			users.ProStatus, 
@@ -429,7 +447,8 @@ func GetUser(c *fiber.Ctx) error {
 			})
 			
 		
-	}
+		}
+ 
 
 	// type TurnoverResult struct {
 	// 	Turnover decimal.Decimal
@@ -471,7 +490,16 @@ func GetUser(c *fiber.Ctx) error {
 	}
 	pro_setting, err := wallet.CheckPro(db, &users) 
 	if err != nil {
-		fmt.Printf("388 error: %s \n",err)
+		//fmt.Printf("388 error: %s \n",err)
+		
+	updates := map[string]interface{}{
+		"pro_status": "",
+	}
+
+	// อัปเดตข้อมูลยูสเซอร์
+	repository.UpdateFieldsUserString(db, users.Username, updates)
+
+
 		return c.JSON(fiber.Map{
 			"Status": false,
 			"Message":  err.Error(),
@@ -483,6 +511,9 @@ func GetUser(c *fiber.Ctx) error {
 				"username":   strings.ToUpper(users.Username),
 				"balance":    users.Balance,
 				"prefix":     users.Prefix,
+				"promotionlog":  promotionLogs,
+				"includegames": "13,8,2,5,7,1,3,2",
+				"excludegames": "",
 			}})
 	}
 
@@ -503,8 +534,8 @@ func GetUser(c *fiber.Ctx) error {
 	if minTurnover == "" {
 		minTurnover = "0"
 	}
-	fmt.Printf("minTurnover: %+v \n",minTurnover)
-	fmt.Printf("baseAmount: %+v \n",baseAmount)
+	//fmt.Printf("508 minTurnover: %+v \n",minTurnover)
+	//fmt.Printf("509 baseAmount: %+v \n",baseAmount)
 
 
 	requiredTurnover, err := wallet.CalculateRequiredTurnover(minTurnover, baseAmount)
@@ -569,11 +600,251 @@ func GetUser(c *fiber.Ctx) error {
 			"lastproamount": users.LastProamount,
 			"referredby": users.ReferredBy,
 			"lastwithdraw": users.LastWithdraw,
+			"promotionlog": promotionLogs,
 			"pro_status": users.ProStatus,
 			"pro_balance": pro_balance,
 			"includegames": promotion.Includegames,
 			"excludegames": promotion.Excludegames,
 		}}
+	return c.JSON(response)
+}
+
+
+
+func getPromotionsWithUserID(userID int, db *gorm.DB) ([]models.Promotion, error) {
+	var goodpromotions []models.Promotion
+	var promotionLogs []models.PromotionLog
+	var createdAt time.Time
+	createdAt = time.Now() 
+	type Promotion struct {
+		SpecificTime json.RawMessage `json:"SpecificTime"`
+		// เพิ่มฟิลด์อื่น ๆ ที่คุณต้องการที่นี่
+	}
+	// ดึง userID จาก c.Locals
+	//userID := c.Locals("userid").(int)
+
+	// ดึงข้อมูลจาก promotionlog ตาม userID
+	err := db.Where("userid = ?", userID).Find(&promotionLogs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// ตรวจสอบสถานะของ user
+	var user models.Users
+	if err := db.First(&user, userID).Error; err != nil {
+		return nil, err
+	}
+	var promotions []models.Promotion
+	if err = db.Debug().Model(models.Promotion{}).Where("status=1 and date(end_date) > date(?)",createdAt.Format("2006-01-02 15:04:05")).Scan(&promotions).Error; err != nil {
+		return nil, err
+	}
+	
+	// ตรวจสอบประเภทของ promotion
+	for _, log := range promotions {
+		var promotionlog []models.PromotionLog
+		err := db.Debug().Model(models.PromotionLog{}).Where("promotioncode = ? and userid = ?",log.ID,userID).Scan(&promotionlog).Error
+		if err != nil {
+			fmt.Println("Error unmarshalling JSON:", err)
+		}
+		//if len(promotionlog) == 0 {
+		//	continue // ข้ามไปถ้าไม่พบ promotion
+		//}
+		// if err := json.Unmarshal([]byte(promotionData), &promotion); err != nil {
+		// 	fmt.Println("Error unmarshalling JSON:", err)
+		// 	return
+		// }
+
+		var specificTime map[string]interface{}
+		if err := json.Unmarshal([]byte(log.SpecificTime), &specificTime); err != nil {
+			fmt.Println("Error unmarshalling SpecificTime:", err)
+			
+		}
+
+		//fmt.Printf("Promotion: %+v \n",promotion)
+		//fmt.Printf("Actived: %v \n",user.Actived)
+		//fmt.Printf("Type: %v \n",specificTime["type"])
+
+		// ถ้า user มีการ actived แล้ว ให้ตัด promotion ชนิด first ออก
+		// if user.Actived != nil && specificTime["type"] == "first" {
+			
+		// 	continue // ข้าม promotion ชนิด first
+		// }
+
+		// เปรียบเทียบข้อมูลระหว่าง promotionlog และ promotion
+		if specificTime["type"] == "first" {
+			if user.Actived != nil {
+				continue
+			}
+			// ถ้าเป็น type first ให้ดึงข้อมูล promotion ที่ id ไม่ตรงกับ promotioncode ใน promotionlog
+			//if string(promotion.ID) != log.Promotioncode {
+				goodpromotions = append(goodpromotions, log)
+				
+			//}
+		} else {
+
+			if specificTime["type"] == "month" {
+
+				var currentMonthPromotionLogs []models.PromotionLog
+				currentMonth := time.Now().Month()
+				for _, log := range promotionlog {
+					if log.CreatedAt.Month() == currentMonth {
+						currentMonthPromotionLogs = append(currentMonthPromotionLogs, log)
+					}
+				}
+
+				if len(currentMonthPromotionLogs) < int(log.UsageLimit) {
+					goodpromotions = append(goodpromotions, log)
+				}
+			
+			}  else if specificTime["type"] == "weekly" {
+				// กรอง promotionlog ที่มี createdat ตรงกับสัปดาห์ปัจจุบัน
+				var currentDayPromotionLogs []models.PromotionLog
+				currentWeekday := time.Now().Weekday()
+				for _, log := range promotionlog {
+					if log.CreatedAt.Weekday() == currentWeekday {
+						currentDayPromotionLogs = append(currentDayPromotionLogs, log)
+					}
+				}
+
+				// ตรวจสอบจำนวนครั้งที่ใช้ในวันปัจจุบัน
+				if len(currentDayPromotionLogs) < int(log.UsageLimit) {
+					goodpromotions = append(goodpromotions, log)
+				}
+
+			} else if specificTime["type"] == "once" {
+				// สำหรับ once ให้ตรวจสอบว่า promotionlog มีการใช้งานแล้วหรือไม่
+				var usageCount int
+				for _, log := range promotionlog {
+					if log.CreatedAt.Year() == time.Now().Year() && log.CreatedAt.YearDay() == time.Now().YearDay() {
+						usageCount++
+					}
+				}
+
+				if usageCount < int(log.UsageLimit) {
+					goodpromotions = append(goodpromotions, log)
+				}
+			} else {
+
+			// ถ้าเป็น type อื่น ให้ตรวจสอบจำนวน rows ใน promotionlog
+			// var count int64
+			// db.Model(&models.PromotionLog{}).Where("promotioncode = ? AND userid = ?", promotion.Promotioncode, userID).Count(&count)
+			//fmt.Printf("Count: %v \n",len(promotionlog))
+			//fmt.Printf("UsageLimit: %v \n",log.UsageLimit)
+			if len(promotionlog)< int(log.UsageLimit) {
+				goodpromotions = append(goodpromotions, log)
+			}
+			}
+			
+		}
+		//fmt.Printf("Promotions: %+v \n",goodpromotions)
+		// เปรียบเทียบข้อมูลเพิ่มเติมที่คุณต้องการ
+		// เช่น เปรียบเทียบ Promoamount ใน PromotionLog กับ MaxDiscount ใน Promotion
+		//if log.Promoamount.GreaterThan(promotion.MaxDiscount) {
+			// ทำอะไรบางอย่างถ้า Promoamount มากกว่า MaxDiscount
+			// เช่น อาจจะเพิ่มโปรโมชั่นนี้ในรายการ
+		//	promotions = append(promotions, promotion)
+		//}
+	}
+
+	return goodpromotions, nil
+}
+
+
+
+func  GetPromotionByUser(c *fiber.Ctx) (error) {
+	
+
+	user := new(models.Users)
+
+	if err := c.BodyParser(user); err != nil {
+		return c.Status(200).SendString(err.Error())
+	}
+	//fmt.Printf(" %s ",user.Username)
+	db, _ := database.ConnectToDB(user.Prefix)
+
+
+	//db, _err := handler.GetDBFromContext(c)
+	prefix := c.Locals("Prefix")
+
+	
+	 
+	//var promotions []models.Promotion
+	var promotionLogs []models.PromotionLog
+
+	// ดึง userID จาก c.Locals
+	userID := c.Locals("userid").(int)
+
+	// ดึงข้อมูลจาก promotionlog ตาม userID
+	err := db.Where("userid = ?", userID).Find(&promotionLogs).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": err,
+			"Status":  false,
+			"Data": fiber.Map{
+				"prefix": prefix,
+			},
+		}
+
+		return c.JSON(response)
+	}
+
+	// // ตรวจสอบสถานะของ user
+	// var user models.Users
+	// if err := db.First(&user, userID).Error; err != nil {
+	// 	response := fiber.Map{
+	// 		"Message": err,
+	// 		"Status":  false,
+	// 		"Data": fiber.Map{
+	// 			"prefix": prefix,
+	// 		},
+	// 	}
+
+	// 	return c.JSON(response)
+	// }
+
+
+
+	// // ตรวจสอบประเภทของ promotion
+	// for _, log := range promotionLogs {
+	// 	var promotion models.Promotion
+	// 	err := db.First(&promotion, log.Promotioncode).Error
+	// 	if err != nil {
+	// 		continue // ข้ามไปถ้าไม่พบ promotion
+	// 	}
+	// 	// ถ้า user มีการ actived แล้ว ให้ตัด promotion ชนิด first ออก
+	// 	if user.Actived != nil && promotion.Typetime == "first" {
+	// 		continue // ข้าม promotion ชนิด first
+	// 	}
+
+	// 	// เปรียบเทียบข้อมูลระหว่าง promotionlog และ promotion
+	// 	if promotion.Typetime == "first" {
+	// 		// ถ้าเป็น type first ให้ดึงข้อมูล promotion ที่ id ไม่ตรงกับ promotioncode ใน promotionlog
+	// 		if string(promotion.ID) != log.Promotioncode {
+	// 			promotions = append(promotions, promotion)
+	// 		}
+	// 	} else {
+	// 		// ถ้าเป็น type อื่น ให้ตรวจสอบจำนวน rows ใน promotionlog
+	// 		var count int64
+	// 		db.Model(&models.PromotionLog{}).Where("promotioncode = ? AND userid = ?", promotion.Promotioncode, userID).Count(&count)
+
+	// 		if count < int64(promotion.UsageLimit) {
+	// 			promotions = append(promotions, promotion)
+	// 		}
+	// 	}
+
+	// 	// เปรียบเทียบข้อมูลเพิ่มเติมที่คุณต้องการ
+	// 	// เช่น เปรียบเทียบ Promoamount ใน PromotionLog กับ MaxDiscount ใน Promotion
+	// 	if log.Promoamount.GreaterThan(promotion.MaxDiscount) {
+	// 		// ทำอะไรบางอย่างถ้า Promoamount มากกว่า MaxDiscount
+	// 		// เช่น อาจจะเพิ่มโปรโมชั่นนี้ในรายการ
+	// 		promotions = append(promotions, promotion)
+	// 	}
+	// }
+	response := fiber.Map{
+		"Status":  true,
+		"Message": "สำเร็จ",
+		"Data": promotionLogs,
+	}
 	return c.JSON(response)
 }
 
@@ -1184,13 +1455,13 @@ func UpdateUserPro(c *fiber.Ctx) error {
 		if ok && usageCount >= maxUse {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"Status": false,
-				"Message": "คุณใช้โปรโมชั่นนี้เกินจำนวนครั้งที่กำหนดแล้ว",
+				"Message": "คุณใช้โปรโมชั่นนี้เกินจำนวนครั้งที่กำหนดแล้ว \n โปรโมชั่นจะปรับอัตโนมัติ",
 				"Data": fiber.Map{"id": -1},
 			})
 		}
 
-		//fmt.Printf("Balance: %v \n",user.Balance)
-		//fmt.Printf("Round: %v \n",user.Balance.Floor())
+		fmt.Printf("Balance: %v \n",user.Balance)
+		fmt.Printf("Round: %v \n",user.Balance.Floor())
 
 		one,_ := decimal.NewFromString("0")
 

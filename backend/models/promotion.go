@@ -35,9 +35,11 @@ type Promotion struct {
 	MinDept decimal.Decimal `gorm:"type:numeric" json:"minDept"`
 	MinSpend string `gorm:"size:255;not null;" json:"minSpend"`
 	MinCredit string `gorm:"size:255;column:minCredit;not null;" json:"minCredit`
+	MinCreditType string `gorm:"size:255;column:minCreditType;" json:"minCreditType"`
 	TurnType string `gorm:"size:100;column:turntype;" json:"turntype"`
 	MinSpendType string `gorm:"size:255;column:minSpendType;" json:"minSpendType"`
 	MaxSpend decimal.Decimal `gorm:"type:numeric" json:"maxSpend"`
+	MaxWithdrawType	   string   `gorm:"size:255;column:maxWithdrawType;"json:"maxWithdrawType"` 
 	TermsAndConditions string `gorm:"size:255;not null;" json:"termsAndConditions"`
 	Description string `gorm:"size:255;not null;" json:"description"`
 	StartDate string `gorm:"size:255;not null;" json:"startDate"`

@@ -434,7 +434,7 @@ func GenerateSeedPhrase(length int) string {
 }
 
 func GetDBFromContext(c *fiber.Ctx) (*gorm.DB, error) {
-	fmt.Println(c.Locals("db"))
+	//fmt.Println(c.Locals("db"))
 	dbInterface := c.Locals("db")
  
 	if dbInterface == nil {
@@ -474,20 +474,20 @@ func migrateNormal(db *gorm.DB) {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
 	 
-	fmt.Println("Migrations Normal Tables executed successfully")
+	//fmt.Println("Migrations Normal Tables executed successfully")
 }
 
 func migrationPromotion(db *gorm.DB){
-	if err := db.AutoMigrate(&models.PromotionLog{});err != nil {
+	if err := db.AutoMigrate(&models.Promotion{},&models.PromotionLog{});err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
-	fmt.Println("Migrations Promotion Tables executed successfully")
+	//fmt.Println("Migrations Promotion Tables executed successfully")
 }
 func migrationAffiliate(db *gorm.DB){
 	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateTracking{},&models.Users{},&models.AffiliateLog{},&models.Promotion{});err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
-	fmt.Println("Migrations Affiliate Tables executed successfully")
+	//fmt.Println("Migrations Affiliate Tables executed successfully")
 }
 // database
 
@@ -875,6 +875,7 @@ func CreateDB(db *gorm.DB, dbName string) error {
 		Excludegames       string              `json:"excludegames"`
 		Example            string              `json:"example"`
 		MinSpendType       string              `json:"minSpendType"`
+		MinCreditType       string              `json:"minCreditType"`
 		MinCredit          string              `json:"minCredit`
 		Widthdrawmin       decimal.NullDecimal `json:"minwithdrawal"`
 		TurnType           string              `json:"TurnType`
@@ -894,12 +895,14 @@ type ProBody struct  {
 	MinDept            decimal.NullDecimal `json:"minDept"`
 	MinSpend           string              `json:"minSpend"`
 	MaxSpend           decimal.NullDecimal `json:"maxSpend"`
+	MaxWithdrawType	   string              `json:"maxWithdrawType"`
 	TermsAndConditions string              `json:"termsAndConditions"`
 	Status             int                 `json:"status"`
 	Includegames       string              `json:"includegames"`
 	Excludegames       string              `json:"excludegames"`
 	Example            string              `json:"example"`
 	MinSpendType       string              `json:"minSpendType"`
+	MinCreditType       string              `json:"minCreditType"`
 	MinCredit          string              `json:"minCredit`
 	Widthdrawmin       decimal.NullDecimal `json:"minwithdrawal"`
 	TurnType           string              `json:"TurnType`
@@ -959,6 +962,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		MinDept:            data.Body.MinDept.Decimal,
 		MinSpend:           data.Body.MinSpend,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
+		MaxWithdrawType:	data.Body.MaxWithdrawType,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
 		Includegames:       data.Body.Includegames,
@@ -966,6 +970,7 @@ func CreatePromotion(c *fiber.Ctx) error {
 		Example:            data.Body.Example,
 		MinSpendType:       data.Body.MinSpendType,
 		MinCredit:          data.Body.MinCredit,
+		MinCreditType:      data.Body.MinCreditType,
 		Widthdrawmin:       data.Body.Widthdrawmin.Decimal,
 		TurnType:           data.Body.TurnType,
 		Zerobalance:        data.Body.Zerobalance,
@@ -988,7 +993,228 @@ func CreatePromotion(c *fiber.Ctx) error {
 
 	return c.JSON(response)
 }
+
+func GetLogByUser(c *fiber.Ctx) error {
+
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
+
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	//fmt.Printf("prefixs: %s",prefixs)
+	// db, err := database.ConnectToDB(body.Prefix)
+	// if err != nil {
+
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	db, _err := GetDBFromContext(c)
+	 
+	if db == nil {
+		fmt.Printf("1027 Err: %s \n",_err)
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+ 
+	userID := c.Locals("ID")
+	var promotionlog = []models.PromotionLog{}
+
+	err := db.Debug().Where("userid = ? and status=1 ", userID).Find(&promotionlog).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
+	fmt.Printf(" 1118 err: %s \n",err)
+     
+	if err != nil {
+		log.Fatal("Error is",err)
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Status":true,
+		"Message":"",
+		"Data": promotionlog,
+	}
+	return c.JSON(response)
+ 
+}
+
 func GetPromotionByUser(c *fiber.Ctx) error {
+
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
+
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	//fmt.Printf("prefixs: %s",prefixs)
+	// db, err := database.ConnectToDB(body.Prefix)
+	// if err != nil {
+
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	db, _err := GetDBFromContext(c)
+	 
+	if db == nil {
+		fmt.Println(_err)
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+ 
+	userID := c.Locals("ID")
+	var promotionlog = []models.PromotionLog{}
+
+	err := db.Debug().Where("userid = ? and status=1 ", userID).Find(&promotionlog).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
+	//fmt.Printf(" 1118 err: %s \n",err)
+     
+	if err != nil {
+		log.Fatal("Error is",err)
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Status":true,
+		"Message":"",
+		"Data": promotionlog,
+	
+	}
+	return c.JSON(response)
+ 
+}
+func GetPromotionsLogs(c *fiber.Ctx) error {
+
+	// body := new(Dbstruct)
+	// if err := c.BodyParser(body); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
+
+	// var prefixs = struct {
+	// 	development string
+	// 	production  string
+	// }{
+	// 	development: body.Prefix + "_development",
+	// 	production:  body.Prefix + "_production",
+	// }
+	//fmt.Printf("prefixs: %s",prefixs)
+	// db, err := database.ConnectToDB(body.Prefix)
+	// if err != nil {
+
+	// 	response := fiber.Map{
+	// 		"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+	// 		"Status":  false,
+	// 	}
+	// 	return c.JSON(response)
+	// }
+
+	db, _err := GetDBFromContext(c)
+	 
+	if db == nil {
+		fmt.Println(_err)
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+ 
+	userID := c.Locals("ID")
+	var promotionlog = []models.PromotionLog{}
+
+	err := db.Debug().Where("userid = ? and status=1 ", userID).Find(&promotionlog).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
+	//fmt.Printf(" 1118 err: %s \n",err)
+     
+	if err != nil {
+		log.Fatal("Error is",err)
+		response := fiber.Map{
+			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
+			"Status":  false,
+		}
+		return c.JSON(response)
+	}
+	response := fiber.Map{
+		"Status":true,
+		"Message":"",
+		"Data":fiber.Map{
+			"Promotionlog":promotionlog,
+		},
+	}
+	return c.JSON(response)
+ 
+}
+func getGoodPromotions(db *gorm.DB, userID int, promotionCode string) ([]models.Promotion, error) {
+	var promotions []models.Promotion
+	var promotionLogs []models.PromotionLog
+
+	// ดึงข้อมูลจาก promotionlog ตาม userID และ promotioncode
+	err := db.Where("userid = ? AND promotioncode = ?", userID, promotionCode).Find(&promotionLogs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// ตรวจสอบประเภทของ promotion
+	for _, log := range promotionLogs {
+		var promotion models.Promotion
+		err := db.First(&promotion, log.Promotioncode).Error
+		if err != nil {
+			continue // ข้ามไปถ้าไม่พบ promotion
+		}
+
+		if promotion.Typetime == "first" {
+			// ถ้าเป็น type first ให้ดึงข้อมูล promotion ที่ id ไม่ตรงกับ promotioncode ใน promotionlog
+			if string(promotion.ID) != log.Promotioncode {
+				promotions = append(promotions, promotion)
+			}
+		} else {
+			// ถ้าเป็น type อื่น ให้ตรวจสอบจำนวน rows ใน promotionlog
+			var count int64
+			db.Model(&models.PromotionLog{}).Where("promotioncode = ? AND userid = ?", promotion.Promotioncode, userID).Count(&count)
+
+			if count < int64(promotion.UsageLimit) {
+				promotions = append(promotions, promotion)
+			}
+		}
+	}
+
+	return promotions, nil
+}
+func GetProGoodByUser(c *fiber.Ctx) error {
 
 	// body := new(Dbstruct)
 	// if err := c.BodyParser(body); err != nil {
@@ -1051,6 +1277,8 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	return c.JSON(response)
  
 }
+
+
 func GetAllPromotion(c *fiber.Ctx) error {
 	body := new(Dbstruct)
 	if err := c.BodyParser(body); err != nil {
@@ -1076,7 +1304,7 @@ func GetAllPromotion(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	//db.AutoMigrate(models.Promotion{})
+	db.AutoMigrate(models.Promotion{})
 	// err = db.AutoMigrate(&models.Promotion{})
 	// if err != nil {
 	// 	fmt.Println("err:", err)
@@ -1186,6 +1414,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		PaymentMethod:      data.Body.PaymentMethod,
 		MinDept:            data.Body.MinDept.Decimal,
 		MinSpend:           data.Body.MinSpend,
+		MaxWithdrawType:	data.Body.MaxWithdrawType,
 		MaxSpend:           data.Body.MaxSpend.Decimal,
 		TermsAndConditions: data.Body.TermsAndConditions,
 		Status:             data.Body.Status,
@@ -1193,6 +1422,7 @@ func UpdatePromotion(c *fiber.Ctx) error {
 		Excludegames:       data.Body.Excludegames,
 		Example:            data.Body.Example,
 		MinSpendType:       data.Body.MinSpendType,
+		MinCreditType:      data.Body.MinCreditType,
 		MinCredit:          data.Body.MinCredit,
 		Widthdrawmin:       data.Body.Widthdrawmin.Decimal,
 		TurnType:           data.Body.TurnType,
@@ -1221,9 +1451,9 @@ func UpdatePromotion(c *fiber.Ctx) error {
         payment_method = ?, min_dept = ?, min_spend = ?,
         max_spend = ?, terms_and_conditions = ?, status = ?,
         includegames = ?, excludegames = ?, example = ?,
-        minSpendType = ?, minCredit = ?, turnType = ?,
+        minSpendType = ?,minCreditType = ?,minCredit = ?, turnType = ?,
 		widthdrawmin = ?,
-        zerobalance = ?
+        zerobalance = ?,maxWithdrawType = ?
     WHERE id = ?`,
     promotion.Name, promotion.Description, promotion.PercentDiscount,
     promotion.StartDate, promotion.EndDate, promotion.MaxDiscount,
@@ -1231,9 +1461,11 @@ func UpdatePromotion(c *fiber.Ctx) error {
     promotion.PaymentMethod, promotion.MinDept, promotion.MinSpend,
     promotion.MaxSpend, promotion.TermsAndConditions, promotion.Status,
     promotion.Includegames, promotion.Excludegames, promotion.Example,
-    promotion.MinSpendType, promotion.MinCredit, promotion.TurnType,
+    promotion.MinSpendType,promotion.MinCreditType, promotion.MinCredit, promotion.TurnType,
 	promotion.Widthdrawmin,
-    promotion.Zerobalance, data.PromotionId).Error
+    promotion.Zerobalance,
+	promotion.MaxWithdrawType,
+	data.PromotionId).Error
 	
 	if err != nil {
 		response := fiber.Map{
@@ -1665,7 +1897,7 @@ func getGameStatusRedis() ([]Product,error) {
 	}
 	 
 
-	fmt.Println("1474",cachedStatus)
+	//fmt.Println("1474",cachedStatus)
 
 	if err == nil {
 		if err := json.Unmarshal([]byte(cachedStatus), &tempProducts); err != nil {
@@ -1868,15 +2100,15 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
             })
         }
 		commissionRate,_ := common.GetCommissionRate(partner.Prefix)
-        if turnType == "turnover" {
-		totalTurnover, err := common.CheckTurnover(db,&games[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
-		totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
-		if err == nil {
-			games[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
-			games[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
-		
-			}	
-		}
+			if turnType == "turnover" {
+			totalTurnover, err := common.CheckTurnover(db,&games[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
+			totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+			if err == nil {
+				games[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+				games[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
+			
+				}	
+			}
 		} else {
 			games[i].TotalEarnings = decimal.NewFromFloat(0.0) //CalculatePartnerCommission(db,partner.ID, totalTurnover)
 			games[i].TotalTurnover = decimal.NewFromFloat(0.0)

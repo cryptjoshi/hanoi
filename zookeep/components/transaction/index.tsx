@@ -80,22 +80,23 @@ function TransactionForm({lng,slug}:TransProps) {
     const [bonus, setBonus] = React.useState<number>(0);
 
     React.useEffect(() => {
-        const fetchBalance = async () => {
+     
+        
+        const fetchBalance = async (accessToken:string) => {
     
           try {
           setLoading(true);
-          const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-        
+         
           
     
-          if (userLoginStatus.state) {
-              if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
-                  const user = await GetUserInfo(userLoginStatus.state.accessToken);
+        //  if (userLoginStatus.state) {
+            // if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
+                  const user = await GetUserInfo(accessToken);
                 
                         if(user.Status){
                           setBalance(user.Data.balance);
                           setUser(user.Data);
-                          setCurrency(userLoginStatus.state.customerCurrency);
+                         
                           setTurnOver(user.Data.turnover)
                         //  setPrefix(user.Data.prefix);
                           
@@ -105,48 +106,51 @@ function TransactionForm({lng,slug}:TransProps) {
                         // console.log(user)
                         return;
                         }
-                  } else {
-                    router.push(`/${lng}/login`);
-                    return;
-                    }
-            } else {
-              router.push(`/${lng}/login`);
-              return;
-            }
+                  // } else {
+                  //   router.push(`/${lng}/login`);
+                  //   return;
+                  //   }
+            // } else {
+            //   router.push(`/${lng}/login`);
+            //   return;
+            // }
           } catch (error) {
            // router.push(`/${lng}/login`);
            console.log(error)
           }
          
         };
-        const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-        const fetchPromotion = async (prefix: string) => {
+        //const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+        const fetchPromotion = async (accessToken: string) => {
      
-          if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken){
-          const promotion = await GetPromotion(userLoginStatus.state.accessToken);
-          
-          if (promotion.Status) {
-            // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-            setPromotions(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
-            setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
-           // setPromotions(promotion.Data.Promotions);
-           
+          //if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken){
+          const promotion = await GetPromotion(accessToken);
+          console.log(promotion.Data)
+          // if (promotion.Status) {
+          //   // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
+          //   let pro_use = promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)
+          //   setPromotions(pro_use)
+          //   //console.log(pro_use)
+          //   setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
+          //  // setPromotions(promotion.Data.Promotions);
+          //  //console.log(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
             
-          } else {
+          // } else {
             
-            //router.push(`/${lng}/login`)toast({
-          toast({title: t('unsuccess'),
-            description: promotion.Message,
-            variant: "destructive",
-          });
+          //   //router.push(`/${lng}/login`)toast({
+          // toast({title: t('unsuccess'),
+          //   description: promotion.Message,
+          //   variant: "destructive",
+          // });
              
-          } 
-        } 
+          // } 
+        //} 
        }
     
-    
-        fetchBalance();
-        fetchPromotion(userLoginStatus.state.prefix);
+       const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+        setCurrency(userLoginStatus.state.customerCurrency);
+        fetchBalance(userLoginStatus.state.accessToken);
+        fetchPromotion(userLoginStatus.state.accessToken);
         setLoading(false);
        
          
@@ -196,7 +200,7 @@ function TransactionForm({lng,slug}:TransProps) {
              if(accessToken){
 
                 const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
-                
+                //console.log(response)
                 if(response.Status  ){
                   //const link = response.Data.link;
                   // toast({
@@ -207,6 +211,13 @@ function TransactionForm({lng,slug}:TransProps) {
                   if( slug === "deposit"){
                       setQrCodeLink(response.Data.link);
                       setIsDialogOpen(true);
+                  } else {
+                    toast({
+                        title: t("promotion.edit.success"),
+                        description: response.Message,
+                        variant: "default",
+                      })
+                      router.push(`/${lng}/home`)
                   }
               
                      // router.push(`/${lng}/home`)
@@ -256,9 +267,30 @@ function TransactionForm({lng,slug}:TransProps) {
             </div>
             ) }
             {promotions?.turntype=="turnover"? (
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1"> {  promotions ? `≈ Min Turnover ${(parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend}  ${currency}`:''}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1"> 
+            {  promotions ? `≈ Min Turnover ${(parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend}  ${currency}`:''}</p>
             ):(
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1"> {  promotions ? `≈ Min Credit ${parseFloat(promotions?.MinCredit)}  ${currency}`:''}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1"> 
+            
+              {promotions ? 
+               promotions.minCreditType === "deposit" 
+               ?
+                `   Min Credit ${user?.lastdeposit} x ${promotions.MinCredit} ≈ ${
+                  parseFloat(user?.lastdeposit) * (promotions.MinCredit?.toString().includes("%") 
+                      ? (100 + parseFloat(promotions.MinCredit.toString().replace("%",""))) / 100 
+                      : parseFloat(promotions.MinCredit || 0)) } ${currency}
+                `
+                : 
+                `  Min Credit ${(parseFloat(user?.lastdeposit)).toFixed(2)} + ${(parseFloat(user?.lastproamount)).toFixed(2)} x ${promotions.MinCredit} ≈ ${ ((parseFloat(user?.lastdeposit) + parseFloat(user?.lastproamount)) * (promotions.MinCredit?.toString().includes("%") 
+                      ? (100 + parseFloat(promotions.MinCredit.toString().replace("%",""))) / 100
+                      : parseFloat(promotions.MinCredit || 0))).toFixed(2) } ${currency}
+                `
+                : ''
+              }
+              
+            </p>
+
+              // <p className="text-xs sm:text-sm text-muted-foreground mt-1"> {  promotions ? `≈ Min Credit ${parseFloat(promotions?.MinCredit)}  ${currency}`:''}</p>
             )}
             </div>
             <div className="mt-2">

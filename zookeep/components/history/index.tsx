@@ -10,22 +10,26 @@ import {
 } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { GetHistory,GetTransaction,Webhoook } from "@/actions"
+import { GetHistory,GetTransaction,Webhoook,GetPromotionLog,GetPromotion } from "@/actions"
 import useAuthStore from "@/store/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/app/i18n/client"
 import { Button } from "../ui/button"
+import { TransactionTable } from "./transaction"
+import { HistoryTable } from "./statement"
+import { HistoryPromotion } from "./promotionlog"
 
 export function History({lng}:{lng:string}) {
     const [history,setHistory] = useState<any[]>([])
     const [statement,setStatement] = useState<any[]>([])
+    const [promotionlog,setPromotionlog] = useState<any[]>([])
     const { accessToken,user } = useAuthStore()  
     const router = useRouter()
     const { t } = useTranslation(lng,'translation' ,undefined);
     useEffect(() => {
        if(accessToken){
-       GetHistory(accessToken,lng).then((response:any) => {
+       GetHistory(accessToken,user.prefix).then((response:any) => {
        if(response.Status){
             setHistory(response.Data)
             
@@ -38,7 +42,7 @@ export function History({lng}:{lng:string}) {
         }
         })
 
-        GetTransaction(accessToken,lng).then((response:any) => {
+        GetTransaction(accessToken,user.prefix).then((response:any) => {
       
           if(response.Status){
               setStatement(response.Data)
@@ -51,6 +55,21 @@ export function History({lng}:{lng:string}) {
                   })
           }
         })
+
+        GetPromotion(accessToken).then((response:any) => {
+        //console.log(response)
+          if(response.Status){
+               console.log(response.Data)
+               setPromotionlog(response.Data)
+               
+           } else {
+                  //  toast({
+                  //      title: t('common.unsuccess'),
+                  //      description: response.Message,
+                  //      variant: "destructive",
+                  //  })
+           }
+           })
        } else {
         router.push(`/${lng}/login`)
        }
@@ -75,7 +94,7 @@ export function History({lng}:{lng:string}) {
               "type":"payin" /* payin,payout */ 
           })
       }).then(resp=>{
-        console.log(resp.json())
+        //console.log(resp.json())
         router.push(`/${lng}/home`)
       })
     //Webhoook(item.Uid,user.username,"0","1",item.Prefix,item.StatementType=="Deposit"?"payin":"payout").then((resp)=>console.log(resp))
@@ -94,9 +113,24 @@ export function History({lng}:{lng:string}) {
   return (
     <Tabs defaultValue="history">
       <TabsList>
+      <TabsTrigger value="promotion">Promotion</TabsTrigger>
         <TabsTrigger value="history">Statement</TabsTrigger>
         <TabsTrigger value="transaction">Transaction</TabsTrigger>
+        
       </TabsList>
+      <TabsContent value="promotion">
+      <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>{t('bankstatement.history')}</CardTitle>
+        <CardDescription>
+          {t('bankstatement.historyDescription')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-1">
+          <HistoryPromotion history={promotionlog}  />
+      </CardContent>
+    </Card>
+      </TabsContent>
     <TabsContent value="history">
     <Card>
       <CardHeader className="pb-3">
@@ -106,23 +140,7 @@ export function History({lng}:{lng:string}) {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
-        {history.map((item:any) => (
-         
-        <div key={item.ID} className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-          <BellIcon className="mt-px h-5 w-5" />
-          <div className="space-y-1">
-            <p className="text-sm font-medium leading-none">{t('bankstatement.transactionDate')}: {item.CreatedAt}</p>
-            <p className="text-sm font-medium leading-none">{t('bankstatement.uid')}: <Button  variant="link"  disabled={item.Status !== "waiting"} onClick={() => callwebhook(item)}> {item.Uid} </Button></p>
-            <p className="text-sm font-medium leading-none">{t('bankstatement.bankName')}: {item.Bankname}</p>
-            <p className="text-sm font-medium leading-none">{t('bankstatement.beforeBalance')}: {item.Beforebalance}</p>
-            <p className={cn("text-sm font-medium leading-none", item.Transactionamount>0 ? 'text-green-500' : 'text-red-500')}>{ item.Transactionamount>0?t('bankstatement.deposit'):t('bankstatement.withdraw')}: {item.Transactionamount}</p>
-            <p className="text-sm font-medium leading-none">{t('bankstatement.proAmount')}: {item.Proamount}</p>
-            <p className="text-sm font-medium leading-none">{t('bankstatement.balance')}: {item.Balance}</p>
-          
-          </div>
-        </div>
-        ))}
-    
+          <HistoryTable history={history} callwebhook={callwebhook} />
       </CardContent>
     </Card>
     </TabsContent>
@@ -135,23 +153,7 @@ export function History({lng}:{lng:string}) {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
-        {statement.map((item:any) => (
-        <div key={item.ID} className="-mx-2 flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-          <BellIcon className="mt-px h-5 w-5" />
-          <div className="space-y-1">
-          <p className={cn("text-sm font-medium leading-none text-muted-foreground", item.Status=='100' ? 'text-green-500' : 'text-red-500')}>{t('transaction.Status')}: {item.Status=="100" ? t('transaction.bet') : t('transaction.result')}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.transactionDate')}:{new Date(item.CreatedAt).toLocaleDateString()} {new Date(item.CreatedAt).toLocaleTimeString()}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.gameprovide')}: {item.GameProvide}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.beforeBalance')}: {item.BeforeBalance}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.betamount')}: {item.BetAmount}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.transactionAmount')}: {item.TransactionAmount}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.balance')}: {item.Balance}</p>
-            <p className="text-sm font-medium leading-none">{t('transaction.turover')}: {item.BetAmount}</p>
-          
-          </div>
-        </div>
-        ))}
-    
+      <TransactionTable statement={statement} />
       </CardContent>
     </Card>
     </TabsContent>

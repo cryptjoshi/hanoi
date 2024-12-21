@@ -341,7 +341,21 @@
         "gameprovide": "Game Provide",
         "transactionDate": "Transaction Date",
         "failed": "Failed",
-        "success": "Success"
+        "success": "Success",
+        "filterByProvider": "Filter Provider",
+        "selectProvider": "Select",
+        "allProviders": "All",
+         "currentPageTotal": "Total Page",
+        "grandTotal": "Total All"
+    },
+    "promotionlog":{
+        "createdAt":"Date",
+        "promotioncode":"Code",
+        "promotionname":"Name",
+        "promoamount":"Bonus",
+        "transactionamount":"Deposit",
+        "proamount":"Bonus",
+        "balance": "Balance"
     },
     "common": {
         "mon": "Mon",
@@ -399,7 +413,8 @@
         "cancel": "Cancel",
         "accept": "Accept",
         "promotionAccept": "Promotion accepted",
-        "success": "Success"
+        "success": "Success",
+        "total":"Total"
     }
 }
   

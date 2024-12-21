@@ -9,7 +9,7 @@ import (
 	"hanoi/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	
+	"time"
 )
 
 // var Database *gorm.DB
@@ -75,20 +75,20 @@ func migrateNormal(db *gorm.DB) {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
 	 
-	fmt.Println("Migrations Normal Tables executed successfully")
+	//fmt.Println("Migrations Normal Tables executed successfully")
 }
 
-func migrationPromotion(db *gorm.DB){
-	if err := db.AutoMigrate(&models.PromotionLog{});err != nil {
+func MigrationPromotion(db *gorm.DB){
+	if err := db.AutoMigrate(&models.Promotion{},&models.PromotionLog{},&models.BankStatement{});err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
-	fmt.Println("Migrations Promotion Tables executed successfully")
+	//fmt.Println("Migrations Promotion Tables executed successfully")
 }
 func migrationAffiliate(db *gorm.DB){
 	if err := db.AutoMigrate(&models.Referral{},&models.Partner{},&models.Affiliate{},&models.AffiliateTracking{},&models.Users{},&models.AffiliateLog{},&models.Promotion{});err != nil {
 		fmt.Errorf("Tables schema migration not successfully\n")
 	}
-	fmt.Println("Migrations Affiliate Tables executed successfully")
+	//fmt.Println("Migrations Affiliate Tables executed successfully")
 }
 
 type Setting struct {
@@ -154,63 +154,47 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	defer mutex.Unlock()
 
 	prefix = strings.ToLower(prefix)
-
-	//var setting Setting
-
-	setting,_ := GetMaster(prefix)
-
-	// Determine the database name based on the retrieved value
+	setting, _ := GetMaster(prefix)
 	dbName := fmt.Sprintf("%s_%s", prefix, setting.Value)
 
-	// Check if the connection already exists
+	// ตรวจสอบการเชื่อมต่อที่มีอยู่
 	if db, exists := dbConnections[dbName]; exists {
-		migrationPromotion(db)
+		MigrationPromotion(db)
 		migrationAffiliate(db)
 		return db, nil
 	}
 
-	// Read database prefixes and environment from environment variable
-	//prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
-	// env := os.Getenv("ENVIRONMENT") // Read the environment variable
-	// var dbName string
-	// suffix := "development" // Default to dev
-
-	// if env == "production" {
-	// 	suffix = "production"
-	// }
-
-	// if strings.Contains(prefix, suffix) {
-	// 	//suffix = "production"
-	// 	dbName = fmt.Sprintf("%s", prefix)
-	// } else {
-	// 	dbName = fmt.Sprintf("%s_%s", prefix, suffix)
-	// }
- 
-	// Connect to the master database to read settings
-
-	//defer masterDB.Close() // Ensure the masterDB connection is closed
-
-	// Read the value from the settings table
-
-
-	// Create the DSN for the selected database
+	// สร้าง DSN พร้อมกำหนด timezone
 	dsn := fmt.Sprintf(baseDSN, dbName)
-	//fmt.Println(dsn)
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		SkipDefaultTransaction:                   true,
-		PrepareStmt:                              true,
+		PrepareStmt:                             true,
 	})
-	//migrationPromotion(db)
-	if err == nil {
-		dbConnections[dbName] = db // Store the connection in the map
-		fmt.Println("Successfully connected to DB:", dbName)
-	} else {
-		return nil, err // Return the error if connection fails
+
+	if err != nil {
+		return nil, err
 	}
-	//migrateNormal(db)
-	//CheckAndCreateTable(db,models.BankStatement{})
-	//migrationAffiliate(db)
+
+	// ตั้งค่า timezone หลังจากเชื่อมต่อสำเร็จ
+	if sqlDB, err := db.DB(); err == nil {
+		// ตั้งค่า timezone
+		if _, err := sqlDB.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+			fmt.Printf("Warning: Failed to set timezone: %v\n", err)
+		}
+
+		// ตั้งค่าการเชื่อมต่อเพิ่มเติม
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetConnMaxLifetime(time.Hour)
+	}
+
+	if err == nil {
+		dbConnections[dbName] = db
+		fmt.Println("Successfully connected to DB:", dbName)
+	}
+
 	return db, nil
 }
 

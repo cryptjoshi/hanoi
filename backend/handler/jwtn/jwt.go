@@ -277,7 +277,7 @@ func JwtPMiddleware(c *fiber.Ctx) error {
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })
-	fmt.Printf("Claims: %+v \n",claims)
+	//fmt.Printf("Claims: %+v \n",claims)
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         
@@ -331,16 +331,17 @@ func JwtMiddleware(c *fiber.Ctx) error {
 	}
 	tokenString := authHeader[7:]
 
-	//fmt.Printf("token : %s",tokenString)
+	//fmt.Printf("JwtMiddleware tokenString : %s \n",tokenString)
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })
-	fmt.Println(claims.Prefix)
+	//fmt.Println(claims.Prefix)
+	//fmt.Printf("claims: %+v \n",claims)
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         
 		//fmt.Println("claims",claims.Prefix) 
-		//fmt.Printf("claims : %s",claims)
+		//fmt.Printf("claims : %s \n",claims)
 		c.Locals("Walletid", claims.Walletid)
         c.Locals("ID", claims.ID)
         c.Locals("username", claims.Username)
@@ -362,7 +363,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
 		}
 		db, ok := c.Locals("db").(*gorm.DB)
 		if db == nil {
-			fmt.Printf("db is null")
+			fmt.Printf("db is null \n")
 		}
 		if ok {
 			c.Locals("db",db)

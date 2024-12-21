@@ -38,6 +38,7 @@ type BankStatement struct {
 	Detail            string    `gorm:"type:text;column:detail;"`
 	Prefix            string    `gorm:"type:text;column:prefix;"`
 	Ismanual          int       `gorm:"column:ismanual;default:0"`
+	ProStatus        string    `gorm:"type:varchar(50)";gorm:"column:pro_status;default:none"`
 }
 
 func (m *BankStatement) TableName() string {

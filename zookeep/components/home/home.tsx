@@ -102,7 +102,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
                 if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
         const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
-      
+     
         if(user.Status){
           setBalance(user.Data.balance);
        
@@ -147,22 +147,36 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       setIsLoading(true);
       if(token){
       const promotion = await GetPromotion(token);
-      //console.log(promotion)
+      console.log(promotion)
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-         
+        //console.log(promotion.Data)
         //console.log(user)
-        const filtered = promotion.Data.Promotions.filter((promo:any) => 
-          //{
-            //console.log(promo.ID.toString(), user?.pro_status?.toString())
-            (1*promo.ID)-(1*user?.pro_status) != 0 
-          //}
-        );
+        // const filtered =  promotion.Data.Promotions?.filter((promo:any) => 
+        //   //{
+        //     //console.log(promo.ID.toString(), user?.pro_status?.toString())
+        //     (1*promo.ID)-(1*user?.pro_status) != 0 
+        //   //}
+        // );
+        if(promotion.Data.length>0){
+        setPromotions(promotion.Data[0]);
+        setFilteredPromotions(promotion.Data[0]);
+        }
+       
+      //   const filteredPromotions = promotion.Data.Promotions.filter((promo: any) => 
+          
+      //     user?.promotionlog.some((log: any) => log.Promotioncode === promo.ID) // ใช้ user?.promotionlog เป็นตัวกรอง
         
-        setPromotions(promotion.Data.Promotions);
-        setFilteredPromotions(promotion.Data.Promotions);
+      // );
+      // if(user)
+      // console.log(filteredPromotions);
+
         // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
-         
+                 // แก้ไขการใช้ includes แทน include
+        //console.log(promotion.Data.Promotions.filter((item:any)=>item.ID))
+                // สร้าง array เก็บ ID ของ Promotions
+               // กรอง promotions ที่มี ID ตรงกับ promotioncode ใน user.promotionlog
+              
         // if (filtered.length === 0 ) {
         //   setFilteredPromotions([{
         //     ID: 'default',
@@ -202,9 +216,12 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     }
   }
     fetchPromotion(prefix);
+    
     setIsLoading(false);
   }, [prefix, user?.pro_status, t])
-
+  // if(!isLoading){
+  //   console.log(user)
+  // }
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
       <div className="p-4 sm:p-6">
@@ -222,10 +239,10 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-    
+              
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :  promotions.find(promo => promo.ID.toString() == user?.pro_status && promo.status==1)?.name || t('noPromotion')  // Changed ID to id and added fallback text
+                :    promotions?.promotionname || t('noPromotion')  // Changed ID to id and added fallback text
               }   
             </p>
           </div>
@@ -244,7 +261,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       <PromotionList 
         prefix={prefix} 
         lng={lng} 
-        promotions={filteredPromotions} 
+        promotions={user?.promotionlog}
         onSelectPromotion={accpetedPromotion} 
       />
       )}

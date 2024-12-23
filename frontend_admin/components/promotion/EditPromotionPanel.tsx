@@ -89,11 +89,13 @@ const formSchema = z.object({
   usageLimit: z.coerce.number(),
   minDept:z.coerce.number(),
   minCredit:z.string().optional(),
+  minCreditType: z.string().optional(),
   turnType:z.string(),
   minwithdrawal:z.string(),
   minSpend: z.string().optional(),
   minSpendType: z.string().optional(),
   maxSpend: z.coerce.number(),
+  maxWithdrawType: z.string(),
   termsAndConditions: z.string().optional(),
   status: z.coerce.number(),
   example: z.string().optional(),
@@ -166,6 +168,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             minSpend: data.Data.minSpend,
             minwithdrawal:data.Data.Widthdrawmin,
             maxSpend: Number(data.Data.maxSpend),
+            maxWithdrawType: data.Data.maxWithdrawType,
             minSpendType: data.Data.minSpendType,
             minCredit: data.Data.MinCredit,
             turnType: data.Data.turntype,
@@ -241,6 +244,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
       minSpend: values.minSpend?.toString(),
       minSpendType:values.minSpendType?.toString(),
       maxSpend: values.maxSpend?.toString(),
+      maxWithdrawType: values.maxWithdrawType?.toString(),
       example: example_str,
       minCredit: values.minCredit?.toString(),
       turntype: values.turnType.toString(),
@@ -289,7 +293,7 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
   return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-    <div className="p-6 bg-white rounded-lg shadow-md md:max-w-md">
+    <div className="p-6 bg-white rounded-lg shadow-md md:max-w-lg">
       <h2 className="text-2xl font-bold mb-4">{promotionId ? t('promotion.edit.title') : t('promotion.add.title')}</h2>
       <p className="text-gray-600 mb-6">{t('promotion.edit.description')}</p>
       <Tabs defaultValue="promotion">
@@ -672,36 +676,36 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
             />
             </div>
             <div className="space-y-2">
-            <FormField
-            control={form.control}
-            name="minSpendType"
-            render={({ field }) => (
-              <FormItem>
-                      <Label htmlFor="hour">{t('promotion.minSpendtype')}</Label>
-                      <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('promotion.selectMinspendType')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="deposit_bonus">{t('promotion.deposit_bonus')}</SelectItem>
-                        <SelectItem value="deposit">{t('promotion.deposit')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    </FormItem>
-            )}
-        
-            />
+              <FormField
+              control={form.control}
+              name="minSpendType"
+              render={({ field }) => (
+                <FormItem>
+                        <Label htmlFor="hour">{t('promotion.minSpendtype')}</Label>
+                        <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('promotion.selectMinspendType')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="deposit_bonus">{t('promotion.deposit_bonus')}</SelectItem>
+                          <SelectItem value="deposit">{t('promotion.deposit')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      </FormItem>
+              )}
+          
+              />
               </div>
           </div>
           :
-         
+          <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"> 
               <FormField
             control={form.control}
@@ -716,8 +720,35 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
               </FormItem>
             )}
             />
+            </div>
+            <div className="space-y-2">
+              <FormField
+              control={form.control}
+              name="minCreditType"
+              render={({ field }) => (
+                <FormItem>
+                        <Label htmlFor="hour">{t('promotion.minCreditdtype')}</Label>
+                        <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('promotion.selectMinCreditType')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="deposit_bonus">{t('promotion.deposit_bonus')}</SelectItem>
+                          <SelectItem value="deposit">{t('promotion.deposit')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      </FormItem>
+              )}
           
-           
+              />
+              </div>
           </div>
           }
            <div className="grid grid-cols-2 gap-4">
@@ -737,19 +768,55 @@ export const EditPromotionPanel: React.FC<EditPromotionPanelProps> = ({ promotio
           />
          </div>
          <div className="space-y-2">
-          <FormField
-            control={form.control}
-            name="maxSpend"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('promotion.maxSpend')}</FormLabel>
-                <FormControl>
-                  <Input {...field} type="text" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-1" > 
+                  <FormField
+                  
+                    control={form.control}
+                    name="maxSpend"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('promotion.maxSpend')}</FormLabel>
+                        <FormControl>
+                          <Input  {...field} type="text" maxLength={5}/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                
+                  />
+                </div>
+                <div className="col-span-2" >
+                  <FormField
+                   
+                      control={form.control}
+                      name="maxWithdrawType"
+                      render={({ field }) => (
+                        <FormItem>
+                                <Label htmlFor="hour">{t('promotion.maxWithdrawtype')}</Label>
+                                <Select
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                value={field.value}
+                                
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={t('promotion.selectMaxWithdrawType')} />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="deposit_bonus">{t('promotion.deposit_bonus')}</SelectItem>
+                                  <SelectItem value="deposit">{t('promotion.deposit')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              </FormItem>
+                      )}
+                
+                      />
+                </div>
+              </div>
           </div>
           </div>
           <FormField

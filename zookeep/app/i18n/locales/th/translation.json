@@ -338,7 +338,21 @@
         "gameprovide": "เกมส์ที่ให้บริการ",
         "transactionDate": "วันที่ทำรายการ",
         "failed": "ล้มเหลว",
-        "success": "สำเร็จ"
+        "success": "สำเร็จ",
+        "filterByProvider": "กรองตามผู้ให้บริการ",
+        "selectProvider": "เลือกผู้ให้บริการ",
+        "allProviders": "ทั้งหมด",
+         "currentPageTotal": "รวมหน้านี้",
+        "grandTotal": "รวมทั้งหมด"
+    },
+    "promotionlog":{
+        "createdAt":"วันที่",
+        "promotioncode":"รหัส",
+        "promotionname":"ชื่อ",
+        "promoamount":"เดรดิตฟรี",
+        "transactionamount":"ฝาก",
+        "proamount":"โบนัส",
+        "balance": "ยอดคงเหลือ"
     },
     "common": {
         "mon": "จันทร์",
@@ -396,7 +410,8 @@
         "cancel": "ยกเลิก",
         "accept": "ยอมรับ",
         "promotionAccept": "โปรโมชั่นยอมรับ",
-        "success": "สำเร็จ"
+        "success": "สำเร็จ",
+        "total": "ยอดรวม"
     }   
 }
   

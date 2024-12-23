@@ -1096,7 +1096,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	userID := c.Locals("ID")
 	var promotionlog = []models.PromotionLog{}
 
-	err := db.Debug().Where("userid = ? and status=1 ", userID).Find(&promotionlog).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
+	err := db.Debug().Where("userid = ? and (status=1 || status=0)", userID).Order("id desc").Find(&promotionlog).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
 	//fmt.Printf(" 1118 err: %s \n",err)
      
 	if err != nil {

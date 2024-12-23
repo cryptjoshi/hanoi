@@ -23,6 +23,7 @@ type PromotionLog struct {
 	Balance           decimal.Decimal    `gorm:"type:numeric(10,2);gorm:"column:balance"`
 	Status        int  `json:"status"`
 	Example string `gorm:"size:255;not null;" json:"example"`
+	Uid               string    `gorm:"type:varchar(255);column:uid;"` 
  
 }
 

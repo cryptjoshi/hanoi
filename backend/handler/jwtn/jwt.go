@@ -37,6 +37,7 @@ import (
 	//"io/ioutil"
 	//"log"
 	"io"
+	"math/rand"
 )
 var jwtKey  = []byte(os.Getenv("PASSWORD_SECRET"))
 //var CLIENT_ID = "6342e1be-fa03-456f-8d2d-8e1c9513c351" //[]byte(os.Getenv("CLIENT_ID"))
@@ -479,4 +480,40 @@ func Decrypt(encryptedData string, key []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func CompressAndEncrypt(plaintext []byte, key []byte) (string, error) {
+	// บีบอัดข้อมูล
+	var b io.Writer
+	var buf bytes.Buffer
+	b = &buf
+	writer := gzip.NewWriter(b)
+	if _, err := writer.Write(plaintext); err != nil {
+		return "", err
+	}
+	if err := writer.Close(); err != nil {
+		return "", err
+	}
+
+	// รหัสข้อมูลที่บีบอัด
+	compressedData := buf.Bytes()
+	
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, compressedData, nil)
+	// แปลงเป็น Base64
+	return base64.StdEncoding.EncodeToString(append(nonce, ciphertext...)), nil
 }

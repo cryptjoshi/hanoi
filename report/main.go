@@ -19,7 +19,7 @@ import (
 	//"hanoi/handler"
 	//"hanoi/users"
 	"hanoi/route"
-	jwtn "hanoi/handler/jwtn"
+	//jwtn "hanoi/handler/jwtn"
 	// "hanoi/database"
 	// "hanoi/models"
 	//"hanoi/handler/njwt"
@@ -29,7 +29,7 @@ import (
 	//"github.com/swaggo/fiber-swagger"
 	//"github.com/swaggo/files"
 	 _ "hanoi/docs" // สำหรับเอกสาร Swagger
-	"crypto/sha256"
+	//"crypto/sha256"
 	//"github.com/gofiber/contrib/websocket"
 	socketio "github.com/doquangtan/gofiber-socket.io"
  	//"encoding/json"
@@ -133,8 +133,8 @@ func subscribeMessages(client *redis.Client, channel string,io *socketio.Io) {
 	if err != nil {
 		log.Fatalf("Could not subscribe: %v", err)
 	}
-	key := []byte(secretKey) 
-	hashedKey := sha256.Sum256(key)
+	// key := []byte(secretKey) 
+	// hashedKey := sha256.Sum256(key)
 
 	ch := sub.Channel()
 	for msg := range ch {
@@ -142,14 +142,14 @@ func subscribeMessages(client *redis.Client, channel string,io *socketio.Io) {
 		
 
 		// คีย์ที่ใช้งานเป็นต้องมีขนาด 16, 24 หรือ 32 bytes
-		decryptedData,err := jwtn.Decrypt(msg.Payload,hashedKey[:])
-		if err != nil {
-			log.Fatalf("Could not decrypted: %v", err)
-		}
-		decompressedData,err := jwtn.DecompressData(decryptedData)
-		if err != nil {
-			log.Fatalf("Could not decompress: %v", err)
-		}
+		// decryptedData,err := jwtn.Decrypt(msg.Payload,hashedKey[:])
+		// if err != nil {
+		// 	log.Fatalf("Could not decrypted: %v", err)
+		// }
+		// decompressedData,err := jwtn.DecompressData(decryptedData)
+		// if err != nil {
+		// 	log.Fatalf("Could not decompress: %v", err)
+		// }
 		// count := len(hub) // นับจำนวนการเชื่อมต่อ websocket
 		// fmt.Printf("Current number of websocket connections: %d\n", count)
 
@@ -158,11 +158,11 @@ func subscribeMessages(client *redis.Client, channel string,io *socketio.Io) {
 		// 		log.Println("Error sending message:", err)
 		// 	}
 		// }
-	
+		fmt.Println("payload ",msg.Payload)
 		//fmt.Println("Decrypted and Decompress ",string(decompressedData))
 	//	io := io.(*socketio.Io)
 		io.Emit("message", msg.Payload)
-		fmt.Printf("Received and emitted message: %s\n", string(decompressedData))
+		//fmt.Printf("Received and emitted message: %s\n", string(decompressedData))
 
 	}
 }

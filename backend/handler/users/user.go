@@ -315,6 +315,7 @@ func Register(c *fiber.Ctx) error {
 			"Preferredname": user.Username,
 			"Username":      strings.ToUpper(user.Prefix) + user.Username + currency,
 			"Currency":      currency,
+			"MinTurnoverDef": "5%",
 			"Actived": nil,
 			"ReferredBy": user.ReferredBy,
 		}
@@ -754,53 +755,67 @@ func getPromotionsWithUserID(userID int, db *gorm.DB) ([]models.Promotion, error
 func  GetPromotionByUser(c *fiber.Ctx) (error) {
 	
 
-	user := new(models.Users)
-
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(200).SendString(err.Error())
-	}
-	//fmt.Printf(" %s ",user.Username)
-	db, _ := database.ConnectToDB(user.Prefix)
-
-
-	//db, _err := handler.GetDBFromContext(c)
-	prefix := c.Locals("Prefix")
-
-	
 	 
-	//var promotions []models.Promotion
-	var promotionLogs []models.PromotionLog
 
-	// ดึง userID จาก c.Locals
-	userID := c.Locals("userid").(int)
+	// if err := c.BodyParser(user); err != nil {
+	// 	return c.Status(200).SendString(err.Error())
+	// }
+	// //fmt.Printf(" %s ",user.Username)
+	// db, _ := database.ConnectToDB(user.Prefix)
 
-	// ดึงข้อมูลจาก promotionlog ตาม userID
-	err := db.Where("userid = ?", userID).Find(&promotionLogs).Error
-	if err != nil {
+
+	// //db, _err := handler.GetDBFromContext(c)
+	// prefix := c.Locals("Prefix")
+
+	db, _err := handler.GetDBFromContext(c)
+	 
+	if db == nil {
+		fmt.Println(_err)
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "โทเคนไม่ถูกต้อง!!",
+		}
+		return c.JSON(response)
+	}
+ 
+	userID := c.Locals("ID")
+	//var promotionlog = []models.PromotionLog{}
+	 	// ตรวจสอบสถานะของ user
+	var user models.Users
+	if err := db.Debug().First(&user, userID).Error; err != nil {
 		response := fiber.Map{
 			"Message": err,
 			"Status":  false,
 			"Data": fiber.Map{
-				"prefix": prefix,
+				"id": -1,
 			},
 		}
 
 		return c.JSON(response)
 	}
 
-	// // ตรวจสอบสถานะของ user
-	// var user models.Users
-	// if err := db.First(&user, userID).Error; err != nil {
-	// 	response := fiber.Map{
-	// 		"Message": err,
-	// 		"Status":  false,
-	// 		"Data": fiber.Map{
-	// 			"prefix": prefix,
-	// 		},
-	// 	}
+	var promotion models.Promotion
 
-	// 	return c.JSON(response)
-	// }
+	err := db.Debug().Model(&models.Promotion{}).Where("id = ?",user.ProStatus).First(&promotion).Error
+
+	//var promotionLogs []models.PromotionLog
+
+	// ดึง userID จาก c.Locals
+	//userID := c.Locals("userid").(int)
+
+	// ดึงข้อมูลจาก promotionlog ตาม userID
+	//err := db.Where("userid = ?", userID).Find(&promotionLogs).Error
+	if err != nil {
+		response := fiber.Map{
+			"Message": "ไม่พบข้อมูล",
+			"Status":  false,
+			"Data": fiber.Map{ 
+			},
+		}
+
+		return c.JSON(response)
+	}
+
 
 
 
@@ -843,7 +858,7 @@ func  GetPromotionByUser(c *fiber.Ctx) (error) {
 	response := fiber.Map{
 		"Status":  true,
 		"Message": "สำเร็จ",
-		"Data": promotionLogs,
+		"Data": promotion,
 	}
 	return c.JSON(response)
 }
@@ -1506,254 +1521,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 	}
 
 }
-
-func XUpdateUserPro(c *fiber.Ctx) error {
-	// Parse the request body into a map
-	body := make(map[string]interface{})
-	if err := c.BodyParser(&body); err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": err.Error(),
-		}
-		return c.JSON(response)
-	}
-
-	// Get the username from the context
-	username := c.Locals("username").(string)
-	
-	db, _err := handler.GetDBFromContext(c)
-	if _err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": "โทเคนไม่ถูกต้อง!!",
-		}
-		return c.JSON(response)
-	}
-
-	var user models.Users
-	err := db.Where("username = ?", username).First(&user).Error
-	if err != nil {
-		response := fiber.Map{
-			"Status":  false,
-			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
-		}
-		return c.JSON(response)
-	}
-
-	old_promo := user.ProStatus
-
-	// Update the user with the provided fields
-	//fmt.Printf("Body: %s",body)
-	//fmt.Printf("Old_promo: %s",old_promo)
-
-
-	 
-// Assuming body is defined as a map[string]interface{}
-	proStatusValue, exists := body["pro_status"]
-	if !exists {
-		return c.JSON(fiber.Map{
-			"Status":  false,
-			"Message": "pro_status not found",
-		})
-	}
-
-	 
-	proStatus := fmt.Sprintf("%v", proStatusValue)
-	fmt.Printf("1034 %v \n",proStatus)
-// Check the type of proStatusValue
-// switch v := proStatusValue.(type) {
-// case string:
-//     // pro_status is a string, proceed with your logic
-//     fmt.Printf("Pro Status: %s\n", v)
-// case float64:
-//     // If it's a float64, you can convert it to string if needed
-//     proStatus := fmt.Sprintf("%v", v)
-//     fmt.Printf("Pro Status v (converted): %s\n", proStatus)
-// case int:
-//     // If it's an int, you can convert it to string if needed
-//     proStatus := fmt.Sprintf("%d", v)
-//     fmt.Printf("Pro Status d (converted): %s\n", proStatus)
-// default:
-//     // Handle unexpected types
-//     return c.JSON(fiber.Map{
-//         "Status":  false,
-//         "Message": "Invalid type for pro_status",
-//     })
-// }
-
-// Continue with your logic using proStatus
-	// Now you can use proStatus safely
-//	fmt.Printf("Pro Status: %s\n", proStatus)
-	 
-
-	pro_setting, err := handler.GetProdetail(db,proStatus)
-	
-	if err != nil {
-		fmt.Errorf(" %s ",err)
-	}
-
-	fmt.Printf("ProDetail: %s",pro_setting)
-
-	if pro_setting != nil {
-		 
-		updates := map[string]interface{}{
-			"MinTurnover": 0,
-			"ProStatus": proStatus,
-		}
-	
-		if minTurnover, ok := pro_setting["MinTurnover"].(decimal.Decimal); ok {
-			 
-			 
-				updates = map[string]interface{}{
-					"MinTurnover": minTurnover,
-					"ProStatus": proStatus,
-				}
-	
-
-		} else {
-			//fmt.Println(pro_setting["MinTurnover"])
-			// Handle the case where the assertion fails
-			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			// 	"Message": "Invalid type for MinTurnover",
-			// 	"Status":  false,
-			// })
-			updates = map[string]interface{}{
-				"MinTurnover": pro_setting["MinTurnover"],
-				"ProStatus": proStatus,
-			}
-		}
-		if pro_setting["Type"] == "first" {
-			// fmt.Printf("1047 line")
-			// fmt.Printf("user.Balance: %s \n",user.Balance)
-			// fmt.Printf("user.Deposit: %s \n",user.Deposit)
-			// fmt.Printf("user.Actived: %s \n",user.Actived)
-		 
-			
-			if user.Balance.IsZero() && user.Deposit.IsZero() && user.Actived == nil { // หรือใช้ member.Actived == time.Time{}
-				//user.ProStatus = "2"
-				fmt.Println("pro is actived")
-				repository.UpdateFieldsUserString(db, username, updates)
-				
-			} else {
-				//user.ProStatus = ""
-				updates["ProStatus"] = old_promo
-				
-				repository.UpdateFieldsUserString(db, username, updates)
-
-
-				if user.Balance.IsZero() == false && pro_setting["ZeroBalance"] == 1 {
-				// fmt.Println("1012 line")
-					response := fiber.Map{
-						"Message": "ยอดคงเหลือมากกว่าศูนย์!",
-						"Status":  false,
-						"Data":    "ยอดคงเหลือมากกว่าศูนย์!",
-					}
-					return c.JSON(response)
-				} else {
-				response := fiber.Map{
-					"Message": "คุณใช้งานโปรโมชั่นอยู่",
-					"Status":  false,
-					"Data":    "คุณใช้งานโปรโมชั่นอยู่",
-				}
-				return c.JSON(response)
-				}
-				
-			}
-		} else {
-			// fmt.Printf("Prostatus:  %s \n",user.ProStatus)
-			// fmt.Printf("1040 line Balance: %s \n",user.Balance)
-			// fmt.Printf("1088 line \n")
-			// fmt.Printf("pro_setting: %s \n",pro_setting["Type"])
-			// if pro_setting["Type"] == "weekly" {
-			// 	fmt.Printf("1090 line \n")
-			// 	fmt.Printf("pro_setting: %s \n",pro_setting["Week"])
-			// }
-
-
-			var promotion_log models.PromotionLog
-			db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").Limit(1).Scan(&promotion_log)	
-			
-			rowsAffected := db.Debug().Model(&models.PromotionLog{}).Where("userid = ? and status=1 and promotioncode = ?",user.ID,proStatus).Order("id DESC").RowsAffected
-			fmt.Printf("rowsAffected: %d \n",rowsAffected)
-
-			if rowsAffected > 0 && pro_setting["MaxUse"] != nil {
-				maxUse, ok := pro_setting["MaxUse"].(int64)
-				if !ok {
-					// กรณีที่ไม่สามารถแปลงค่าได้
-					updates["ProStatus"] = ""
-					repository.UpdateFieldsUserString(db, username, updates)
-					return c.JSON(fiber.Map{
-						"Message": "เกิดข้อผิดพลาดในการตรวจสอบ MaxUse",
-						"Status":  false,
-					})
-				}
-				
-				if rowsAffected > maxUse {
-					updates["ProStatus"] = ""
-					repository.UpdateFieldsUserString(db, username, updates)
-					return c.JSON(fiber.Map{
-						"Message": "คุณใช้งานโปรโมชั่นนี้แล้ว",
-						"Status":  false,
-						"Data":    "คุณใช้งานโปรโมชั่นนี้แล้ว",
-					})
-				}
-			
-			} else if user.Balance.IsZero() == false && pro_setting["ZeroBalance"] == 1 { // หรือใช้ decimal.NewFromInt(0)
-				//user.ProStatus = old_promo
-				response := fiber.Map{
-					"Message": "ยอดคงเหลือมากกว่าศูนย์!",
-					"Status":  false,
-					"Data":    "ยอดคงเหลือมากกว่าศูนย์!",
-				}
-				return c.JSON(response)
-			} else {
-				fmt.Printf("941 line db: %s  username: %s updates: %s\n",db,username,updates)
-				repository.UpdateFieldsUserString(db, username, updates)
-			}
-		}
-		
-	
-
-	// // อัปเดตข้อมูลยูสเซอร์
-	
-	}
-	 
-// 	var check_deposit models.BankStatement
-// 	db.Debug().Model(&models.BankStatement{}).Where("userid = ? and created_at >= ?",user.ID,pro_setting["CreatedAt"].(time.Time).Format("2006-01-02 15:04:05")).Order("id DESC").Limit(1).Scan(&check_deposit)
-
-//     if check_deposit.Transactionamount.IsZero() {
-// 		updates["ProStatus"] = old_promo
-// 		repository.UpdateFieldsUserString(db, username, updates)
-//    }
-
-
-	// if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
-	// 	response := fiber.Map{
-	// 		"Status":  false,
-	// 		"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
-	// 	}
-	// 	return c.JSON(response)
-	// }
-
-	// Update the user with the provided fields
-	
-
-	response := fiber.Map{
-		"Status":  true,
-		"Message": "อัปเดตข้อมูลสำเร็จ!",
-	}
-	return c.JSON(response)
-
-	// if err := db.Debug().Model(&user).Updates(body).Error; err != nil {
-	// 	response := fiber.Map{
-	// 		"Status":  false,
-	// 		"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
-	// 	}
-	// 	return c.JSON(response)
-	// }
-
-
-}
+ 
 
 func CheckSeed(db *gorm.DB) string {
 

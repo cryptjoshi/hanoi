@@ -1362,14 +1362,28 @@ func getDataList() ([]DatabaseInfo,error) {
 
 }
 
-
-
+type OverviewResponse struct {
+	Allmembers decimal.Decimal `json:"allmembers"`
+	Newcomer decimal.Decimal `json:"newcomer"`
+	FirstDept decimal.Decimal `json:"firstdept"`
+	Deposit decimal.Decimal `json:"deposit"`
+	Withdrawl decimal.Decimal `json:"withdrawl"`
+	TotalDeposit decimal.Decimal `json:"totaldeposit"`
+	TotalWithdrawl decimal.Decimal `json:"totalwithdrawl"`
+	Winlose decimal.Decimal `json:"winlose"`
+	Totalprofit decimal.Decimal `json:"totalprofit"`
+	Provider []struct {
+		Name string `json:"name"`
+		Total decimal.Decimal `json:"total"`
+	}
+}
+type OBody struct {
+	Startdate string `json:"startdate"`
+	Id string `json:"id"`
+}
 func Overview(c *fiber.Ctx) (error) {
 
-
-	type OBody struct {
-		Startdate string `json:"startdate"`
-	}
+ 
 
 	var body OBody
 
@@ -1579,27 +1593,27 @@ func Overview(c *fiber.Ctx) (error) {
 	}
 
 
-	type Overview struct {
-		Allmembers decimal.Decimal `json:"allmembers"`
-		Newcomer decimal.Decimal `json:"newcomer"`
-		FirstDept decimal.Decimal `json:"firstdept"`
-		Deposit decimal.Decimal `json:"deposit"`
-		Withdrawl decimal.Decimal `json:"withdrawl"`
-		TotalDeposit decimal.Decimal `json:"totaldeposit"`
-		TotalWithdrawl decimal.Decimal `json:"totalwithdrawl"`
-		Winlose decimal.Decimal `json:"winlose"`
-		Totalprofit decimal.Decimal `json:"totalprofit"`
-		Provider []struct {
-			Name string `json:"name"`
-			Total decimal.Decimal `json:"total"`
-		}
-	}
+	// type Overview struct {
+	// 	Allmembers decimal.Decimal `json:"allmembers"`
+	// 	Newcomer decimal.Decimal `json:"newcomer"`
+	// 	FirstDept decimal.Decimal `json:"firstdept"`
+	// 	Deposit decimal.Decimal `json:"deposit"`
+	// 	Withdrawl decimal.Decimal `json:"withdrawl"`
+	// 	TotalDeposit decimal.Decimal `json:"totaldeposit"`
+	// 	TotalWithdrawl decimal.Decimal `json:"totalwithdrawl"`
+	// 	Winlose decimal.Decimal `json:"winlose"`
+	// 	Totalprofit decimal.Decimal `json:"totalprofit"`
+	// 	Provider []struct {
+	// 		Name string `json:"name"`
+	// 		Total decimal.Decimal `json:"total"`
+	// 	}
+	// }
 
 
 	//allmembers := db.Debug()
 	
 
-	overview := Overview{
+	overview := OverviewResponse{
 		Allmembers:    decimal.NewFromInt(memberCount),
 		Newcomer:      newcomerDecimal,
 		FirstDept:     firstDept,
@@ -1627,4 +1641,235 @@ func Overview(c *fiber.Ctx) (error) {
 	})
 
 	return nil
+}
+
+
+
+func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
+
+	
+	
+	startDate, err := time.Parse("01/02/2006", body.Startdate)
+	if err != nil {
+		// response := fiber.Map{
+		// 	"Status":  false,
+		// 	"Message": "ไม่สามารถแปลงวันที่ได้: " + err.Error(),
+		// }
+		// return c.JSON(response)
+		fmt.Printf(" %s ",err.Error())
+	}
+	formattedDate := startDate.Format("2006-01-02")
+	fmt.Printf("Startdate: %s \n", formattedDate)
+
+	
+
+	var partner models.Partner
+
+	//db, _err := handler.GetDBFromContext(c)
+	//prefix := c.Locals("Prefix")
+	//fmt.Println("prefix:", prefix)
+	//if _err != nil {
+
+		// response := fiber.Map{
+		// "Message": "โทเคนไม่ถูกต้อง!!",
+		// "Status":  false,
+		// "Data": fiber.Map{
+		// "prefix": prefix,
+		// 	},
+		// }
+		// return c.JSON(response)
+		//db, _ = database.ConnectToDB(prefix.(string))
+	//}
+	//id := c.Locals("Walletid")
+	u_err := db.Debug().Where("id= ?", body.Id).Find(&partner).Error
+
+	if u_err != nil {
+		fmt.Printf(" %s ",u_err)
+		// response := fiber.Map{
+		// 	"Message": "ไม่พบรหัสผู้ใช้งาน!!",
+		// 	"Status":  false,
+		// 	"Data": fiber.Map{
+		// 		"prefix": prefix,
+		// 	},
+		// }
+
+		// return c.JSON(response)
+	}
+
+	fmt.Printf(" Partner: %+v \n",partner)
+
+	member := []models.Users{}
+
+	result := db.Debug().Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	if result.Error != nil {
+		// response := fiber.Map{
+		// 	"Message": "ดึงข้อมูลผิดพลาด",
+		// 	"Status":  false,
+		// 	"Data":    result.Error.Error(),
+		// }
+		// return c.JSON(response)
+		fmt.Printf(" %s ",result.Error.Error())
+	}
+	memberCount := result.RowsAffected
+	
+	// แสดงจำนวนสมาชิก
+	// ... existing code ...
+	var activeMembers []models.Users
+	var newMembers []models.Users
+	for _, m := range member {
+		if m.Actived != nil && m.Actived.Format("2006-01-02") == startDate.Format("2006-01-02") { // เปรียบเทียบกับ startDate
+			activeMembers = append(activeMembers, m)
+		}
+		if  m.CreatedAt.Format("2006-01-02") == startDate.Format("2006-01-02") {
+			newMembers = append(newMembers,m)
+		}
+	}
+
+
+
+	activeCount := len(activeMembers) 
+	activeCountStr := strconv.Itoa(activeCount) // นับจำนวนสมาชิกที่ Actived ไม่เป็น NULL และเท่ากับ startdate
+	firstDept,_ := decimal.NewFromString(activeCountStr)
+
+	newMembersCount := len(newMembers)
+	newMembersCountStr := strconv.Itoa(newMembersCount)
+	newcomerDecimal, _ := decimal.NewFromString(newMembersCountStr)
+	
+	
+	//var exists bool
+	//result := db.Debug().Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	type TransactionResult struct {
+		UserID      uint            `json:"userid"`
+		Username    string          `json:"username"`
+		UID         string          `json:"uid"`
+		Deposit     decimal.Decimal `json:"deposit"`
+		Withdraw    decimal.Decimal `json:"withdraw"`
+		CreatedAt   time.Time       `json:"created_at"`
+		StatementType string        `json:"statement_type"`
+	}
+	
+	// ใช้ GORM query
+	var results []TransactionResult
+	
+	err = db.Debug().Table("BankStatement").
+		Select(`
+			BankStatement.userid,
+			Users.username,
+			BankStatement.uid,
+			BankStatement.statement_type,
+			COALESCE(CASE WHEN BankStatement.transactionamount > 0 THEN BankStatement.transactionamount END, 0) as deposit,
+			COALESCE(CASE WHEN BankStatement.transactionamount < 0 THEN BankStatement.transactionamount END, 0) as withdraw,
+			BankStatement.createdAt
+		`).
+		Joins("JOIN Users ON BankStatement.userid = Users.id").
+		Where("Users.referred_by = ? AND BankStatement.channel = ? AND DATE(BankStatement.createdAt) = ?",
+			partner.AffiliateKey,
+			"1stpay",
+			startDate.Format("2006-01-02")).
+		Scan(&results).Error
+	
+	//	fmt.Printf("Results: %+v \n",results)
+	if err != nil {
+		fmt.Printf(" %s ",err.Error())
+	}
+
+	var withdrawRows []TransactionResult
+	var depositRows []TransactionResult 
+    var sumWithdraw decimal.Decimal
+	var sumDeposit decimal.Decimal 
+
+	for _, m := range results {
+	//	fmt.Printf(" m: %+v \n",m)
+		if m.StatementType == "Deposit" {
+			depositRows = append(depositRows,m)
+			sumDeposit = sumDeposit.Add(m.Deposit)
+		} else {
+			withdrawRows = append(withdrawRows,m)
+			sumWithdraw = sumWithdraw.Add(m.Withdraw.Abs())
+		}
+	}
+     depositCount := len(depositRows)
+	 withdrawCount := len(withdrawRows)
+	//memberCount := result.RowsAffected
+	//withdrawCount := len(withdrawMembers)
+	// fmt.Printf("จำนวนสมาชิกทั้งหมด: %v\n", memberCount) 
+	// fmt.Printf("จำนวนสมาชิกใหม่: %v\n", newcomerDecimal) 
+	// fmt.Printf("จำนวนสมาชิกฝากครั้งแรก: %v\n", firstDept) 
+	// fmt.Printf("จำนวนสมาชิกฝาก: %v\n", depositCount) 
+	// fmt.Printf("ยอดฝาก: %v\n", sumDeposit) 
+	// fmt.Printf("จำนวนสมาชิกถอน: %v\n", withdrawCount) 
+	// fmt.Printf("ยอดถอน: %v\n", sumWithdraw) 
+	
+	// if err != nil {
+	// 	// จัดการกับข้อผิดพลาดที่เกิดขึ้น
+	// 	response := fiber.Map{
+	// 		"Status":  false,
+	// 		"Message": "ไม่สามารถแปลง activeCount เป็น decimal ได้: " + err.Error(),
+	// 	}
+	// 	return c.JSON(response)
+	// }
+ 
+	// var settings []models.Settings
+
+	// dbm := ConnectMaster()
+
+	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+
+	// defer dbm.Close()
+	
+
+	for i := range member {
+		
+		pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
+		fmt.Printf(" pro_setting: %+v",pro_setting)
+		//turnType, ok := pro_setting["TurnType"].(string)
+        // if !ok {
+        //     return c.JSON(fiber.Map{
+        //         "Status": false,
+        //         "Message": "รูปแบบ TurnType ไม่ถูกต้อง",
+        //         "Data": fiber.Map{"id": -1},
+        //     })
+        // }
+		// commissionRate,_ := common.GetCommissionRate(partner.Prefix)
+        // if turnType == "turnover" {
+		// totalTurnover, err := common.CheckTurnover(db,&member[i], pro_setting) //wallet.CheckTurnover(games[i].ID) // เรียกใช้ฟังก์ชัน CheckTurnover
+		// totalEarnings := totalTurnover.Mul(commissionRate.Div(decimal.NewFromFloat(100)))
+		// if err == nil {
+		// 	member[i].TotalEarnings = totalEarnings  //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+		// 	member[i].TotalTurnover = totalTurnover // ปรับปรุงยอด totalturnover
+		
+		// 	}	
+		// }
+		
+	}
+
+
+	
+
+
+	//allmembers := db.Debug()
+	
+
+	overview := OverviewResponse{
+		Allmembers:    decimal.NewFromInt(memberCount),
+		Newcomer:      newcomerDecimal,
+		FirstDept:     firstDept,
+		Deposit:        decimal.NewFromInt(int64(depositCount)),    // แปลง int เป็น decimal
+		Withdrawl:      decimal.NewFromInt(int64(withdrawCount)),   // แปลง int เป็น decimal	
+		TotalDeposit:  sumDeposit,
+		TotalWithdrawl: sumWithdraw,
+		Winlose:       decimal.NewFromFloat(2500.00),
+		Totalprofit:   decimal.NewFromFloat(10000.00),
+		Provider: []struct {
+			Name  string          `json:"name"`
+			Total decimal.Decimal `json:"total"`
+		}{
+			{Name: "PGSoft", Total: decimal.NewFromFloat(1000.00)},
+			{Name: "Efinity", Total: decimal.NewFromFloat(2000.00)},
+			{Name: "GCLUB", Total: decimal.NewFromFloat(4000.00)},
+		},
+	}
+
+	return overview,nil
+	//fmt.Printf(" %s ",result.Error.Error())
 }

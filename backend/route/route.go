@@ -71,6 +71,7 @@ func SetupRoutes(app fiber.Router) {
 	app.Post("/users/update",jwt.JwtMiddleware,users.UpdateUser)
 	app.Post("/users/update/pro",jwt.JwtMiddleware,users.UpdateUserPro)
 	app.Post("/users/commission",jwt.JwtMiddleware,handler.GetUserCommission)
+	app.Post("/users/promotion",jwt.JwtMiddleware,users.GetPromotionByUser)
 	
     
 	app.Post("/db/create",handler.CreateDatabase)

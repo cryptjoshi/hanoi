@@ -434,6 +434,7 @@ func Deposit(c *fiber.Ctx) error {
 	// user := c.Locals("user").(*jtoken.Token)
 	// 	claims := user.Claims.(jtoken.MapClaims)
 	var users models.Users
+	var promotionLogID int
 	db,_ := handler.GetDBFromContext(c)
 	id := c.Locals("ID").(int)
 	BankStatement := new(models.BankStatement)
@@ -560,17 +561,17 @@ func Deposit(c *fiber.Ctx) error {
 
 			// Update BankStatement.Balance
 
-			fmt.Printf("wallet.go 447 line pro_setting[\"maxDept\"].(decimal.Decimal): %v \n",pro_setting["maxDept"].(decimal.Decimal))
+			//fmt.Printf("wallet.go 447 line pro_setting[\"maxDept\"].(decimal.Decimal): %v \n",pro_setting["maxDept"].(decimal.Decimal))
 			if balanceIncrease.Sub(deposit).GreaterThan(pro_setting["maxDept"].(decimal.Decimal)) {
 				//BankStatement.Balance = users.Balance.Add(deposit.Add(pro_setting["maxDept"].(decimal.Decimal)))
 				BankStatement.Balance = deposit.Add(pro_setting["maxDept"].(decimal.Decimal))
 			} else {
-				fmt.Printf("wallet.go 453 line balanceIncrease: %v \n",balanceIncrease)
+				//fmt.Printf("wallet.go 453 line balanceIncrease: %v \n",balanceIncrease)
 				//BankStatement.Balance = users.Balance.Add(balanceIncrease)
 				BankStatement.Balance = balanceIncrease
 			}
 
-			fmt.Printf("wallet.go 451 line BankStatement.Balance: %v \n",BankStatement.Balance)
+			//fmt.Printf("wallet.go 451 line BankStatement.Balance: %v \n",BankStatement.Balance)
 
 			promotionLog := models.PromotionLog{
 
@@ -586,7 +587,7 @@ func Deposit(c *fiber.Ctx) error {
 				Proamount: balanceIncrease.Sub(deposit),
 				Balance: BankStatement.Balance,
 				Example: Formular,
-				Status: 1,
+				Status: 0,
 				// Add other necessary fields for the promotion log
 			}
 
@@ -602,7 +603,7 @@ func Deposit(c *fiber.Ctx) error {
 						"id": -1,
 					}})
 			}
-	 
+			promotionLogID = promotionLog.ID 
 		 
 	
 			if users.Balance.LessThan(decimal.NewFromInt(1)) == false && pro_setting["Zerobalance"] == 0  {
@@ -630,7 +631,7 @@ func Deposit(c *fiber.Ctx) error {
 			if users.Balance.LessThanOrEqual(decimal.Zero) == false && pro_setting["Zerobalance"] == 1 {
 				
 				response := fiber.Map{
-					"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
+					"Message": "code 631 ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
 					"Status":  false,
 					"Data": fiber.Map{ 
 						"id": -1,
@@ -639,7 +640,7 @@ func Deposit(c *fiber.Ctx) error {
 				} else if users.Balance.GreaterThan(decimal.NewFromFloat(0.1)) == true && pro_setting["Zerobalance"] == 0 {
 				
 					response := fiber.Map{
-						"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
+						"Message": " code 643 ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
 						"Status":  false,
 						"Data": fiber.Map{ 
 							"id": -1,
@@ -762,12 +763,13 @@ func Deposit(c *fiber.Ctx) error {
 
 	 } else {
 
-// 		updates := map[string]interface{}{
-// 			"Balance": BankStatement.Balance,
-// 			"Turnover": users.Turnover,
-// 			"ProStatus": users.ProStatus,
-// 			}
-	
+		updates := map[string]interface{}{
+			"Uid": BankStatement.Uid,
+		}
+		if err := db.Debug().Model(&models.PromotionLog{}).Where("id = ?",promotionLogID).Updates(updates).Error; err != nil {
+				fmt.Println("Update Promotionlog TransacionID Fail!")
+		}
+			
  
 // 	 _err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
 // 	if _err != nil {
@@ -838,6 +840,7 @@ func Withdraw(c *fiber.Ctx) error {
             "Data": fiber.Map{"id": -1},
         })
     }
+
 	//fmt.Printf("Withdraw : %+v \n" ,BankStatement)
     //ตรวจสอบข้อมูลผู้ใช้
     if err := db.Where("walletid = ? or id = ?", id,id).First(&users).Error; err != nil {
@@ -900,7 +903,7 @@ func Withdraw(c *fiber.Ctx) error {
 	// 		})
 	// 	}
     // }
-
+	fmt.Println("906 User ProStatus:",users.ProStatus)
     // ตรวจสอบโปรโมชั่น
     if users.ProStatus != "" {
         pro_setting, err := CheckPro(db, &users)
@@ -1120,7 +1123,7 @@ func Withdraw(c *fiber.Ctx) error {
         "Balance": decimal.Zero,
         "LastWithdraw": withdraw,
     }
-    //fmt.Println(users.ProStatus)
+    fmt.Println("User ProStatus:",users.ProStatus)
     if users.ProStatus != "" {
         updates["ProStatus"] = ""
 		if err := tx.Model(&users).Updates(updates).Error; err != nil {
@@ -1236,6 +1239,13 @@ func Webhook(c *fiber.Ctx) error {
 			message = "ฝากเงินสำเร็จ"
 			deposit = bankstatement.Transactionamount
 			withdraw = decimal.Zero
+
+			updates["status"] = 1
+			
+			if err := db.Debug().Model(&models.PromotionLog{}).Where("uid = ?",bankstatement.Uid).Updates(updates).Error; err != nil {
+				fmt.Printf(" Error %s \n",errors.New("มีข้อผิดพลาด"))
+			}
+
 	} else if requestBody.Type == "payout" {
 		var balanceamount decimal.Decimal
 		if requestBody.Verify == 1 && requestBody.IsExpired == 0 {
@@ -1321,6 +1331,8 @@ func Webhook(c *fiber.Ctx) error {
 				}})
 		} 
 
+	    
+
 
 		if err := checkActived(db,bankstatement.Userid); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -1341,28 +1353,34 @@ func Webhook(c *fiber.Ctx) error {
 		jsonData, _ := json.Marshal(data)
 
 		// Compress Data
-		compressedData, err := jwtn.CompressData(jsonData)
-		if err != nil {
-			log.Fatal(err)
-		}
+		// compressedData, err := jwtn.CompressData(jsonData)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 
 		// คีย์สำหรับการเข้ารหัส (ต้องมีความยาว 16, 24 หรือ 32 bytes)
 		key := []byte(secretKey) // คีย์ที่ใช้งานเป็นต้องมีขนาด 16, 24 หรือ 32 bytes
 		hashedKey := sha256.Sum256(key)
-		// Encrypt Data
-		encryptedData, err := jwtn.Encrypt(compressedData, hashedKey[:])
+
+		encryptedData, err := jwtn.CompressAndEncrypt(jsonData, hashedKey[:])
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		// Encrypt Data
+		// encryptedData, err := jwtn.Encrypt(compressedData, hashedKey[:])
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 
 		fmt.Printf("Data Before: %+v \n",data)
 		fmt.Println("Encrypted and compressed data:", encryptedData)
 
-		decryptedData,err := jwtn.Decrypt(encryptedData,hashedKey[:])
+		// decryptedData,err := jwtn.Decrypt(encryptedData,hashedKey[:])
 
-		decompressedData,err := jwtn.DecompressData(decryptedData)
+		// decompressedData,err := jwtn.DecompressData(decryptedData)
 
-		fmt.Println("Decrypted and Decompress ",string(decompressedData))
+		// fmt.Println("Decrypted and Decompress ",string(decompressedData))
 
 		// Publish ข้อมูลไปยัง Redis
 		channel := "balance_update_channel"
@@ -1373,7 +1391,7 @@ func Webhook(c *fiber.Ctx) error {
 		// 		DB:       0,  // ใช้ฐานข้อมูล 0
 		// 	})
 		// }
-		err = publishToRedis(rdb, channel, encryptedData)
+		err = publishToRedis(rdb, channel, string(jsonData))//encryptedData)
 		if err != nil {
 			log.Fatal("Failed to publish to Redis:", err)
 		} else {

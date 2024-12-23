@@ -12,7 +12,7 @@ import { formatNumber } from '@/lib/utils';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Deposit, GetPromotion, GetUserInfo, Withdraw } from '@/actions';
+import { Deposit, GetUserPromotion, GetUserInfo, Withdraw } from '@/actions';
 import type { User } from '@/store/auth';
 import useAuthStore from '@/store/auth';
  import { useRouter } from 'next/navigation';
@@ -124,26 +124,26 @@ function TransactionForm({lng,slug}:TransProps) {
         const fetchPromotion = async (accessToken: string) => {
      
           //if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken){
-          const promotion = await GetPromotion(accessToken);
-          console.log(promotion.Data)
-          // if (promotion.Status) {
+          const promotion = await GetUserPromotion(accessToken);
+         
+          if (promotion.Status) {
           //   // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
           //   let pro_use = promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)
           //   setPromotions(pro_use)
           //   //console.log(pro_use)
           //   setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
-          //  // setPromotions(promotion.Data.Promotions);
+          setPromotions(promotion.Data);
           //  //console.log(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
             
-          // } else {
-            
-          //   //router.push(`/${lng}/login`)toast({
+         } else {
+         console.log(promotion.Message)
+            //router.push(`/${lng}/login`)toast({
           // toast({title: t('unsuccess'),
           //   description: promotion.Message,
           //   variant: "destructive",
           // });
              
-          // } 
+          } 
         //} 
        }
     
@@ -255,21 +255,25 @@ function TransactionForm({lng,slug}:TransProps) {
  
         <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4 max-w-md mx-auto">
-      
+       
             <h2 className="text-xl font-bold mb-4">{t(`${slug}`)}</h2>
+            
             <div>
-            <p className="text-xs sm:text-sm text-muted-foreground">{t('your_balance')}</p>
+           
+            <p className="text-xs sm:text-sm text-muted-foreground">{promotions?.turntype!="turncredit"?t('your_balance'):t('your_credit')}</p>
             <h2 className="text-xl sm:text-2xl font-bold mt-1">{formatNumber(balance)}</h2>
+         
+        
             { slug === "withdraw" && (
               <div>
-                <p className="text-xs sm:text-sm text-muted-foreground">{ promotions?.turntype=="turncredit"?t('your_credit'):t('your_turnover')}</p>
-                <h2 className="text-xl sm:text-2xl font-bold mt-1">{promotions?.turntype=="turncredit"?formatNumber(user?.pro_balance):formatNumber(turnover || 0)}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">{ promotions?.turntype!="turncredit"?t('your_turnover'):""}</p>
+                <h2 className="text-xl sm:text-2xl font-bold mt-1">{promotions?.turntype!="turncredit"?formatNumber(user?.turnover):""}</h2>
             </div>
             ) }
             {promotions?.turntype=="turnover"? (
             <p className="text-xs sm:text-sm text-muted-foreground mt-1"> 
-            {  promotions ? `≈ Min Turnover ${(parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend}  ${currency}`:''}</p>
-            ):(
+           {  promotions ? `≈ Min Turnover ${(parseFloat(user?.lastdeposit)+parseFloat(promotions?.minSpendType=="deposit"?0:user?.lastproamount))*promotions?.minSpend}  ${currency}`:''}</p>
+          ):(
               <p className="text-xs sm:text-sm text-muted-foreground mt-1"> 
             
               {promotions ? 

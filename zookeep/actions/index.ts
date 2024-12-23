@@ -328,6 +328,24 @@ return response.json()
   return error
 }
 }
+export const GetUserPromotion = async (token:string) =>{
+  try{
+   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/users/promotion`, { method: 'POST',
+     headers: {   
+       'Accept': 'application/json',
+       'Content-Type': 'application/json',
+       'Authorization': 'Bearer ' +  token
+       },
+       //body: JSON.stringify({"prefix":dbname.toLowerCase()})
+ })
+ return response.json()
+ }catch(error){
+ 
+   console.log(error)
+   return error
+ }
+ }
+ 
 export const DeletePromotion = async (dbname:string,id:any) =>{
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/db/promotion/delete`, { method: 'POST',
     headers: {   

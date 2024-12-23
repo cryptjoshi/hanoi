@@ -23,7 +23,7 @@ import { useTranslation } from '@/app/i18n/client';
 import {GetOverview} from '@/actions'
 import useAuthStore from '@/store/auth'
 import { TZDate } from "@date-fns/tz";
-import { formatNumber } from '@/lib/utils'
+import { formatNumber,decompressGzip,Decrypt } from '@/lib/utils'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -79,6 +79,8 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
  const [isBlinking, setIsBlinking] = useState(false);
  const socketRef = useRef(null);
  const [socketid,setSocketId] = useState("");
+ const [decompressedMessage, setDecompressedMessage] = useState<string | null>(null);
+
  const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -104,16 +106,37 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
 
   });
 
-  socketRef.current.on('message', (newMessage) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+  socketRef.current.on('message', (newMessage:any) => {
+    try {
+       
+      //const decompressedData = Decrypt(newMessage)
+      // const binaryString = atob(newMessage); // แปลง Base64 เป็น binary string
+      // const byteArray = new Uint8Array(binaryString.length);
+      // for (let i = 0; i < binaryString.length; i++) {
+      //     byteArray[i] = binaryString.charCodeAt(i);
+      // }
+     
+      // const decompressedData = decompressGzip(byteArray);
+      //if (decompressedData) {
+      //  console.log(decompressedData)
+         // setDecompressedMessage(new TextDecoder().decode(decompressedData));
+      //}
+
+      setMessages((prevMessages:any) => [...prevMessages, newMessage]);
       setIsBlinking(true);
       // ตั้งเวลาให้หยุดกระพริบหลังจาก 3 วินาที
       setTimeout(() => {
         setIsBlinking(false);
+        //const message = decompressData(newMessage)
+        console.log('Received message:', newMessage);
         fetchGames();
       }, 3000);
 
-      console.log('Received message:', newMessage);
+      //console.log('Received message:', newMessage);
+    }
+    catch(err){
+      console.log(err)
+    }
   });
 
   socketRef.current.on('disconnect', () => {
@@ -159,7 +182,7 @@ const fetchGames = async () => {
 
    useEffect(() => {
     
-    fetchGames();
+   // fetchGames();
   }, [ refreshTrigger])
 
 
@@ -216,6 +239,7 @@ const fetchGames = async () => {
             initialDate={date}/>
             <Button type="submit">{t('button.refresh')}</Button>
           </div>
+       {messages}
           <div className="flex items-center gap-2">
           <div
             className={cn(

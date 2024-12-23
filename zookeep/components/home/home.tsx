@@ -147,20 +147,21 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       setIsLoading(true);
       if(token){
       const promotion = await GetPromotion(token);
-      
+      console.log(promotion)
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
         //console.log(promotion.Data)
         //console.log(user)
-        const filtered =  promotion.Data.Promotions?.filter((promo:any) => 
-          //{
-            //console.log(promo.ID.toString(), user?.pro_status?.toString())
-            (1*promo.ID)-(1*user?.pro_status) != 0 
-          //}
-        );
-        
-        setPromotions(promotion.Data.Promotions);
-        setFilteredPromotions(promotion.Data.Promotions);
+        // const filtered =  promotion.Data.Promotions?.filter((promo:any) => 
+        //   //{
+        //     //console.log(promo.ID.toString(), user?.pro_status?.toString())
+        //     (1*promo.ID)-(1*user?.pro_status) != 0 
+        //   //}
+        // );
+        if(promotion.Data.length>0){
+        setPromotions(promotion.Data[0]);
+        setFilteredPromotions(promotion.Data[0]);
+        }
        
       //   const filteredPromotions = promotion.Data.Promotions.filter((promo: any) => 
           
@@ -238,10 +239,10 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-    
+              
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :  promotions?.find(promo => promo.ID.toString() == user?.pro_status && promo.status==1)?.name || t('noPromotion')  // Changed ID to id and added fallback text
+                :    promotions?.promotionname || t('noPromotion')  // Changed ID to id and added fallback text
               }   
             </p>
           </div>

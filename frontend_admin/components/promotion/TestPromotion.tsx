@@ -100,7 +100,7 @@ export default function TestPromotion({lng,promotion}:TransProps) {
         
                     minturn = calculatedBalance*((100+percentage)/100)
                 }else {
-                    minturn = promotion.getValues("MinCredit")
+                    minturn = promotion.getValues("MinCredit")*amount
                 }
                 //minturn = form.getValue("balance")*percentDiscount
                 form.setValue("mincredit",minturn)
@@ -120,6 +120,13 @@ export default function TestPromotion({lng,promotion}:TransProps) {
             <Form {...form}> 
             <form   className="space-y-4">
                 <div>
+                    {
+                    `   Min Credit ${amount|| 0} x ${promotion.getValues("MinCredit")} ≈ ${
+                    parseFloat(amount || 0) * (promotion.getValues("MinCredit")?.toString().includes("%") 
+                        ? (100 + parseFloat(promotion.getValues("MinCredit").toString().replace("%",""))) / 100 
+                        : parseFloat(promotion.getValues("MinCredit") || 0)) } 
+                    `
+                    }
                     <p>{ `${t('promotion.minDept')} : ${promotion.getValues("minDept")} `  } </p>
                     <p> {  `${t('promotion.percentDiscount')} :  ${promotion.getValues("percentDiscount")} %`  } </p>
                     <p> {  `${t('promotion.maxDiscount')} :  ${promotion.getValues("maxDiscount")} `  } </p>

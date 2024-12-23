@@ -8,12 +8,14 @@ export interface AuthStore {
     accessTokenData: string | null;
     refreshToken: string | null;
     customerCurrency: string | null;
+    systemdate: string | null;
     Signin: (body: User) => Promise<any>;   
     Logout: () => void;
     setIsLoggedIn: (isLoggedIn: boolean | false) => void;
     setAccessToken: (accessToken: string | null) => void;
     setRefreshToken: (refreshToken: string | null) => void;
     setCustomerCurrency: (customerCurrency: string | null) => void;
+    setSystemDate:(systemdate:string) => void;
     init: () => void;
     clearTokens: () => void;
     lng: string;
@@ -46,6 +48,7 @@ const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       customerCurrency: "THB",
       prefix:"",
+      systemdate: null,
       Signin: async (body: User) => {
       //  const router = useRouter()
         try {
@@ -98,18 +101,21 @@ const useAuthStore = create<AuthStore>()(
         const accessTokenData = accessToken || null;
         set({ accessToken, accessTokenData });
       },
+      setSystemDate: (systemdate:string | null)=>set({systemdate,}),
       setRefreshToken: (refreshToken: string | null) => set({ refreshToken }),
       setCustomerCurrency: (customerCurrency: string | null) => set({ customerCurrency }),
       init: () => {
-        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency } = get();
+        const { setAccessToken, setRefreshToken, setIsLoggedIn, setLng, setCustomerCurrency ,setSystemDate} = get();
         const isloggedIn = localStorage.getItem('isLoggedIn') == 'true';
         const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');
         const lng = getCookie('lng') || 'en';
+        const systemdate = new Date().toLocaleDateString()
          // Get language from cookie or use default
         setIsLoggedIn(isloggedIn);
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
+        setSystemDate()
         setLng(lng);
       },
       clearTokens: () => {

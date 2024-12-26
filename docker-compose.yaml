@@ -219,7 +219,23 @@ services:
 
 
       
-
+  proservice:
+    #image: king_game_service                                                                                                                                        
+    container_name: pro_service
+    build:
+      context: ./proservice
+      dockerfile: dev.Dockerfile
+    ports:
+      - "4002:8020"
+    env_file: .env
+    labels:
+      caddy: pro.tsxbet.net
+      caddy.reverse_proxy: "{{upstreams 8020}}"
+      caddy.tls: "internal"
+    volumes:
+      - ./proservice/:/app
+    networks:
+      - caddy
 
       
 

@@ -139,7 +139,7 @@ func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]inte
 			promotionLog.CreatedAt).
 		Select("COALESCE(SUM(turnover), 0)").
 		Scan(&totalTurnover).Error; 
-		fmt.Printf( "1086 Err Check: %s",err)
+		//fmt.Printf( "1086 Err Check: %s",err)
 	if err != nil {
 		return decimal.Decimal(decimal.NewFromInt(0)),errors.New("ไม่สามารถคำนวณยอดเทิร์นได้")
 	}
@@ -183,7 +183,7 @@ func GetCommissionRate(prefix string) (decimal.Decimal,error) {
 	if db == nil {
 		return decimal.NewFromFloat(0.0), errors.New("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล")
 	}
-	db.Debug().Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
+	db.Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
 
 	var commissionRate decimal.Decimal
 	for _, setting := range settings {
@@ -231,14 +231,14 @@ func CalculatePartnerCommission(commissionRate decimal.Decimal, userTurnover dec
 
 func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 	var promotion models.Promotion
-	if err := db.Debug().Where("id = ?", procode).Find(&promotion).Error; err != nil {
-		fmt.Printf("Error unmarshalling JSON: %v", err)
+	if err := db.Where("id = ?", procode).Find(&promotion).Error; err != nil {
+		//fmt.Printf("Error unmarshalling JSON: %v", err)
 		return nil, err
 	}
 	if promotion.SpecificTime != "" {
 			if err := json.Unmarshal([]byte(promotion.SpecificTime), &ProItem.ProType); err != nil {
 			//log.Fatalf("Error unmarshalling JSON: %v", err)
-			fmt.Printf("Error unmarshalling JSON: %v", err)
+			//fmt.Printf("Error unmarshalling JSON: %v", err)
 			return nil, err
 			}
 		} else {

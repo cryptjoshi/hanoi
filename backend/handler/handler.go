@@ -2402,6 +2402,7 @@ func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 		 
 		response := make(map[string]interface{}) 
 		//fmt.Printf(" %s ",promotion)
+			response["Id"] = promotion.ID
 			response["Type"] = ProItem.ProType.Type
 			response["count"] = ProItem.UsageLimit
 			response["MinTurnover"] = promotion.MinSpend

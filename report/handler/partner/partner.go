@@ -19,7 +19,7 @@ import (
 	"hanoi/handler"
 	"hanoi/handler/jwtn"
 	"hanoi/models"
-	"hanoi/common"
+	//"hanoi/common"
 	//wallet "hanoi/handler/wallet"
 	// 	//"github.com/golang-jwt/jwt"
 	// 	//jtoken "github.com/golang-jwt/jwt/v4"
@@ -256,7 +256,7 @@ func Login(c *fiber.Ctx) error {
 
 			// ค้นหาผู้ใช้ใน partners
 			
-			err = dbConnection.Debug().Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&partner).Error
+			err = dbConnection.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&partner).Error
 			if err == nil {
 				// ผู้ใช้พบแล้ว ทำการดำเนินการต่อ
 
@@ -465,7 +465,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	fmt.Printf("partner: %+v \n",partner.Body)
+	//fmt.Printf("partner: %+v \n",partner.Body)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
 	//fmt.Printf("SeedPhase  %s\n", seedPhrase) 
@@ -481,7 +481,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	result := db.Debug().Create(&partner.Body)
+	result := db.Create(&partner.Body)
 	
 	if result.Error != nil {
 		response := ErrorResponse{
@@ -491,7 +491,7 @@ func Register(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	} else {
-		fmt.Printf("Result : %+v \n",result)
+		//fmt.Printf("Result : %+v \n",result)
 		updates := map[string]interface{}{
 			//"Partnerid":      partner.Body.ID,
 			//"Preferredname": partner.Body.Name,
@@ -500,7 +500,7 @@ func Register(c *fiber.Ctx) error {
 			//"Actived": nil,
 			//"AffiliateKey": partner.Body.AffiliateKey,
 		}
-		if err := db.Debug().Model(&models.Partner{}).Where("id = ?",partner.Body.ID).Updates(updates).Error; err != nil {
+		if err := db.Model(&models.Partner{}).Where("id = ?",partner.Body.ID).Updates(updates).Error; err != nil {
 			response := ErrorResponse{
 				Message: "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
 				Status:  false,
@@ -556,7 +556,7 @@ func GetPartner(c *fiber.Ctx) error {
 		db, _ = database.ConnectToDB(prefix.(string))
 	}
 	id := c.Locals("Walletid")
-	u_err := db.Debug().Where("id= ?", id).Find(&users).Error
+	u_err := db.Where("id= ?", id).Find(&users).Error
 
 	if u_err != nil {
 
@@ -600,7 +600,7 @@ func GetPartner(c *fiber.Ctx) error {
 	// var promotion models.Promotion
 	// //fmt.Println(summary.Turnover)
 	// if users.ProStatus != "" {
-	// 	db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
+	// 	db.Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
 	// }
 	// pro_setting, err := wallet.CheckPro(db, &users) 
 	// if err != nil {
@@ -645,9 +645,9 @@ func GetPartner(c *fiber.Ctx) error {
 	// }
 
 	// // var transaction models.TransactionSub
-	// // db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(balance,0) as balance").Where("membername= ? and deleted_at is null", users.Username).Scan(&transaction)
+	// // db.Model(&models.TransactionSub{}).Select("COALESCE(balance,0) as balance").Where("membername= ? and deleted_at is null", users.Username).Scan(&transaction)
 	// // var pro_balance decimal.Decimal
-	// // db.Debug().Model(&models.TransactionSub{}).
+	// // db.Model(&models.TransactionSub{}).
 	// // 	Select("COALESCE(balance, 0) as balance").
 	// // 	Where("membername = ? AND deleted_at is null AND ProID=? and created_at > ?", users.Username,users.ProStatus,time.Now().Format("2006-01-02 15:04:05")).Order("id DESC").Limit(1).Scan(&pro_balance)
 	// // createdAt := time.Now()
@@ -664,13 +664,13 @@ func GetPartner(c *fiber.Ctx) error {
 	// if pro_setting["CreatedAt"] != nil {
 	// 	createdAt = pro_setting["CreatedAt"].(time.Time) 
 	// }
-	// db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND deleted_at is null and created_at > ?",users.Username,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
+	// db.Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND deleted_at is null and created_at > ?",users.Username,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
 	
 
 	// updates := map[string]interface{}{
 	// 	"ProBalance": pro_balance,
 	// }
-	// if err := db.Debug().Model(&users).Where("id=? and pro_status=?",users.ID,users.ProStatus).Updates(updates).Error; err != nil {
+	// if err := db.Model(&users).Where("id=? and pro_status=?",users.ID,users.ProStatus).Updates(updates).Error; err != nil {
 	// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 	// 			"status": false,
 	// 			"message": err.Error(),
@@ -717,7 +717,7 @@ func GetPartnerById(c *fiber.Ctx) error {
     }
 
     user := models.Partner{}
-    err = db.Debug().First(&user, body.ID).Error
+    err = db.First(&user, body.ID).Error
     if err != nil {
         response := fiber.Map{
             "Message": "ดึงข้อมูลผิดพลาด",
@@ -761,7 +761,7 @@ func GetPartnerByUsername(c *fiber.Ctx) error {
 	}
 	//id := c.Locals("Walletid")
 	var users models.Partner
-	u_err := db.Debug().Where("username= ?", user.Username).Find(&users).Error
+	u_err := db.Where("username= ?", user.Username).Find(&users).Error
 
 	if u_err != nil {
 
@@ -782,8 +782,8 @@ func GetPartnerByUsername(c *fiber.Ctx) error {
 	// }
 	var summary models.BankStatement
 	
-	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
-	db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
+	//db.Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
+	db.Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
 	
 		 
 	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
@@ -792,15 +792,15 @@ func GetPartnerByUsername(c *fiber.Ctx) error {
 	fmt.Println(summary.Turnover)
 	fmt.Println(summary.CreatedAt)
 	if summary.Turnover.LessThanOrEqual(decimal.Zero) {
-	 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
+	 	db.Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
 	} else {
-		db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
+		db.Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
 	}
 	
 	//var promotion models.Promotion
 	//fmt.Println(summary.Turnover)
 	// if users.ProStatus != "" {
-	// 	db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
+	// 	db.Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
 	// }
 
 
@@ -857,7 +857,7 @@ func GetBalance(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	id := c.Locals("Walletid")
-	u_err := db.Debug().Where("id= ?", id).Find(&users).Error
+	u_err := db.Where("id= ?", id).Find(&users).Error
 
 	if u_err != nil {
 
@@ -976,9 +976,9 @@ func GetPartnerTransaction(c *fiber.Ctx) error {
 	var statements []models.TransactionSub
 
 	if body.Status == "all" {
-		db.Debug().Where("id=? AND GameProvide = ? AND  DATE(createdat) BETWEEN ? AND ? ", id, provide, startDateStr, endDateStr).Find(&statements)
+		db.Where("id=? AND GameProvide = ? AND  DATE(createdat) BETWEEN ? AND ? ", id, provide, startDateStr, endDateStr).Find(&statements)
 	} else {
-		db.Debug().Where("id=? AND GameProvide = ? AND  DATE(createdat) BETWEEN ? AND ? and status = ?", id, provide, startDateStr, endDateStr, body.Status).Find(&statements)
+		db.Where("id=? AND GameProvide = ? AND  DATE(createdat) BETWEEN ? AND ? and status = ?", id, provide, startDateStr, endDateStr, body.Status).Find(&statements)
 	}
 
 	// สร้าง slice เพื่อเก็บผลลัพธ์หลังจากตรวจสอบเงื่อนไข
@@ -1095,9 +1095,9 @@ func GetPartnerStatement(c *fiber.Ctx) error {
 	var statements []models.BankStatement
 
 	if body.Status == "all" {
-		db.Debug().Where("userid=? AND channel = ? AND  DATE(createdat) BETWEEN ? AND ? ", id, channel, startDateStr, endDateStr).Find(&statements)
+		db.Where("userid=? AND channel = ? AND  DATE(createdat) BETWEEN ? AND ? ", id, channel, startDateStr, endDateStr).Find(&statements)
 	} else {
-		db.Debug().Where("userid=? AND channel = ? AND  DATE(createdat) BETWEEN ? AND ? and status = ?", id, channel, startDateStr, endDateStr, body.Status).Find(&statements)
+		db.Where("userid=? AND channel = ? AND  DATE(createdat) BETWEEN ? AND ? and status = ?", id, channel, startDateStr, endDateStr, body.Status).Find(&statements)
 	}
 
 	// สร้าง slice เพื่อเก็บผลลัพธ์หลังจากตรวจสอบเงื่อนไข
@@ -1149,8 +1149,8 @@ func GetBalanceSum(c *fiber.Ctx) error {
 	}
 	//id := c.Locals("Walletid")
 	var sum decimal.Decimal
-	u_err := db.Debug().Table("Users").Select("sum(balance)").Where("deposit is not NULL").Row().Scan(&sum)
-	//u_err := db.Debug().Table("Users").Select("sum(balance)").Where("deposit is not NULL").Find(&users).Error
+	u_err := db.Table("Users").Select("sum(balance)").Where("deposit is not NULL").Row().Scan(&sum)
+	//u_err := db.Table("Users").Select("sum(balance)").Where("deposit is not NULL").Find(&users).Error
 
 	if u_err != nil {
 
@@ -1204,7 +1204,7 @@ func UpdatePartner(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
-	fmt.Printf("data: %+v \n",data.Body)
+	//fmt.Printf("data: %+v \n",data.Body)
  
 
 	// // Get the username from the context
@@ -1234,7 +1234,7 @@ func UpdatePartner(c *fiber.Ctx) error {
 
 	// Update the user with the provided fields
 	// fmt.Printf("Body: %s",data.Body)
-	if err := db.Debug().Model(&user).Updates(data.Body).Error; err != nil {
+	if err := db.Model(&user).Updates(data.Body).Error; err != nil {
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถอัปเดตข้อมูลได้: " + err.Error(),
@@ -1290,7 +1290,7 @@ func CheckSeed(db *gorm.DB) string {
 	var seedPhrase string
 	for {
 		seedPhrase, _ = encrypt.GenerateAffiliateCode(5) // สร้าง affiliate key ใหม่
-		rowsAffected := db.Debug().Model(&models.Partner{}).Where("affiliatekey = ?", seedPhrase).RowsAffected
+		rowsAffected := db.Model(&models.Partner{}).Where("affiliatekey = ?", seedPhrase).RowsAffected
 		if rowsAffected == 0 { // ถ้าไม่ซ้ำ
 			break // ออกจากลูป
 		}
@@ -1306,7 +1306,7 @@ type DatabaseInfo struct {
 func getDataList() ([]DatabaseInfo,error) {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", mysql_user, mysql_pass, mysql_host)
-	fmt.Printf(" DSN: %s \n",dsn)
+	//fmt.Printf(" DSN: %s \n",dsn)
 	// Connect to MySQL without a specific database
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -1317,8 +1317,8 @@ func getDataList() ([]DatabaseInfo,error) {
 	groupedDatabases := make(map[string][]string)
 
 	rows, err := db.Raw("SHOW DATABASES").Rows()
-	fmt.Printf("Rows: %v \n",rows)
-	fmt.Printf("Err: %v \n",err)
+	//fmt.Printf("Rows: %v \n",rows)
+	//fmt.Printf("Err: %v \n",err)
 	if err != nil {
 		return nil,err
 	}
@@ -1336,8 +1336,8 @@ func getDataList() ([]DatabaseInfo,error) {
 		if err := rows.Scan(&dbName); err != nil {
 			continue
 		}
-		fmt.Printf("DBName: %v",dbName)
-		fmt.Printf("SysDBName: %v",systemDatabases[dbName])
+		//fmt.Printf("DBName: %v",dbName)
+		//fmt.Printf("SysDBName: %v",systemDatabases[dbName])
 		// Include databases with underscore in their names and exclude system databases
 		//
 		if strings.Contains(dbName, "_") && !systemDatabases[dbName] {
@@ -1379,6 +1379,7 @@ type OverviewResponse struct {
 }
 type OBody struct {
 	Startdate string `json:"startdate"`
+	Prefix string `json:"prefix"`
 	Id string `json:"id"`
 }
 func Overview(c *fiber.Ctx) (error) {
@@ -1404,8 +1405,8 @@ func Overview(c *fiber.Ctx) (error) {
 		}
 		return c.JSON(response)
 	}
-	formattedDate := startDate.Format("2006-01-02")
-	fmt.Printf("Startdate: %s \n", formattedDate)
+//	formattedDate := startDate.Format("2006-01-02")
+	//fmt.Printf("Startdate: %s \n", formattedDate)
 
 	
 
@@ -1413,7 +1414,7 @@ func Overview(c *fiber.Ctx) (error) {
 
 	db, _err := handler.GetDBFromContext(c)
 	prefix := c.Locals("Prefix")
-	fmt.Println("prefix:", prefix)
+	//fmt.Println("prefix:", prefix)
 	if _err != nil {
 
 		// response := fiber.Map{
@@ -1427,7 +1428,7 @@ func Overview(c *fiber.Ctx) (error) {
 		db, _ = database.ConnectToDB(prefix.(string))
 	}
 	id := c.Locals("Walletid")
-	u_err := db.Debug().Where("id= ?", id).Find(&partner).Error
+	u_err := db.Where("id= ?", id).Find(&partner).Error
 
 	if u_err != nil {
 
@@ -1442,11 +1443,11 @@ func Overview(c *fiber.Ctx) (error) {
 		return c.JSON(response)
 	}
 
-	fmt.Printf(" Partner: %+v \n",partner)
+	//fmt.Printf(" Partner: %+v \n",partner)
 
 	member := []models.Users{}
 
-	result := db.Debug().Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	result := db.Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
 	if result.Error != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1482,7 +1483,7 @@ func Overview(c *fiber.Ctx) (error) {
 	
 	
 	//var exists bool
-	//result := db.Debug().Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	//result := db.Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
 	type TransactionResult struct {
 		UserID      uint            `json:"userid"`
 		Username    string          `json:"username"`
@@ -1496,7 +1497,7 @@ func Overview(c *fiber.Ctx) (error) {
 	// ใช้ GORM query
 	var results []TransactionResult
 	
-	err = db.Debug().Table("BankStatement").
+	err = db.Table("BankStatement").
 		Select(`
 			BankStatement.userid,
 			Users.username,
@@ -1562,15 +1563,15 @@ func Overview(c *fiber.Ctx) (error) {
 
 	// dbm := ConnectMaster()
 
-	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+	// dbm.Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
 
 	// defer dbm.Close()
 	
 
-	for i := range member {
+	//for i := range member {
 		
-		pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
-		fmt.Printf(" pro_setting: %+v",pro_setting)
+		//pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
+		//fmt.Printf(" pro_setting: %+v",pro_setting)
 		//turnType, ok := pro_setting["TurnType"].(string)
         // if !ok {
         //     return c.JSON(fiber.Map{
@@ -1590,7 +1591,7 @@ func Overview(c *fiber.Ctx) (error) {
 		// 	}	
 		// }
 		
-	}
+	//}
 
 
 	// type Overview struct {
@@ -1645,7 +1646,7 @@ func Overview(c *fiber.Ctx) (error) {
 
 
 
-func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
+func GetOverview(body OBody) (OverviewResponse,error) {
 
 	
 	
@@ -1658,8 +1659,8 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 		// return c.JSON(response)
 		fmt.Printf(" %s ",err.Error())
 	}
-	formattedDate := startDate.Format("2006-01-02")
-	fmt.Printf("Startdate: %s \n", formattedDate)
+	//formattedDate := startDate.Format("2006-01-02")
+	//fmt.Printf("Startdate: %s \n", formattedDate)
 
 	
 
@@ -1681,7 +1682,8 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 		//db, _ = database.ConnectToDB(prefix.(string))
 	//}
 	//id := c.Locals("Walletid")
-	u_err := db.Debug().Where("id= ?", body.Id).Find(&partner).Error
+	db, _ := database.ConnectToDB(body.Prefix)
+	u_err := db.Where("id= ?", body.Id).Find(&partner).Error
 
 	if u_err != nil {
 		fmt.Printf(" %s ",u_err)
@@ -1696,11 +1698,11 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 		// return c.JSON(response)
 	}
 
-	fmt.Printf(" Partner: %+v \n",partner)
+	//fmt.Printf(" Partner: %+v \n",partner)
 
 	member := []models.Users{}
 
-	result := db.Debug().Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	result := db.Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
 	if result.Error != nil {
 		// response := fiber.Map{
 		// 	"Message": "ดึงข้อมูลผิดพลาด",
@@ -1737,7 +1739,7 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 	
 	
 	//var exists bool
-	//result := db.Debug().Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	//result := db.Model(&models.ฺBankStatement{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
 	type TransactionResult struct {
 		UserID      uint            `json:"userid"`
 		Username    string          `json:"username"`
@@ -1751,7 +1753,7 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 	// ใช้ GORM query
 	var results []TransactionResult
 	
-	err = db.Debug().Table("BankStatement").
+	err = db.Table("BankStatement").
 		Select(`
 			BankStatement.userid,
 			Users.username,
@@ -1813,15 +1815,15 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 
 	// dbm := ConnectMaster()
 
-	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+	// dbm.Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
 
 	// defer dbm.Close()
 	
 
-	for i := range member {
+	//for i := range member {
 		
-		pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
-		fmt.Printf(" pro_setting: %+v",pro_setting)
+	//	pro_setting,_ := common.GetProdetail(db,member[i].ProStatus)
+		//fmt.Printf(" pro_setting: %+v",pro_setting)
 		//turnType, ok := pro_setting["TurnType"].(string)
         // if !ok {
         //     return c.JSON(fiber.Map{
@@ -1841,7 +1843,7 @@ func getOverview(db *gorm.DB,body *OBody) (OverviewResponse,error) {
 		// 	}	
 		// }
 		
-	}
+//	}
 
 
 	

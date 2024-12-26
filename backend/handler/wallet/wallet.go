@@ -854,14 +854,14 @@ func Withdraw(c *fiber.Ctx) error {
     withdraw := BankStatement.Transactionamount
 
 	withdrawAbs := withdraw.Abs()
-
-    // เพิ่มการตรวจสอบยอดถอนกับยอดคงเหลือ
+	// fmt.Printf("Users: %+v",users)
+    // เพิ่มการตรวจสอบยอด ถอนกับยอดคงเหลือ
     if withdrawAbs.GreaterThan(users.Balance) {
-        return c.JSON(fiber.Map{
-            "Status": false,
-            "Message": fmt.Sprintf("ยอดถอนมากกว่ายอดคงเหลือในบัญชี (%v %v)", users.Balance, users.Currency),
-            "Data": fiber.Map{"id": -1},
-        })
+		return c.JSON(fiber.Map{
+			"Status": false,
+			"Message": fmt.Sprintf("ยอดถอน  %v มากกว่ายอดคงเหลือในบัญชี (%v %v)",withdrawAbs, users.Balance, users.Currency),
+			"Data": fiber.Map{"id": -1},
+		})
     }
 
 	
@@ -1213,12 +1213,20 @@ func Webhook(c *fiber.Ctx) error {
 
 				updates := map[string]interface{}{
 					"Balance": bankstatement.Balance,
+					 
 					//"Turnover": users.Turnover,
 					//"ProStatus": users.ProStatus,
 					}
-			
 				
-					_err := repository.UpdateUserFields(db, bankstatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
+				userupdate := map[string]interface{}{
+					"Balance": bankstatement.Balance,
+					"ProID":"1",
+					//"Turnover": users.Turnover,
+					//"ProStatus": users.ProStatus,
+					}
+				 
+					_err := repository.UpdateUserFields(db, bankstatement.Userid, userupdate) // อัปเดตยูสเซอร์ที่มี ID = 1
+				
 				if _err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"Status": false,
@@ -1243,7 +1251,12 @@ func Webhook(c *fiber.Ctx) error {
 			updates["status"] = 1
 			
 			if err := db.Debug().Model(&models.PromotionLog{}).Where("uid = ?",bankstatement.Uid).Updates(updates).Error; err != nil {
-				fmt.Printf(" Error %s \n",errors.New("มีข้อผิดพลาด"))
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"Status": false,
+					"Message": "เกิดข้อผิดพลาดในการอัปเดตข้อมูล",
+					"Data": fiber.Map{ 
+						"id": -1,
+					}})
 			}
 
 	} else if requestBody.Type == "payout" {
@@ -1347,6 +1360,7 @@ func Webhook(c *fiber.Ctx) error {
 			"Deposit": deposit,
 			"Withdraw": withdraw,
 			"Signup": 0,
+			"Prefix": requestBody.MerchantID,
 		}
 
 
@@ -1466,8 +1480,8 @@ func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]inte
 
 
 	var totalTurnover decimal.Decimal
-	err := db.Model(&models.TransactionSub{}).
-		Where("proid = ? AND membername = ? AND created_at >= ?", 
+	err := db.Debug().Model(&models.TransactionSub{}).
+		Where("proid = ? AND membername = ? AND date(created_at) >= date(?)", 
 			users.ProStatus, 
 			users.Username, 
 			promotionLog.CreatedAt).
@@ -1511,6 +1525,8 @@ func checkTurnCredit(db *gorm.DB, users *models.Users, pro_setting map[string]in
 		createdAt = pro_setting["CreatedAt"].(time.Time) 
 	}
   
+	fmt.Printf("ProSetting: %+v ",pro_setting)
+
 	// if err := db.Model(&models.TransactionSub{}).
     //     Where("membername = ? AND deleted_at is null", users.Username).
     //     Order("id desc").
@@ -1520,7 +1536,7 @@ func checkTurnCredit(db *gorm.DB, users *models.Users, pro_setting map[string]in
     //     return errors.New("ไม่สามารถตรวจสอบยอดเครดิต")
     // }
 
-	db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND deleted_at is null and date(created_at) >= date(?)",users.Username,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
+	db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND ProID = ? AND deleted_at is null and date(created_at) >= date(?)",users.Username,users.ProStatus,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
 
 
     minCreditStr, ok := pro_setting["MinCredit"].(string)
@@ -1580,7 +1596,7 @@ func checkTurnCredit(db *gorm.DB, users *models.Users, pro_setting map[string]in
         return fmt.Errorf("ยอดเครดิต %v น้อยกว่ายอดเครดิตขั้นต่ำ %v %v", pro_balance, requiredCredit, users.Currency)
     }
 
-    return nil
+    return  nil //fmt.Errorf("ยอดเครดิต %v น้อยกว่ายอดเครดิตขั้นต่ำ %v %v", pro_balance, requiredCredit, users.Currency) //nil
 }
 func XWithdraw(c *fiber.Ctx) error {
 

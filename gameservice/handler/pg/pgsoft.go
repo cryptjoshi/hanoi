@@ -286,12 +286,12 @@ func PlaceBet(c *fiber.Ctx) error {
 							
 							updates := map[string]interface{}{
 								"Balance": user.Balance.Add(transactionAmount),
-								"ProID":user.ProStatus,
+								//"ProID":user.ProStatus,
 								}
-							one,_ := decimal.NewFromString("1")
-							if user.Balance.Add(transactionAmount).LessThan(one) {
-								updates["pro_status"] = ""
-							}
+							// one,_ := decimal.NewFromString("1")
+							// if user.Balance.Add(transactionAmount).LessThan(one) {
+							// 	updates["pro_status"] = ""
+							// }
 							repository.UpdateUserFields(db,user.ID, updates) 
 							balanceBeforeFloat, _ := user.Balance.Float64()
 							balanceAfterFloat, _ := user.Balance.Add(transactionAmount).Float64()

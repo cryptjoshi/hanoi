@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // นำเข้า Dialog
 
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
+//import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
 import { useTranslation } from '@/app/i18n/client';
 import { formatNumber } from '@/lib/utils';
 //import Footer from '../footer';
@@ -13,11 +13,12 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Deposit, GetUserPromotion, GetUserInfo, Withdraw } from '@/actions';
-import type { User } from '@/store/auth';
-import useAuthStore from '@/store/auth';
+//import type { User } from '@/store/auth';
+//import useAuthStore from '@/store/auth';
  import { useRouter } from 'next/navigation';
+ import { cn } from "@/lib/utils"
  import { useToast } from "@/hooks/use-toast"
-
+import { getSession } from '@/actions';
 interface TransProps {
     lng:string
     slug:string
@@ -52,11 +53,12 @@ const formSchema = z.object({
 function TransactionForm({lng,slug}:TransProps) {
     //const [amount, setAmount] = useState('');
     const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
-    const [loading, setLoading] = React.useState(true);
+    const [loading, setLoading] = React.useState(false);
     const [balance, setBalance] = React.useState(0);
     const [turnover,setTurnOver] =React.useState(0);
     const [user, setUser] = React.useState<any | null>(null);
     const [currency, setCurrency] = React.useState('USD');
+    const [isBlinking, setIsBlinking] = useState(false);
     const {t} = useTranslation(lng,"home",undefined)
     const { toast } = useToast()
     const form = useForm<z.infer<typeof formSchema>>({
@@ -66,7 +68,7 @@ function TransactionForm({lng,slug}:TransProps) {
         } as z.infer<typeof formSchema>
       })
     const router = useRouter()
-    const {accessToken} = useAuthStore()
+    //const {accessToken} = useAuthStore()
   //  console.log(accessToken)
    // console.log(lng)
     //if(!accessToken)
@@ -75,28 +77,29 @@ function TransactionForm({lng,slug}:TransProps) {
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false); // สถานะสำหรับเปิดปิด Dialog
     const [qrCodeLink, setQrCodeLink] = useState<string | null>(null); // สถานะสำหรับเก็บลิงก์ QR Code
-
+    const transactionAmountWatch = form.watch('transactionamount', 0);
     //const [minTurnover, setMinTurnover] = React.useState<number>(0);
     const [bonus, setBonus] = React.useState<number>(0);
 
     React.useEffect(() => {
      
         
-        const fetchBalance = async (accessToken:string) => {
-    
+        const fetchBalance = async () => {
+          //const session = await getSession()
+
           try {
-          setLoading(true);
+        
          
           
-    
+          //setCurrency(session.customerCurrency);
         //  if (userLoginStatus.state) {
             // if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
-                  const user = await GetUserInfo(accessToken);
+                  const user = await GetUserInfo();
                 
                         if(user.Status){
                           setBalance(user.Data.balance);
                           setUser(user.Data);
-                         
+                         setCurrency(user.Data.currency)
                           setTurnOver(user.Data.turnover)
                         //  setPrefix(user.Data.prefix);
                           
@@ -114,6 +117,7 @@ function TransactionForm({lng,slug}:TransProps) {
             //   router.push(`/${lng}/login`);
             //   return;
             // }
+          
           } catch (error) {
            // router.push(`/${lng}/login`);
            console.log(error)
@@ -121,10 +125,11 @@ function TransactionForm({lng,slug}:TransProps) {
          
         };
         //const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-        const fetchPromotion = async (accessToken: string) => {
-     
+        const fetchPromotion = async () => {
+          setLoading(true);
+         // const session = await getSession()
           //if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken){
-          const promotion = await GetUserPromotion(accessToken);
+          const promotion = await GetUserPromotion();
          
           if (promotion.Status) {
           //   // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
@@ -134,7 +139,8 @@ function TransactionForm({lng,slug}:TransProps) {
           //   setBonus(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus)?.minSpendType=="deposit"?0:user?.lastproamount)
           setPromotions(promotion.Data);
           //  //console.log(promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == promotion.Data.Prostatus))
-            
+          if(promotion.Data.status!="0")
+          setIsBlinking(true)  
          } else {
          console.log(promotion.Message)
             //router.push(`/${lng}/login`)toast({
@@ -145,13 +151,15 @@ function TransactionForm({lng,slug}:TransProps) {
              
           } 
         //} 
+        setLoading(false);
+        
        }
     
-       const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-        setCurrency(userLoginStatus.state.customerCurrency);
-        fetchBalance(userLoginStatus.state.accessToken);
-        fetchPromotion(userLoginStatus.state.accessToken);
-        setLoading(false);
+        
+        
+        fetchBalance();
+        fetchPromotion();
+       
        
          
         //const lastbonus = promotion.Data.Promotions.find((promo:any) => promo.ID.toString() == user?.pro_status?.toString())?.minSpendType=="deposit"?0:user?.lastproamount
@@ -163,6 +171,7 @@ function TransactionForm({lng,slug}:TransProps) {
       }, [lng, router]);
    
     const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+      const session = await getSession()
         //e.preventDefault();
         //console.log(values)
         // const result = await form.trigger();
@@ -197,9 +206,9 @@ function TransactionForm({lng,slug}:TransProps) {
             
             //console.log(formattedValues)
 
-             if(accessToken){
+             if(session.isLoggedIn){
 
-                const response = await (slug === "deposit" ? Deposit(accessToken, formattedValues) : Withdraw(accessToken, formattedValues));
+                const response = await (slug === "deposit" ? Deposit(formattedValues) : Withdraw(formattedValues));
                 //console.log(response)
                 if(response.Status  ){
                   //const link = response.Data.link;
@@ -299,13 +308,27 @@ function TransactionForm({lng,slug}:TransProps) {
             </div>
             <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-             
-              {  // Display selected promotion name if available
-                promotions?.name || t('No Promotion') 
-              }   
-            </p>
-          </div>
+          
+            <div className="flex items-center gap-2">
+            <div
+                className={cn(
+                  "h-3 w-3 rounded-full transition-all duration-300",
+                   promotions?.status != "0" ? "bg-green-500" : "bg-red-500",
+                  isBlinking && "animate-pulse"
+                )}
+              />
+               <span className={cn(
+                "transition-opacity",
+                promotions?.status != "0" ? "text-green-500" : "text-red-500",
+                 isBlinking && "animate-pulse"
+              )}> 
+                {  // Display selected promotion name if available
+                  promotions?.Name || t('No Promotion') 
+                }   
+                </span>
+              </div>
+           
+            </div>
             <FormField
                     control={form.control}
                     name="transactionamount"
@@ -319,35 +342,9 @@ function TransactionForm({lng,slug}:TransProps) {
                     </FormItem>
                     )}
                 />
-               
-                {/* <FormField 
-                    control={form.control}
-                    name="transactionType"
-                      render={({field})=>{
-                        return (
-                        <FormItem>
-                            <FormLabel>
-                            {t('transactionType')}
-                            </FormLabel>
-                            <FormControl>
-                            <Select
-                                    value={transactionType}
-                                    onValueChange={setTransactionType}
-                                    className="mt-1"
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="เลือกประเภท" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="deposit">ฝากเงิน</SelectItem>
-                                        <SelectItem value="withdraw">ถอนเงิน</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </FormControl>
-                        </FormItem>
-                        )
-                    }}
-                /> */}
+             
+            <p>{ slug=="deposit" && transactionAmountWatch?`Result ≈ ${ (eval(promotions?.Example?.replace("deposit", isNaN(transactionAmountWatch)?0:transactionAmountWatch)))?.toFixed(2)}`:""}</p>
+                    
             <Button type="submit" onClick={async () => {
               const result = await form.trigger();
               if (!result) {

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import useGameStore from "@/store/gameStore";
 import { useRouter } from "next/navigation";
-import { GetGameByProvide, getGameUrl,GetGameGC } from "@/actions";
+import { GetGameByProvide, getGameUrl,GetGameGC, getSession,getEFGameUrl } from "@/actions";
 import useAuthStore from "@/store/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
@@ -18,10 +18,13 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
   const router = useRouter()
   const [gamelist,setGameList] = useState<any[]>([{}])
   const {toast} = useToast()
-  const {accessToken,user,customerCurrency} = useAuthStore()
-  user
-  if(accessToken){
+  //const {accessToken,user,customerCurrency} = useAuthStore()
+
+ 
+
     useEffect(()=>{
+     
+  
         const fetchgame = async (id:string) =>{
             let provider = "pg"
             if(id =='9999')
@@ -39,17 +42,15 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
               "Platform": "0"
             }
             
-            const response = await GetGameByProvide(accessToken,provider,body)
+            const response = await GetGameByProvide(provider,body)
           
              if(response.Status){
                  setGameList(response.Data?.games)
              } 
             }else {
-              const bodyx = {
-                "username":user.username
-              }
+               
               
-              const responseg = await GetGameGC(accessToken,bodyx)
+              const responseg = await GetGameGC()
           
 
                if(responseg.status){
@@ -62,11 +63,11 @@ export default function GamesList({ product,id,lng }: { product:string,id:string
 
         }
       //  console.log(product)
+    
+     
         fetchgame(id)
     },[])
-  } else {
-    router.push(`/${lng}/login`)
-  }
+   
 //   const playgame = (ID:string) =>{
 //       router.push(`/${lng}/games/${ID}`)
 //   }
@@ -78,10 +79,11 @@ const openInNewTab = (url:string) => {
    let data
    const playgame = (code:string) =>{
     //console.log("product:"+product+"id:"+id)
+  
     switch(id){
       case "8888":
-         data  = {  "currency": customerCurrency || "USD", "productId": code, "username": user.username,"password":user.password, "sessionToken": accessToken,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
-        getGameUrl("http://152.42.185.164:4007/api/v1/pg/launchgame",data).then((gameurl)=>{
+        // data  = {  "currency": session.customerCurrency || "USD", "productId": code, "username": session.username,"password":session.password, "sessionToken": session.token,"callbackUrl":"http://128.199.92.45:4002/en/games/list/1/8888" }
+        getGameUrl("http://152.42.185.164:4007/api/v1/pg/launchgame",code).then((gameurl)=>{
         if(gameurl.Status){
          // url=gameurl.Data.url
         openInNewTab(gameurl.Data.url)
@@ -100,7 +102,7 @@ const openInNewTab = (url:string) => {
       // getGameUrl("http://152.42.185.164:4005/api/Auth/LaunchGame",data).then((gameurl)=>{
       // if(gameurl.Status){
        // url=gameurl.Data.url
-       console.log(gamelist[0].url)
+      // console.log(gamelist[0].url)
       openInNewTab(gamelist[0].url)
       // }else {
       //   toast({
@@ -115,15 +117,17 @@ const openInNewTab = (url:string) => {
        
         
      
-         data  = {  "currency": customerCurrency || "USD", "username": user.username,  
+         data  = {  
+        "currency": "", 
+        "username": "",  
          "ProductID": id,
          "GameType": product,
          "LanguageCode": "4",
          "Platform": "1",
-         "sessionToken": accessToken
+         "sessionToken": ""
         }
 
-         getGameUrl("http://152.42.185.164:4007/api/v1/ef/launchgame",data).then((gameurl)=>{
+         getEFGameUrl("http://152.42.185.164:4007/api/v1/ef/launchgame",data).then((gameurl)=>{
           console.log(gameurl)
           if(gameurl.Data.errorcode == "0"){
            // url=gameurl.Data.url

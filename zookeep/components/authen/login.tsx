@@ -15,7 +15,7 @@ import { useTranslation } from '@/app/i18n/client'
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {Button} from "@/components/ui/button"
-import ResponseCache from "next/dist/server/response-cache";
+import { Login } from "@/actions";
 
 // Define the schema
 const loginSchema = z.object({
@@ -27,9 +27,9 @@ const loginSchema = z.object({
 // Infer the type from the schema
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function Login({lng}:{lng:string}) {
+export default function LoginComponet({lng}:{lng:string}) {
   const router = useRouter();
-  const { Signin, isLoggedIn } = useAuthStore();
+  //const { Signin, isLoggedIn } = useAuthStore();
   const [showing,setShowing] = React.useState(false)
   const { t } = useTranslation(lng, 'login', undefined  )
   const {toast} = useToast()
@@ -49,8 +49,14 @@ export default function Login({lng}:{lng:string}) {
     setIsSubmitting(true);
     try {
       data.prefix = data.prefix || "ckd"
-      const response:any = await Signin(data);  
-    
+      const response:any = await Login({
+        username: data.username, password: data.password, prefix: data.prefix,
+        fullname: "",
+        referred_by: "",
+        banknumber: "",
+        bankname: ""
+      });  
+     
      
      if (response.Status) {
   
@@ -80,11 +86,11 @@ export default function Login({lng}:{lng:string}) {
     location.replace(`/${lng}/register`)
 }
 
-  React.useEffect(() => {
-  if (isLoggedIn) {
-      router.push(`/${lng}/home`);  
-  }
-}, [isLoggedIn, router]);
+//   React.useEffect(() => {
+//   if (isLoggedIn) {
+//       router.push(`/${lng}/home`);  
+//   }
+// }, [isLoggedIn, router]);
 
   return (
     <>

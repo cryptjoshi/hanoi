@@ -5,7 +5,8 @@ import { Card } from "../ui/card"
 import { Avatar } from "../ui/avatar"
 import useAuthStore from "@/store/auth"
 import { useRouter } from "next/navigation"
-
+import { getSession, Logout } from "@/actions"
+import {useState,useEffect} from 'react'
 interface routeFoot {
   label:string
   route:string
@@ -17,18 +18,27 @@ const footRouter:routeFoot[] = [{label:"home",route:"home"},{label:"deposit",rou
 function Footer() {
 
    
-    
+    const [lng,setLng] = useState("")
     //const {t} = useTranslation(lng,"home",undefined)
    // const { t } = useTranslation(lng,'home',undefined);
+    
+   useEffect(()=>{
+     const fetchSession = async ()=>{
+      const session = await getSession()
+      setLng(session.lng)
+    }
+    fetchSession()
+   },[lng])
 
+    //const {Logout,lng} = useAuthStore();
 
-
-    const {Logout,lng} = useAuthStore();
     const { t } = useTranslation(lng,'home',undefined);
+ 
     const router = useRouter();
     const handleSignOut = () => {
+        //console.log(lng)
         Logout();
-        router.push(`/${lng}/login`);
+       // router.push(`/${lng}/login`);
       };
 return (
     <>

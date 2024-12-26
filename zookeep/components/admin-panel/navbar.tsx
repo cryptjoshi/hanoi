@@ -32,7 +32,7 @@ export function Navbar({ title }: NavbarProps) {
           {/* <Button variant="ghost" size="icon"><MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
           <Button variant="ghost" size="icon"><Bell className="h-4 w-4 sm:h-5 sm:w-5" /></Button> */}
           <ModeToggle />
-          <LanguageSwitcher />
+          {/* <LanguageSwitcher /> */}
         </div>
       </div>
     </header>

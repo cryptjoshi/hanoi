@@ -19,17 +19,26 @@ import { Button } from "../ui/button"
 import { TransactionTable } from "./transaction"
 import { HistoryTable } from "./statement"
 import { HistoryPromotion } from "./promotionlog"
+import { getSession } from "@/actions"
 
 export function History({lng}:{lng:string}) {
     const [history,setHistory] = useState<any[]>([])
     const [statement,setStatement] = useState<any[]>([])
     const [promotionlog,setPromotionlog] = useState<any[]>([])
-    const { accessToken,user } = useAuthStore()  
+    const [username,setUsername] = useState<string>("")
+    //const { accessToken,user } = useAuthStore()  
     const router = useRouter()
     const { t } = useTranslation(lng,'translation' ,undefined);
+
     useEffect(() => {
-       if(accessToken){
-       GetHistory(accessToken,user.prefix).then((response:any) => {
+
+      const fetchHistory = async () =>{
+        const session = await getSession()
+        
+       if(session.isLoggedIn){
+
+       setUsername(session.username)
+       GetHistory(session.token,session.prefix).then((response:any) => {
        if(response.Status){
             setHistory(response.Data)
             
@@ -42,7 +51,7 @@ export function History({lng}:{lng:string}) {
         }
         })
 
-        GetTransaction(accessToken,user.prefix).then((response:any) => {
+        GetTransaction(session.token,session.prefix).then((response:any) => {
       
           if(response.Status){
               setStatement(response.Data)
@@ -56,10 +65,10 @@ export function History({lng}:{lng:string}) {
           }
         })
 
-        GetPromotion(accessToken).then((response:any) => {
+        GetPromotion(session.token).then((response:any) => {
         //console.log(response)
           if(response.Status){
-               console.log(response.Data)
+             //  console.log(response.Data)
                setPromotionlog(response.Data)
                
            } else {
@@ -73,6 +82,9 @@ export function History({lng}:{lng:string}) {
        } else {
         router.push(`/${lng}/login`)
        }
+      }
+
+      fetchHistory()
     }, [])
 
     const callwebhook = (item:any) => {
@@ -89,7 +101,7 @@ export function History({lng}:{lng:string}) {
               "TransactionID":item.Uid,
               "isExpired":0,
               "verify":1,
-              "ref":user.Username,
+              "ref":username,
               "merchantID":item.Prefix,
               "type":"payin" /* payin,payout */ 
           })
@@ -127,7 +139,7 @@ export function History({lng}:{lng:string}) {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
-          <HistoryPromotion history={promotionlog}  />
+          <HistoryPromotion lng={lng} history={promotionlog}  />
       </CardContent>
     </Card>
       </TabsContent>

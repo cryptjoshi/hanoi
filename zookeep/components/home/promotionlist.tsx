@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import useAuthStore from '@/store/auth'
  
+
 import {
   Carousel,
   CarouselContent,
@@ -15,6 +16,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+
+import { getSession } from '@/actions';
+
 
 export interface Promotion {
   ID: string;
@@ -25,23 +29,25 @@ export interface Promotion {
 }
 
 interface PromotionListProps {
-  prefix: string;
+
   lng: string;
   promotions: Promotion[];
   onSelectPromotion: (promotion: Promotion) => void;
 }
 
-export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: PromotionListProps) => {
+export const PromotionList = ({ lng, promotions, onSelectPromotion }: PromotionListProps) => {
   const router = useRouter();
   const { t } = useTranslation(lng, 'translation', undefined);
   const { toast } = useToast();
-  const { accessToken } = useAuthStore()
+  //const { accessToken } = useAuthStore()
 
 //   const handleAccept =  (item: Promotion) => {
 //     const acceptPromotion = async () => {
- 
-//     if(accessToken && prefix!=""){
-//     const res = await UpdateUser(accessToken,{"prefix":prefix,"pro_status":item.ID})
+//     // const session = await getSession()
+//     // if(session.token && session.prefix!=""){
+
+//     const res = await UpdateUser({"pro_status":item.ID.toString()})
+  
 //     if(res.Status){
 //     toast({
 //       title: t('common.success'),
@@ -57,14 +63,14 @@ export const PromotionList = ({ prefix, lng, promotions, onSelectPromotion }: Pr
 //     })
 //    // router.push(`/${lng}/login`);
 //   }
-// } else {
-//   toast({
-//     title: t('common.unsuccess'),
-//     description: t('common.loginFirst'),
-//     variant: "destructive",
-//   })
-//  // router.push(`/${lng}/login`);
-// }
+// // } else {
+// //   toast({
+// //     title: t('common.unsuccess'),
+// //     description: t('common.loginFirst'),
+// //     variant: "destructive",
+// //   })
+// //  // router.push(`/${lng}/login`);
+// // }
 // }
 //   acceptPromotion()
 // }

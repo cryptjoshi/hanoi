@@ -15,12 +15,12 @@ export default function  GameList({ id,lng }: { id:string,lng:string }) {
   const [gameid,setGameId] =useState(id)
   const router = useRouter()
   const [gamelist,setGameList] = useState<any[]>([{}])
-  const {accessToken} = useAuthStore() 
+  //const {accessToken} = useAuthStore() 
 
-  if(accessToken){
+  
     useEffect(()=>{
         const fetchgame = async (id:string) =>{
-            const response = await GetGameByType(accessToken,id)
+            const response = await GetGameByType(id)
             console.log(response)
             if(response.Status){
                 setGameList(response.Data)
@@ -30,9 +30,7 @@ export default function  GameList({ id,lng }: { id:string,lng:string }) {
         }
         fetchgame(id)
     },[])
-  } else {
-    router.push(`/${lng}/login`)
-  }
+  
 //   const playgame = (ID:string) =>{
 //       router.push(`/${lng}/games/${ID}`)
 //   }

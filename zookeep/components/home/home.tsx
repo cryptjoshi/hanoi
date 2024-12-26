@@ -8,14 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import  type { JSX } from 'react';
 import { useTranslation } from '@/app/i18n/client';
-import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion } from '@/actions';
+import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion, GetUserPromotion } from '@/actions';
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
 import GameList from './homegamelist';
 import {Promotion,PromotionList} from './promotionlist';
 import { useToast } from '@/hooks/use-toast';
-
+import { getSession } from '@/actions';
+import { cn } from "@/lib/utils"
 type PromotionFilter = {
   ID: string
   name: string
@@ -31,9 +32,11 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const [balance, setBalance] = React.useState<number>(0);
   const [user, setUser] = React.useState<any>(null);
   const [promotions, setPromotions] = React.useState<any[]>([]);
+  const [userPro,setUserPro] = React.useState<any>()
   const [currency, setCurrency] = React.useState<string>('USD');
-
-  const {prefix,Logout,setPrefix} = useAuthStore();
+  const [isBlinking, setIsBlinking] = useState(false);
+  //const session = getSession()
+  //const {prefix,Logout,setPrefix} = useAuthStore();
   // const handleSignOut = () => {
   //   Logout();
   //   router.push(`/${lng}/login`);
@@ -46,18 +49,17 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
 
   const { toast } = useToast();
  // const { accessToken } = useAuthStore()
-  const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
-  const [token, setToken] = useState<string>(userLoginStatus.state?.accessToken);
+ // const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+  //const [token, setToken] = useState<string>(userLoginStatus.state?.accessToken);
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {
      
-      //console.log(token,prefix)
-      //console.log(promotion)
+      const session = await getSession()
       
-      if(token && prefix!=""){
+    
      
-        const res = await UpdateUserPromotion(token,{"prefix":prefix,"pro_status":promotion.ID})
+      const res = await UpdateUserPromotion({"prefix":session.prefix,"pro_status":promotion.ID.toString()})
      
       if(res.Status){
       toast({
@@ -76,14 +78,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       })
      // router.push(`/${lng}/login`);
     }
-  } else {
-    toast({
-      title: t('common.unsuccess'),
-      description: t('common.loginFirst'),
-      variant: "destructive",
-    })
-    router.push(`/${lng}/login`);
-  }
+ 
   }
   
   accepted(promotion)
@@ -91,24 +86,29 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   }
 
   React.useEffect(() => {
-    const fetchBalance = async () => {
+  
 
+    const fetchBalance = async () => {
+      const session = await getSession()
       try {
-      setLoading(true);
-      const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
+     
+      
     
       
  
     
-                if(userLoginStatus.state.isLoggedIn && userLoginStatus.state.accessToken) {
-        const user:any = await GetUserInfo(userLoginStatus.state.accessToken);
-     
+       //         if(session.isLoggedIn && session.token) {
+        const user:any = await GetUserInfo();
+      
         if(user.Status){
+          
           setBalance(user.Data.balance);
        
           setUser(user.Data);
-          setCurrency(userLoginStatus.state.customerCurrency);
-          setPrefix(user.Data.prefix);
+         
+          session.customerCurrency = user.Data.currency
+          setCurrency(session.customerCurrency);
+          //setPrefix(user.Data.prefix);
            
          } else {
           
@@ -120,14 +120,14 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           setBalance(user.Data.balance);
        
           setUser(user.Data);
-          setCurrency(userLoginStatus.state.customerCurrency);
-          setPrefix(user.Data.prefix);
+          //setCurrency(session.customerCurrency);
+          //setPrefix(user.Data.prefix);
          }  
      
-      } else {
-        router.push(`/${lng}/login`);
-        return;
-        }
+      // } else {
+      //   router.push(`/${lng}/login`);
+      //   return;
+      //   }
      
       } catch (error) {
        // router.push(`/${lng}/login`);
@@ -136,18 +136,24 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
      
     };
 
+    const fetchPromotion = async () => {
+      
 
-    fetchBalance();
-    setLoading(false);
-   
-  }, [lng, router]);
-
-  React.useEffect(() => {
-    const fetchPromotion = async (prefix: string) => {
-      setIsLoading(true);
-      if(token){
-      const promotion = await GetPromotion(token);
-      console.log(promotion)
+      // const session = await getSession()
+      // if(session.token){
+      const user_pro = await GetUserPromotion();
+      
+      if(user_pro.Status){
+        if(parseInt(user_pro.Data.status)>0){
+          setIsBlinking(true);
+        } else {
+          setIsBlinking(false);
+        }
+        setUserPro(user_pro.Data)
+        //setBalance(user_pro.Data.after_balance);
+      }
+      const promotion = await GetPromotion();
+     
       if (promotion.Status) {
         // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
         //console.log(promotion.Data)
@@ -210,18 +216,22 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       });
         return;
       }
-    } else {
-      router.push(`/${lng}/login`);
-      return;
-    }
-  }
-    fetchPromotion(prefix);
+    // } else {
+    //   router.push(`/${lng}/login`);
+    //   return;
+    // }
     
-    setIsLoading(false);
-  }, [prefix, user?.pro_status, t])
-  // if(!isLoading){
-  //   console.log(user)
-  // }
+    }
+    //setIsLoading(true);
+    
+    fetchBalance();
+    fetchPromotion();
+    setLoading(false);
+    
+  }, [ user?.pro_status, t])
+
+ 
+  
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
       <div className="p-4 sm:p-6">
@@ -238,13 +248,27 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
           <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              
+            <div className="flex items-center gap-2">
+            {/* <div
+                className={cn(
+                  "h-3 w-3 rounded-full transition-all duration-300",
+                  promotions.status != "0" ? "bg-green-500" : "bg-red-500",
+                  isBlinking && "animate-pulse"
+                )}
+              /> */}
+             
+                <span className={cn(
+                "transition-opacity",
+                parseInt(userPro?.status) > 0 ? "text-green-500" : "text-red-500",
+                isBlinking && "animate-pulse"
+              )}>
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :    promotions?.promotionname || t('noPromotion')  // Changed ID to id and added fallback text
+                :    userPro?.Name || t('noPromotion')  // Changed ID to id and added fallback text
               }   
-            </p>
+              
+           </span>
+       </div>
           </div>
         </div>
       </div>
@@ -255,16 +279,16 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
     
  
      
-      <GameList prefix={prefix} includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
+      <GameList  includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
  
-      {isLoading ? <div>Loading...</div> : (
+      
       <PromotionList 
-        prefix={prefix} 
+        
         lng={lng} 
         promotions={user?.promotionlog}
         onSelectPromotion={accpetedPromotion} 
       />
-      )}
+     
 
     
      <div className="p-4 sm:p-6">

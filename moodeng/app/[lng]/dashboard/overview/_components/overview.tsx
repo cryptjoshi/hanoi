@@ -130,6 +130,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
         //const message = decompressData(newMessage)
         console.log('Received message:', newMessage);
         fetchGames();
+        setMessages("")
       }, 3000);
 
       //console.log('Received message:', newMessage);

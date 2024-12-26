@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { GetGameStatus } from '@/actions'
+import { getSession } from '@/actions'
 
 type GameStatus = {
   // กำหนดโครงสร้างข้อมูลของ GameStatus ตามที่ API ส่งกลับมา
@@ -10,12 +11,15 @@ interface GameStore {
   fetchGameStatus: (prefix: string,token:string) => Promise<void>
 }
 
+
 const useGameStore = create<GameStore>((set) => ({
   gameStatus: null,
-  fetchGameStatus: async (prefix: string,token:string) => {
+  fetchGameStatus: async (token:string) => {
+
+    const session = await getSession()
     set({gameStatus:null})
     try {
-      const response = await GetGameStatus(prefix,token)
+      const response = await GetGameStatus()
   
        if(response && response.Status){
         const mappedData = response.Data.map((item: any) => {

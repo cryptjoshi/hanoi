@@ -3,7 +3,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { languages } from '@/app/i18n/settings'
 import { useState, useEffect } from 'react'
 import { TbLanguage } from 'react-icons/tb'
-
+import { getSession } from '@/actions'
 import { hasFlag } from 'country-flag-icons'
 import * as CountryFlags from 'country-flag-icons/react/3x2'
 import { Tooltip, TooltipProvider, TooltipTrigger } from './ui/tooltip'
@@ -20,8 +20,15 @@ export default function LanguageSwitcher() {
   const [currentLang, setCurrentLang] = useState('')
 
   useEffect(() => {
+    const fetchLng = async () =>{
+
+    const session = await getSession()
     const lang = pathname?.split('/')[1] || languages[0]
+    session.lng = lang
     setCurrentLang(lang)
+
+    }
+    fetchLng()
   }, [pathname])
 
   const handleLanguageChange = () => {

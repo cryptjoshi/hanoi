@@ -1,37 +1,28 @@
-"use client";
-import Link from "next/link";
+
 import { ContentLayout } from "@/components/admin-panel/content-layout";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from "@/components/ui/breadcrumb";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
-import { useTranslation } from "@/app/i18n/client";
-import WalletInterface from "@/components/home/WalletInterface";
+import { useTranslation } from "@/app/i18n";
+
 import HomePage from "@/components/home/home";
+import { getSession } from "@/actions";
+import { redirect } from "next/navigation";
+
 //import { useTranslation } from '@/app/i18n'
 
-export default  function DashboardPage({ params: { lng } }: { params: { lng: string } }) {
+export default async function DashboardPage({ params: { lng } }: { params: { lng: string } }) {
   //const { t } = await useTranslation(lng)
-  const { t } =  useTranslation(lng,'translation' ,'menu');
-  const sidebar = useStore(useSidebar, (x) => x);
-  if (!sidebar) return null;
-  const { settings, setSettings } = sidebar;
+  const { t } = await useTranslation(lng,'translation' ,'menu');
+  const session = await getSession();
+  //const sidebar = useStore(useSidebar, (x) => x);
+  //if (!sidebar) return null;
+  //const { settings, setSettings } = sidebar;
+//console.log(session)
+  if(!session.isLoggedIn)
+    redirect(`/${lng}/login`)
   return (
     <ContentLayout title="Dashboard">
+      
         <HomePage lng={lng}/>
     </ContentLayout>
   );

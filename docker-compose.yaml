@@ -68,7 +68,7 @@ services:
     container_name: zookeep
     build:
         context: ./zookeep
-        dockerfile: ./Dockerfile
+        dockerfile: ./dev.Dockerfile
         target: development
     volumes:
         - ./zookeep:/app

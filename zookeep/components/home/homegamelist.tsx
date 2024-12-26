@@ -8,11 +8,11 @@ import { User } from 'lucide-react';
 import { GameStatus } from '@/lib/zod/gameStatus';
 
 
-const GameList = ({ prefix,lng,includegames,excludegames }: { prefix: string,lng:string,includegames:string,excludegames:string }) => {
+const GameList = ({ lng,includegames,excludegames }: { lng:string,includegames:string,excludegames:string }) => {
   const { gameStatus, fetchGameStatus } = useGameStore()
   const [games,setGames] = useState<any>()
   const {t} = useTranslation(lng,'translation',undefined);
-  const {accessToken} = useAuthStore()
+  //const {accessToken} = useAuthStore()
   const router = useRouter()
   const [isLoading,setIsLoading] = useState<boolean>(false)
 
@@ -25,16 +25,16 @@ const GameList = ({ prefix,lng,includegames,excludegames }: { prefix: string,lng
     
     setIsLoading(true)
 
-    if(accessToken){
-      fetchGameStatus(prefix,accessToken)
+    //if(accessToken){
+      fetchGameStatus()
       
       
-    } else {
-       router.push(`/${lng}/login`)
-    }
+   // } else {
+  //     router.push(`/${lng}/login`)
+  //  }
     setIsLoading(false)
     //console.log('fetchGameStatus',gameStatus)
-  }, [prefix, fetchGameStatus])
+  }, [fetchGameStatus])
 
   if (isLoading) {
     return <div>Loading game status...</div>

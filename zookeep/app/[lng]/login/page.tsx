@@ -15,6 +15,6 @@ export default function LoginPage({ params }: { params: { lng: string } }) {
       i18n.changeLanguage(params.lng);
     }
   }, [i18n, params.lng]);
-
-  return <Login lng={params.lng} />;
+ 
+  return <Login lng={params.lng}  />;
 }

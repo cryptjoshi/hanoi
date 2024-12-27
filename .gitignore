@@ -318,3 +318,11 @@ database/sys/sys_config.ibd
 database/binlog.000006
 
 database/#innodb_redo/#ib_redo10_tmp
+caddy_data/caddy/certificates/local/games.tsxbet.net/games.tsxbet.net.crt
+caddy_data/caddy/certificates/local/games.tsxbet.net/games.tsxbet.net.key
+caddy_data/caddy/certificates/local/gclub.tsxbet.net/gclub.tsxbet.net.crt
+caddy_data/caddy/certificates/local/gclub.tsxbet.net/gclub.tsxbet.net.key
+caddy_data/caddy/certificates/local/pro.tsxbet.net/pro.tsxbet.net.crt
+caddy_data/caddy/certificates/local/pro.tsxbet.net/pro.tsxbet.net.key
+caddy_data/caddy/certificates/local/games.tsxbet.net/games.tsxbet.net.crt
+caddy_data/caddy/certificates/local/games.tsxbet.net/games.tsxbet.net.crt

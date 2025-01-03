@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"log"
@@ -18,6 +20,23 @@ import (
 	
 )
 
+var ctx = context.Background()
+var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
+var redis_master_port = "6379" 
+
+
+
+
+func createRedisClient() *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr: redis_master_host + ":" + redis_master_port,
+	})
+}
+// ฟังก์ชันตรวจสอบการเชื่อมต่อ Redis
+func checkRedisConnection(redisClient *redis.Client) error {
+	_, err := redisClient.Ping(ctx).Result()
+	return err
+}
 
 func loadDatabase() {
 	if err := database.Connect(); err != nil {
@@ -25,6 +44,8 @@ func loadDatabase() {
 	}
 
 }
+
+ 
 
 func DropTable () {
 
@@ -55,6 +76,13 @@ func handleError(err error) {
 
 func main() {
 
+	
+	redisClient := createRedisClient()
+	defer redisClient.Close()
+	if err := checkRedisConnection(redisClient); err != nil {
+		log.Fatalf("Error connecting to Redis: %v", err)
+	}
+	
 	app := fiber.New()
 
 	app.Use(func(c *fiber.Ctx) error {
@@ -72,7 +100,7 @@ func main() {
 
 	app.Use(logger.New())
 
-	route.SetupRoutes(app)
+	route.SetupRoutes(app,redisClient)
  
 
     // เรียกใช้ฟังก์ชันจาก efinity.go

@@ -167,7 +167,7 @@ func getEnv(key, defaultValue string) string {
 }
 
 
-func evaluateExpression(expression string) (decimal.Decimal, error) {
+func EvaluateExpression(expression string) (decimal.Decimal, error) {
     // Create a new evaluator
     expr, err := govaluate.NewEvaluableExpression(expression)
     if err != nil {
@@ -385,6 +385,7 @@ func CheckPro(db *gorm.DB, users *models.Users) (map[string]interface{}, error) 
 		response["Widthdrawmax"] = promotion.MaxSpend
 		response["Widthdrawmin"] = promotion.Widthdrawmin
 		response["MinTurnover"] = promotion.MinSpend
+		response["Example"] = promotion.Example
 		//response["count"] = promotion.UsageLimit
 		response["Formular"] = promotion.Example
 		response["Name"] = promotion.Name
@@ -429,247 +430,173 @@ func checkActived(db *gorm.DB,ID int) error { //user *models.Users) error {
 	return nil
 }
  
-func Deposit(c *fiber.Ctx) error {
+func Deposit(db *gorm.DB,pro_setting map[string]string,BankStatement *models.BankStatement) (fiber.Map,error) {
+	
+	users  := models.Users{}
+	
+	//BankStatement := new(models.BankStatement)
+
+	 Id,err := strconv.Atoi(pro_setting["Id"])
+	 if err != nil {
+		fmt.Println("Error:", err) 
+	 }
+	
+
+	 if err := db.Debug().Model(models.Users{}).Where("id = ?",Id).First(&users).Error; err != nil {
+		fmt.Println(err)
+		return fiber.Map{},fmt.Errorf( "ระบบธนาคาร เกิดข้อผิดผลาด 446 %s",err)
+	 }
+
+	//balance,_ := decimal.NewFromString(pro_setting["balance"])
+	before,_ := decimal.NewFromString(pro_setting["before_balance"])
+    after,_ := decimal.NewFromString(pro_setting["after_balance"])
+	bonus,_ := decimal.NewFromString(pro_setting["bonus_amount"])
+	amount,_ := decimal.NewFromString(pro_setting["amount"])
+
+	BankStatement.Userid = Id  
+	BankStatement.Walletid  = Id
+	BankStatement.Beforebalance = before
+	BankStatement.Balance = after
+	BankStatement.Proamount = bonus
+	BankStatement.Transactionamount = amount
+  
+ 
+
+	
+	 
+	
+	if users.Bankname == "" && users.Banknumber == "" {
+		return fiber.Map{},fmt.Errorf("หมายเลขบัญชีไม่ถูกต้อง")
+	}
+	
+	BankStatement.Bankname = users.Bankname
+	BankStatement.Accountno = users.Banknumber
+
+	request := &PayInRequest{
+		Ref:            users.Username,
+		BankAccountName: users.Fullname,
+		Amount:         pro_setting["amount"],
+		BankCode:       users.Bankname,
+		BankAccountNo:  users.Banknumber,
+		MerchantURL:    "https://www.xn--9-twft5c6ayhzf2bxa.com/",
+	}
+	
+	var result PayInResponse
+	result, err = paying(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
+	if err != nil {
+		return fiber.Map{},fmt.Errorf( "ระบบธนาคาร เกิดข้อผิดผลาด 486 %s",err.Error())
+	}
+	if result.TransactionID != "" {
+		transactionID := result.TransactionID
+		BankStatement.Uid = transactionID
+		BankStatement.Prefix =  result.MerchantID
+	}
+	
+	BankStatement.Status = "waiting"
+	BankStatement.StatementType = "Deposit"
+	BankStatement.Detail = result.Link
+	// event statement log
+
+	resultz := db.Debug().Create(&BankStatement); 
+	if resultz.Error != nil {
+		return fiber.Map{},fmt.Errorf( "ระบบธนาคาร เกิดข้อผิดผลาด 501 %s",resultz.Error)
+	}
+
+
+
+	promotionLog := models.PromotionLog{
+
+		UserID: BankStatement.Userid,
+		WalletID: BankStatement.Userid,
+		StatementID: BankStatement.ID,
+		Promotionname: pro_setting["Name"],
+		Beforebalance: BankStatement.Beforebalance,
+		//BetAmount: BankStatement.BetAmount,
+		Promotioncode: pro_setting["proID"],
+		Transactionamount: BankStatement.Transactionamount,
+		Promoamount: BankStatement.Balance,
+		Proamount: BankStatement.Proamount,
+		Balance: BankStatement.Balance,
+		Example: pro_setting["Example"],
+		Uid: BankStatement.Uid,
+		Status: 0,
+		// Add other necessary fields for the promotion log
+	}
+	if err := db.Create(&promotionLog).Error; err != nil {
+		return fiber.Map{},fmt.Errorf( "ระบบธนาคาร เกิดข้อผิดผลาด 525 %s",err)
+	}
+	 
+
+
+	// if err := db.Create(&promotionLog).Error; err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "Failed to log promotion",
+	// 		"Data": fiber.Map{
+	// 			"id": -1,
+	// 		}})
+	// }
+	return  fiber.Map{ 
+			"id": BankStatement.Uid,
+			"link": BankStatement.Detail,
+			"beforebalance":BankStatement.Beforebalance,
+			"balance": BankStatement.Balance,
+		},nil
+	 
+}
+
+func XDeposit(db *gorm.DB,userID string,BankStatement *models.BankStatement) (fiber.Map,error) {
 
 	// user := c.Locals("user").(*jtoken.Token)
 	// 	claims := user.Claims.(jtoken.MapClaims)
 	var users models.Users
-	var promotionLogID int
-	db,_ := handler.GetDBFromContext(c)
-	id := c.Locals("ID").(int)
-	BankStatement := new(models.BankStatement)
-	if err := c.BodyParser(BankStatement); err != nil {
 	 
-		return c.Status(200).SendString(err.Error())
-	}
-    if err_ := db.Where("walletid = ? ", id).First(&users).Error; err_ != nil {
-		return c.JSON(fiber.Map{
-			"Status": false,
-			"Message": err_,
-			"Data": fiber.Map{ 
-				"id": -1,
-			}})
-    }
-	pro_setting, err := CheckPro(db, &users) 
-
-	fmt.Printf("343 line Deposit %+v \n",BankStatement)
-	fmt.Printf("pro_setting: %v \n",pro_setting)
-
-
-
-
+	Id,err := strconv.Atoi(userID)
 	if err != nil {
-		fmt.Printf("err: %v \n",err)
-		return c.JSON(fiber.Map{
-			"Status": false,
-			"Message":  err,
-			"Data": fiber.Map{
-				"id": -1,
-			}})
+	   fmt.Println("Error:", err) 
 	}
+	 
+	//BankStatement := new(models.BankStatement)
+	 
+    if err_ := db.Where("id = ? ", Id).First(&users).Error; err_ != nil {
+		return  nil,err_ 
+	
+    }
+	 
 
-	BankStatement.Userid = id
-	BankStatement.Walletid = id
+
+
+
+	BankStatement.Userid = Id
+	BankStatement.Walletid = Id
 	BankStatement.BetAmount = BankStatement.BetAmount
 	BankStatement.Beforebalance = users.Balance
 	if BankStatement.Amount.GreaterThan(decimal.Zero) {
 	BankStatement.Transactionamount = BankStatement.Amount
 	}
 	deposit := BankStatement.Transactionamount
-	fmt.Printf("450 line Deposit %v \n",deposit)
+	 
 	//BankStatement.ProID = users.ProStatus
 	//turnoverdef = strings.Replace(users.MinTurnoverDef, "%", "", 1) 
 	//var result decimal.Decimal
 	//var percentValue decimal.Decimal
 	//var percentStr = ""
-	var zeroBalance bool
-	var balanceIncrease decimal.Decimal
+	//var zeroBalance bool
+	//var balanceIncrease decimal.Decimal
 	//fmt.Printf("deposit: %v ",deposit)
 	// fmt.Printf("TurnType: %v ",pro_setting["TurnType"])
 	// fmt.Printf("MinCredit: %v ",pro_setting["MinCredit"])
 
-	fmt.Printf("pro_setting: %v \n",pro_setting["Zerobalance"])
-
-	if pro_setting != nil {
-		if pro_setting["Zerobalance"] == 1 {
-			zeroBalance = users.Balance.IsZero() && deposit.GreaterThan(decimal.Zero)
-		} else {
-			zeroBalance =  users.Balance.LessThan(decimal.NewFromInt(1)) && deposit.GreaterThan(decimal.Zero)
-		}
-		fmt.Printf("386 line\n	")
-		fmt.Printf("zeroBalance: %v \n",zeroBalance)
-		fmt.Printf("pro_setting: %+v \n",pro_setting)
-		if zeroBalance == true  {
-		
-
-		// New code to log to promotionlog
-		//fmt.Printf("Prosetting: %v ",pro_setting)
-
-		// Ensure pro_setting["Example"] is not nil before type assertion
-
-		//fmt.Printf("deposit > 0 : %v ",deposit.GreaterThan(decimal.Zero))
-
-	 
-			
-
-			Formular, ok := pro_setting["Formular"].(string)
-			fmt.Printf("Formular: %v \n",Formular)
-			if !ok {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"Status": false,
-					"Message": "Promotion example is not a valid string",
-					"Data": fiber.Map{
-						"id": -1,
-					}})
-			}
-			//BankStatement.Proamount = BankStatement.Transactionamount
-			// Calculate the new balance using the example from pro_setting
-
-			
-
-			
-			minDept := pro_setting["minDept"].(decimal.Decimal)
-			if deposit.LessThan(minDept) {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"Status": false,
-					"Message": "ยอดเงินฝากน้อยกว่ายอดฝากขั้นต่ำของโปรโมชั่น",
-					"Data": fiber.Map{
-						"id": -1,
-					}})
-			}
-			//fmt.Printf(" %v ", deposit)
-			//fmt.Printf(" %v ", Formular)
-
-			// Replace 'deposit' in the example with the actual value
-			Formular = strings.Replace(Formular, "deposit", deposit.String(), 1) // Convert deposit to string if necessary
-			fmt.Printf(" %v ",Formular)
-			// Evaluate the expression (you may need to implement a function to evaluate the string expression)
-			balanceIncrease, err = evaluateExpression(Formular) // Implement this function to evaluate the expression
-			if err != nil {
-				fmt.Println(err)
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"Status": false,
-					"Message": "การตั้งค่าสูตรไม่ถูกต้อง!",
-					"Data": fiber.Map{
-						"id": -1,
-					}})
-			}
-			fmt.Printf("balanceIncrease: %v ",balanceIncrease)
-			BankStatement.Proamount = balanceIncrease.Sub(deposit)
-
-
-
-			// Update BankStatement.Balance
-
-			//fmt.Printf("wallet.go 447 line pro_setting[\"maxDept\"].(decimal.Decimal): %v \n",pro_setting["maxDept"].(decimal.Decimal))
-			if balanceIncrease.Sub(deposit).GreaterThan(pro_setting["maxDept"].(decimal.Decimal)) {
-				//BankStatement.Balance = users.Balance.Add(deposit.Add(pro_setting["maxDept"].(decimal.Decimal)))
-				BankStatement.Balance = deposit.Add(pro_setting["maxDept"].(decimal.Decimal))
-			} else {
-				//fmt.Printf("wallet.go 453 line balanceIncrease: %v \n",balanceIncrease)
-				//BankStatement.Balance = users.Balance.Add(balanceIncrease)
-				BankStatement.Balance = balanceIncrease
-			}
-
-			//fmt.Printf("wallet.go 451 line BankStatement.Balance: %v \n",BankStatement.Balance)
-
-			promotionLog := models.PromotionLog{
-
-				UserID: BankStatement.Userid,
-				WalletID: BankStatement.Userid,
-				StatementID: BankStatement.ID,
-				Promotionname: pro_setting["Name"].(string),
-				Beforebalance: BankStatement.Beforebalance,
-				//BetAmount: BankStatement.BetAmount,
-				Promotioncode: users.ProStatus,
-				Transactionamount: deposit,
-				Promoamount: balanceIncrease,
-				Proamount: balanceIncrease.Sub(deposit),
-				Balance: BankStatement.Balance,
-				Example: Formular,
-				Status: 0,
-				// Add other necessary fields for the promotion log
-			}
-
-			
-			if BankStatement.Balance.LessThan(balanceIncrease) {
-				promotionLog.Proamount = BankStatement.Balance.Sub(users.Balance).Sub(deposit)
-			}
-			if err := db.Create(&promotionLog).Error; err != nil {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"Status": false,
-					"Message": "Failed to log promotion",
-					"Data": fiber.Map{
-						"id": -1,
-					}})
-			}
-			promotionLogID = promotionLog.ID 
-		 
-	
-			if users.Balance.LessThan(decimal.NewFromInt(1)) == false && pro_setting["Zerobalance"] == 0  {
-				
-				response := fiber.Map{
-					"Message": "ไม่สามารถ ฝากเงินเพิ่มได้ ยังมียอดเงินฝากคงเหลือ!",
-					"Status":  false,
-					"Data": fiber.Map{ 
-						"id": -1,
-					}}
-					return c.JSON(response)
-				}
-			
-			 
-		} else if deposit.IsZero() {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"Status": false,
-			"Message": "ยอดเงินฝากไม่ถูกต้อง!",
-			"Data": fiber.Map{
-				"id": -1,
-			}})
-		} else {
-			fmt.Printf("621 line %v \n",users.Balance.LessThanOrEqual(decimal.Zero))
-			fmt.Printf("622 line %v \n",pro_setting["Zerobalance"])
-			if users.Balance.LessThanOrEqual(decimal.Zero) == false && pro_setting["Zerobalance"] == 1 {
-				
-				response := fiber.Map{
-					"Message": "code 631 ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
-					"Status":  false,
-					"Data": fiber.Map{ 
-						"id": -1,
-					}}
-					return c.JSON(response)
-				} else if users.Balance.GreaterThan(decimal.NewFromFloat(0.1)) == true && pro_setting["Zerobalance"] == 0 {
-				
-					response := fiber.Map{
-						"Message": " code 643 ไม่สามารถ ฝากเงินเพิ่มได้ ขณะใช้งานโปรโมชั่น!",
-						"Status":  false,
-						"Data": fiber.Map{ 
-							"id": -1,
-						}}
-						return c.JSON(response)
-				
-				 } else {
-					fmt.Printf(" wallet.go 637 line \n")
-					BankStatement.Balance = balanceIncrease //users.Balance.Add(deposit)
-				}
-		}
-	 
-		
-	} else {
-		BankStatement.Balance = users.Balance.Add(deposit)
-	}	
-	
-
-	BankStatement.Bankname = users.Bankname
+	//fmt.Printf("pro_setting: %v \n",pro_setting["Zerobalance"])
+	BankStatement.Balance = users.Balance.Add(deposit)
+ 	BankStatement.Bankname = users.Bankname
 	BankStatement.Accountno = users.Banknumber
-	if pro_setting != nil {
-		BankStatement.Proamount = BankStatement.Balance.Sub(BankStatement.Transactionamount) 
-	} else {
-		BankStatement.Proamount = decimal.NewFromFloat(0.0)
-	}
+	BankStatement.Proamount = decimal.NewFromFloat(0.0)
+	 
 	//user.Username = user.Prefix + user.Username
-	fmt.Printf("692 line \n")
-	fmt.Println(BankStatement.Balance)
-	fmt.Println(deposit)
+	//fmt.Printf("692 line \n")
+	//fmt.Println(BankStatement.Balance)
+	//fmt.Println(deposit)
 
 	// if BankStatement.Balance.IsZero() &&  deposit.LessThan(decimal.Zero) {
 	// 	users.Turnover = decimal.Zero
@@ -698,12 +625,8 @@ func Deposit(c *fiber.Ctx) error {
 	// }
 
 	if users.Bankname == "" && users.Banknumber == "" {
-		response := fiber.Map{
-			"Message": "หมายเลขบัญชีไม่ถูกต้อง",
-			"Status":  false,
-			"Data":    "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-		}
-		return c.JSON(response)
+		 
+		return   nil, fmt.Errorf("หมายเลขบัญชีไม่ถูกต้อง") 
 	}
 
 
@@ -720,26 +643,20 @@ func Deposit(c *fiber.Ctx) error {
 	result, err = paying(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
 	if err != nil {
 		// จัดการข้อผิดพลาดที่เกิดขึ้น
-		fmt.Println("Error in paying:", err)
-		response := fiber.Map{
-			"Message": "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-			"Status":  false,
-			"Data":    "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-		}
-		return c.JSON(response)
+		return   nil,err 
 	}
 	
 	
-	fmt.Printf(" Result: %+v \n",result)
+	 
 
 	if result.TransactionID != "" {
 		transactionID := result.TransactionID
 		BankStatement.Uid = transactionID
 		BankStatement.Prefix =  result.MerchantID
-		fmt.Println("Transaction ID:", transactionID)
+	 
 
 	} else {
-		fmt.Println("Transaction ID does not exist")
+		return   nil, fmt.Errorf("ไม่พบรหัสธุรกรรม")  
 	}
 
 	 
@@ -754,72 +671,20 @@ func Deposit(c *fiber.Ctx) error {
 
 	if resultz.Error != nil {
 	 
-			response := fiber.Map{
-				"Message": "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-				"Status":  false,
-				"Data":    "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-			}
-			return c.JSON(response)
+			return   nil, resultz.Error
 
 	 } else {
 
-		updates := map[string]interface{}{
-			"Uid": BankStatement.Uid,
-		}
-		if err := db.Debug().Model(&models.PromotionLog{}).Where("id = ?",promotionLogID).Updates(updates).Error; err != nil {
-				fmt.Println("Update Promotionlog TransacionID Fail!")
-		}
-			
- 
-// 	 _err := repository.UpdateUserFields(db, BankStatement.Userid, updates) // อัปเดตยูสเซอร์ที่มี ID = 1
-// 	if _err != nil {
-// 		return c.Status(200).JSON(fiber.Map{
-// 			"Status": false,
-// 			"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-// 			"Data": fiber.Map{ 
-// 				"id": -1,
-// 			}})
-// 		}
-
-//     //  if BankStatement.Transactionamount.LessThan(decimal.Zero) {
-// 	// 	updates["LastWithdraw"] = BankStatement.Transactionamount
-// 	//  } else {
-// 		updates["LastDeposit"] = BankStatement.Transactionamount
-// 		updates["LastProamount"] = BankStatement.Balance.Sub(BankStatement.Transactionamount)
-// 	 //}
-// 	 _err = repository.UpdateUserFields(db, BankStatement.Userid, updates)
-// 		if _err != nil {
-// 			return c.Status(200).JSON(fiber.Map{
-// 				"Status": false,
-// 				"Message":  "เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลได้!",
-// 				"Data": fiber.Map{ 
-// 					"id": -1,
-// 				}})
-// 		} else {
-// 			//fmt.Println("User fields updated successfully")
-// 		}
-
- 
-// 	if err := checkActived(db,&users); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"Status": false,
-// 			"Message":  "actived deposit ข้อมูลไม่ได้!",
-// 			"Data": fiber.Map{ 
-// 				"id": -1,
-// 			}})
-// 	}
+		  
 	 
-	 return c.Status(200).JSON(fiber.Map{
-		"Status": true,
-		"Data": fiber.Map{ 
+	 return  fiber.Map{ 
 			"id": BankStatement.Uid,
 			"link": BankStatement.Detail,
 			"beforebalance":BankStatement.Beforebalance,
 			"balance": BankStatement.Balance,
-		},
-	})
-	
- }
+		},nil
+	 
+	 }
 
 }
 
@@ -1040,8 +905,8 @@ func Withdraw(c *fiber.Ctx) error {
 			})
 		}
 		 
-		 fmt.Printf(" Users TurnOver: %v \n",result.Turnover)
-		 fmt.Printf(" minTurnover: %v \n",minTurnover)
+		 fmt.Printf(" 908 Users TurnOver: %v \n",result.Turnover)
+		 fmt.Printf(" 909 minTurnover: %v \n",minTurnover)
 
 		 
 		 if result.Turnover.LessThan(minTurnover) {
@@ -1083,7 +948,7 @@ func Withdraw(c *fiber.Ctx) error {
 	}
 	
 	var result PayInResponse
-	result, err := payout(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
+	result, err := Payout(request) // เรียกใช้ฟังก์ชัน paying พร้อมส่ง request
 	if err != nil {
 		// จัดการข้อผิดพลาดที่เกิดขึ้น
 		fmt.Println("Error in paying:", err)
@@ -1168,7 +1033,8 @@ func Withdraw(c *fiber.Ctx) error {
 }
 
 
-func Webhook(c *fiber.Ctx) error {
+func Webhook(redisClient *redis.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		
 	var requestBody CallbackRequest
 
@@ -1182,7 +1048,7 @@ func Webhook(c *fiber.Ctx) error {
 
 	//db,_ := handler.GetDBFromContext(c)
 
-	//fmt.Printf("Body : %+v \n",&requestBody)
+	fmt.Printf("Body : %+v \n",&requestBody)
 
 	db,_ := database.ConnectToDB(requestBody.MerchantID)
 
@@ -1220,7 +1086,7 @@ func Webhook(c *fiber.Ctx) error {
 				
 				userupdate := map[string]interface{}{
 					"Balance": bankstatement.Balance,
-					"ProID":"1",
+					//"ProID":"",
 					//"Turnover": users.Turnover,
 					//"ProStatus": users.ProStatus,
 					}
@@ -1421,8 +1287,15 @@ func Webhook(c *fiber.Ctx) error {
 				"balance": bankstatement.Balance,
 			},
 		})
-	} else {
-		updates["ProStatus"] = bankstatement.ProStatus
+	} else if bankstatement.Status == "expired" {
+
+		userkey := fmt.Sprintf("%s%d",requestBody.MerchantID, bankstatement.Userid)
+		key := fmt.Sprintf("%s:current_promotion",  userkey)
+		if err := redisClient.HSet(ctx, key, "status", "2", "timestamp", time.Now().Format(time.RFC3339)).Err(); err != nil {
+			fmt.Printf(" ไม่สามารถปรับสถานะได้ ")
+		}
+		
+		updates["ProStatus"] = ""
 		repository.UpdateUserFields(db, bankstatement.Userid, updates)
 		return c.Status(200).JSON(fiber.Map{
 			"Status": false,
@@ -1430,6 +1303,8 @@ func Webhook(c *fiber.Ctx) error {
 			"Data": fiber.Map{ 
 				"id": -1,
 			}})
+	}
+	return nil
 	}
 }
 func turn2Percentage(strvalue string) decimal.Decimal {
@@ -1456,8 +1331,14 @@ func CalculateRequiredTurnover(minTurnover string, lastDeposit decimal.Decimal) 
             return decimal.Zero, err
         }
         return lastDeposit.Mul(percentValue.Div(decimal.NewFromInt(100))), nil
-    }
-    return decimal.NewFromString(minTurnover)
+    } else {
+		percentValue, err := decimal.NewFromString(minTurnover)
+		if err != nil {
+            return decimal.Zero, err
+        }
+		return lastDeposit.Mul(percentValue),nil
+	}
+    //return decimal.NewFromString(minTurnover)
 }
 func calculatePercentage(minTurnover string) (decimal.Decimal, error) {
     if strings.Contains(minTurnover, "%") {
@@ -1514,6 +1395,63 @@ func CheckTurnover(db *gorm.DB, users *models.Users, pro_setting map[string]inte
     }
 
     return totalTurnover,nil
+}
+func CheckTurnCredit(userID string,minCredit float64,baseAmount float64) error {
+    //var lastCredit decimal.Decimal
+	//var pro_balance decimal.Decimal
+	//var createdAt time.Time
+	//createdAt = time.Now() 
+	// if pro_setting["CreatedAt"] != nil {
+	// 	createdAt = pro_setting["CreatedAt"].(time.Time) 
+	// }
+  
+	// fmt.Printf("ProSetting: %+v ",pro_setting)
+
+	// if err := db.Model(&models.TransactionSub{}).
+    //     Where("membername = ? AND deleted_at is null", users.Username).
+    //     Order("id desc").
+    //     Limit(1).
+    //     Select("balance").
+    //     Scan(&lastCredit).Error; err != nil {
+    //     return errors.New("ไม่สามารถตรวจสอบยอดเครดิต")
+    // }
+
+	//db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND ProID = ? AND deleted_at is null and date(created_at) >= date(?)",users.Username,users.ProStatus,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
+
+	 
+
+
+
+	 
+	
+
+            // requiredTurnover, err := CalculateRequiredTurnover(minTurnover, baseAmount)
+            
+			// fmt.Printf(" minCredit: %v \n",minTurnover)
+			// fmt.Printf(" baseAmount: %v \n",baseAmount)
+			// fmt.Printf(" requiredCredit: %v \n",requiredTurnover)
+			// //fmt.Printf(" totalTurnover: %v \n",totalTurnover)
+			// //fmt.Printf(" userTurnover: %v \n",users.Turnover)
+			// if err != nil {
+			// 	fmt.Printf("err  %s \n",err)
+            //     return c.JSON(fiber.Map{
+            //         "Status": false,
+            //         "Message": "ไม่สามารถคำนวณยอดเทิร์นได้",
+            //         "Data": fiber.Map{"id": -1},
+            //     })
+            // }
+
+            // if totalTurnover.LessThan(requiredTurnover.Mul(baseAmount)) {
+            //     return c.JSON(fiber.Map{
+            //         "Status": false,
+            //         "Message": fmt.Sprintf("ยอดเทิร์นไม่เพียงพอ ต้องการ %v %v แต่มี %v %v", 
+            //             requiredTurnover.Mul(baseAmount),users.Currency, totalTurnover, users.Currency),
+            //         "Data": fiber.Map{"id": -1},
+            //     })
+            // }
+	
+
+    return  nil //fmt.Errorf("ยอดเครดิต %v น้อยกว่ายอดเครดิตขั้นต่ำ %v %v", pro_balance, requiredCredit, users.Currency) //nil
 }
 // ฟังก์ชั่นช่วยตรวจสอบ turncredit
 func checkTurnCredit(db *gorm.DB, users *models.Users, pro_setting map[string]interface{}) error {
@@ -2176,7 +2114,7 @@ func paying(request *PayInRequest) (PayInResponse, error) {
 	}
 	return response, nil
 }
-func payout(request *PayInRequest) (PayInResponse, error) {
+func Payout(request *PayInRequest) (PayInResponse, error) {
 	client := resty.New().
 		SetTimeout(30 * time.Second).
 		SetDebug(true) // ตั้งค่า timeout เป็น 30 วินาที
@@ -2227,6 +2165,60 @@ func payout(request *PayInRequest) (PayInResponse, error) {
 		fmt.Println("Failed to get payment link")
 	}
 	return response, nil
+}
+func NormalTurnover(prefix string,userid string) error {
+
+	db,err := database.ConnectToDB(prefix)
+	if err != nil {
+		return  err
+	}
+
+	var users models.Users
+	
+	err = db.Debug().Where("id= ?", userid).Find(&users).Error
+	if err != nil {
+		return  err
+	}
+
+	minTurnover, err := CalculateRequiredTurnover(users.MinTurnoverDef, users.LastDeposit)
+	if err != nil {
+		return  err
+	}
+	type TurnoverResult struct {
+	   Turnover decimal.Decimal
+   }
+   
+	//var lastWithdrawTurnover decimal.Decimal
+	subQuery := db.Debug().
+		Table("BankStatement").
+		Select("TurnOver").
+		Where("(userid = ? OR walletid = ?) AND statement_type = ?", users.ID, users.ID, "Withdraw").
+		Order("created_at DESC").
+		Limit(1)
+	
+	// Query หลัก
+	var result TurnoverResult
+	err = db.Debug().
+		Table("TransactionSub").
+		Select("SUM(turnover) - COALESCE((?),0) as turnover", subQuery).
+		Where("MemberID = ?", users.ID).
+		Scan(&result).Error
+
+   if err != nil {
+		return  err
+   }
+	
+	fmt.Printf(" Users TurnOver: %v \n",result.Turnover)
+	fmt.Printf(" minTurnover: %v \n",minTurnover)
+
+	
+	if result.Turnover.LessThan(minTurnover) {
+		return   fmt.Errorf("ยอดเทิร์นไม่เพียงพอ ต้องการ %v %v แต่มี %v %v", 
+				minTurnover, users.Currency, users.Turnover, users.Currency)
+	 
+	}
+	return nil
+   //BankStatement.Balance = users.Balance.Sub(withdraw.Abs())
 }
 // const getTokenPrefix  = async (prefix:string) => {
 // 	try {

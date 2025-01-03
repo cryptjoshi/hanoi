@@ -2,6 +2,7 @@ package gc
 
 import 
 (
+	"context"
 	"github.com/gofiber/fiber/v2"
 	"hanoi/models"
 	"hanoi/database"
@@ -9,6 +10,7 @@ import
 	"hanoi/repository"
 	"hanoi/encrypt"
 	"crypto/md5"
+	"github.com/go-redis/redis/v8"
 	//"crypto/des"
 	//"crypto/cipher"
 	//"bytes"
@@ -144,7 +146,9 @@ type ResponseBalance struct {
 var API_URL_G = "http://rcgapiv2.rcg666.com/"
 var API_URL_PROXY = "http://api.tsxbet.info:8001"
 
-
+var ctx = context.Background()
+var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
+var redis_master_port = "6379" 
 
 
 func Index(c *fiber.Ctx) error {
@@ -369,7 +373,8 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	}
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	transactionsub.ProID = users.ProStatus
+	transactionsub.ProID = users.Uid
+	transactionsub.Uid = users.Uid
 	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
@@ -397,8 +402,25 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 		}
 
  
- 
-	 
+		redisClient :=redis.NewClient(&redis.Options{
+			Addr: redis_master_host + ":" + redis_master_port,
+		})
+		balance64,_ := transactionsub.Balance.Float64()
+		totalKey := fmt.Sprintf("%s:total_transactions", fmt.Sprintf("%s%d",users.Prefix, users.ID))
+		if err := redisClient.HSet(ctx, totalKey, "total_amount",balance64 ).Err(); err != nil {
+			fmt.Printf("error initializing total transactions: %v \n", err)
+			}
+
+		userid := fmt.Sprintf("%s%d", users.Prefix, users.ID)
+		key := fmt.Sprintf("bank_statement:%s:%s", userid, users.Uid)
+		err := redisClient.HSet(ctx, key, "transaction_amount", transactionsub.TransactionAmount.String()).Err()
+		err = redisClient.HSet(ctx, key, "balance", transactionsub.Balance.String()).Err()
+		err = redisClient.HSet(ctx, key, "before_balance", transactionsub.BeforeBalance.String()).Err()
+	
+		if err != nil {
+			 fmt.Printf("failed to update transaction_amount in Redis: %v", err)
+		}
+
 	  response = Response{
 		Status: true,
 		Message: "สำเร็จ",

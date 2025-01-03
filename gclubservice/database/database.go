@@ -200,6 +200,9 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	} else {
 		return nil, err // Return the error if connection fails
 	}
+	if err := db.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+		fmt.Printf("Warning: Failed to set timezone: %v\n", err)
+	}
 	//migrateNormal(db)
 	//CheckAndCreateTable(db,models.BankStatement{})
 	//migrationAffiliate(db)

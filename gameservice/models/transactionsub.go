@@ -84,6 +84,7 @@ type TransactionSub struct {
 	CreatedAt         time.Time       `gorm:"column:created_at;type:timestamp;not null"`
 	UpdatedAt         time.Time       `gorm:"column:updated_at;type:timestamp;not null"`
 	DeletedAt         gorm.DeletedAt  `gorm:"column:deleted_at;type:timestamp null"`
+	Uid    string          `gorm:"column:uid" json:"uid"`
 }
 
 func (m *TransactionSub) TableName() string {

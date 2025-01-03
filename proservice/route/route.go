@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/gofiber/fiber/v2"
+	// "github.com/gofiber/fiber/v2/middleware/logger"
 	// "github.com/gofiber/fiber/v2/middleware/etag"
 	// "fmt"
 	// "strconv"
@@ -17,7 +18,6 @@ import (
 	// "hanoi/handler/pg"
 	"github.com/go-redis/redis/v8"
 	pro "hanoi/handler/promotion"
-	//"github.com/swaggo/fiber-swagger"
 	"os"
 )
 
@@ -43,7 +43,7 @@ func SetupRoutes(app fiber.Router, isV1 bool,redisClient *redis.Client) {
 	app.Post("/users/register",users.Register)
 	app.Post("/users/balance",jwt.JwtMiddleware,users.GetBalance)
 	app.Post("/users/sum/balance",jwt.JwtMiddleware,users.GetBalanceSum)
-	app.Post("/users/info",jwt.JwtMiddleware,users.GetUser)
+	app.Post("/users/info",jwt.JwtMiddleware,users.GetUser(redisClient))
 	app.Post("/users/info/username",users.GetUserByUsername)
 	app.Post("/users/statement",jwt.JwtMiddleware,users.GetUserStatement)
 	app.Post("/users/transactions",jwt.JwtMiddleware,users.GetUserTransaction)
@@ -68,7 +68,7 @@ func SetupRoutes(app fiber.Router, isV1 bool,redisClient *redis.Client) {
 
 	//app.Post("/db/promotion/all",pro.GetAllPromotion)
 	app.Post("/db/promotion/byuser",jwt.JwtMiddleware,handler.GetPromotionByUser)
-
+	//app.Post("/users/promotions/webhook",jwt.JwtMiddleware,pro.Withdraw(redisClient))
 	app.Post("/users/promotions/withdraw",jwt.JwtMiddleware,pro.Withdraw(redisClient))
 	app.Post("/users/promotions/deposit",jwt.JwtMiddleware,pro.Deposit(redisClient))
 	app.Post("/users/promotions/playgame",jwt.JwtMiddleware,pro.Playgame(redisClient))
@@ -76,6 +76,7 @@ func SetupRoutes(app fiber.Router, isV1 bool,redisClient *redis.Client) {
 	app.Post("/users/promotions/status",jwt.JwtMiddleware,pro.GetPromotionStatus(redisClient))
 	app.Post("/users/promotions/total",jwt.JwtMiddleware,pro.GetUserTotalPromotion(redisClient))
 	app.Post("/users/promotions/all",pro.GetAllPromotion(redisClient))
+	app.Post("/users/promotions/banks",jwt.JwtMiddleware,pro.GetTransactionHandler(redisClient))
 	app.Post("/users/promotions",jwt.JwtMiddleware,pro.SelectPromotion(redisClient))
 	app.Post("/users/promotions/clear",jwt.JwtMiddleware,pro.ClearData(redisClient))
 	//app.Post("/db/promotion/update",pro.UpdatePromotion)
@@ -84,16 +85,16 @@ func SetupRoutes(app fiber.Router, isV1 bool,redisClient *redis.Client) {
 	
 
 
-	// app.Post("/db/game/all",handler.GetGameList)
-	// app.Post("/db/game/byid",handler.GetGameById)
-	// app.Post("/db/game/bytype",jwt.JwtMiddleware,handler.GetGameByType)
-	// app.Post("/db/game/status",handler.GetGameStatus)
-	// app.Post("/db/game/create",handler.CreateGame)
-	// app.Post("/db/game/update",handler.UpdateGame)
+	app.Post("/db/game/all",handler.GetGameList)
+	app.Post("/db/game/byid",handler.GetGameById)
+	app.Post("/db/game/bytype",jwt.JwtMiddleware,handler.GetGameByType)
+	app.Post("/db/game/status",handler.GetGameStatus)
+	app.Post("/db/game/create",handler.CreateGame)
+	app.Post("/db/game/update",handler.UpdateGame)
  
 	// app.Post("/db/game/all", handler.GetGameList)
 	// app.Post("/db/game/byid", handler.GetGameById)
-	// app.Post("/db/game/status", handler.GetGameStatus)
+	app.Post("/db/game/status", handler.GetGameStatus)
 	// app.Post("/db/game/create", handler.CreateGame)
 	// app.Post("/db/game/update", handler.UpdateGame)
 
@@ -117,7 +118,7 @@ func SetupRoutes(app fiber.Router, isV1 bool,redisClient *redis.Client) {
 	app.Post("/statement/update", wallet.UpdateStatement)
 	app.Post("/statement/withdraw",jwt.JwtMiddleware, pro.Withdraw(redisClient))
 	app.Post("/statement/deposit",jwt.JwtMiddleware, pro.Deposit(redisClient))
-	app.Post("/statement/webhook",wallet.Webhook)
+	app.Post("/statement/webhook",wallet.Webhook(redisClient))
 	
 	app.Post("/transaction/add",jwt.JwtMiddleware,handler.AddTransactions)
 	app.Post("/transaction/all",jwt.JwtMiddleware,handler.GetAllTransaction)

@@ -89,13 +89,7 @@ type RequestBody struct {
 
 //var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
-// @Summary Login user
-// @Description Get a list of all users in the database.
-// @Tags users
-// @Produce json
-// @Success 200 {array} models.SwaggerUser
-// @Router /users/login [post]
-// @Param user body models.Partner true "User registration info"
+ 
 func Signing(c *fiber.Ctx) error {
 	// var data = formData
 	// c.Bind(&data)
@@ -364,14 +358,7 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// @Summary Get all users
-// @Description Get a list of all users in the database.
-// @Tags users
-// @Produce json
-// @Success 200 {array} models.SwaggerUser
-// @Router /users/all [post]
-// @Param user body models.SwaggerBody true "User registration info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetPartners(c *fiber.Ctx) error {
 
 	body := new(Dbstruct)
@@ -417,15 +404,7 @@ func GetPartners(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// @Summary Register new user
-// @Description Register user in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/register [post]
-// @Param user body models.Partner true "Partner registration info"
+ 
 func Register(c *fiber.Ctx) error {
 
 	var currency = os.Getenv("CURRENCY")
@@ -513,17 +492,7 @@ func Register(c *fiber.Ctx) error {
 	 
 }
 
-// @Summary Get userinfo
-// @Description Get userinfo in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/info [post]
-// @Param user body models.Partner true "User user info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetPartner(c *fiber.Ctx) error {
 
 
@@ -818,17 +787,7 @@ func GetPartnerByUsername(c *fiber.Ctx) error {
 		}}
 	return c.JSON(response)
 }
-// @Summary Get user balance
-// @Description Get user balance in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/balance [post]
-// @Param user body models.Partner true "User balance info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetBalance(c *fiber.Ctx) error {
 
 	var users models.Partner
@@ -877,17 +836,7 @@ func GetBalance(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// @Summary User Logout
-// @Description Get user balance in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/logout [post]
-// @Param user body models.Partner true "User Logout"
-// @param Authorization header string true "Bearer token"
+ 
 func Logout(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*jtoken.Token)
@@ -919,17 +868,7 @@ func Logout(c *fiber.Ctx) error {
 
 }
 
-// @Summary Get user Transaction
-// @Description Get user Transaction in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerTransactionSub
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/transactions [post]
-// @Param user body models.TransactionSub true "User Transaction info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetPartnerTransaction(c *fiber.Ctx) error {
 
 	body := new(Body)
@@ -1007,17 +946,7 @@ func GetPartnerTransaction(c *fiber.Ctx) error {
 
 }
 
-// @Summary Get user Statement
-// @Description Get user Statement in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerBankStatement
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/statement [post]
-// @Param user body models.BankStatement true "User Bank Statement info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetPartnerStatement(c *fiber.Ctx) error {
 
 	body := new(Body)

@@ -2,6 +2,7 @@ package ef
 
 import 
 (
+	"context"
 	"github.com/gofiber/fiber/v2"
 	"pkd/models"
 	"pkd/database"
@@ -10,6 +11,7 @@ import
 	"github.com/valyala/fasthttp"
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/go-redis/redis/v8"
 	//"os"
 	"encoding/json"
 	"time"
@@ -75,6 +77,9 @@ type ResponseBalance struct {
 	BeforeBalance decimal.Decimal `json:"beforebalance"`
 	Balance decimal.Decimal `json:"balance"`
 }
+var ctx = context.Background()
+var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
+var redis_master_port = "6379" 
 // ฟังก์ชันตัวอย่างใน efinity.go
 //const EF_SECRET_KEY="456Ayb" //product
 //var EF_SECRET_KEY="1g1bb3" //stagging
@@ -227,7 +232,7 @@ func AddBuyOut(transactionsub models.BuyInOut,membername string) Response {
 	transactionsub.BetAmount = transactionsub.BetAmount
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	transactionsub.ProID = users.ProStatus
+	transactionsub.ProID = users.ProID
 	
 	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
@@ -301,7 +306,8 @@ func AddBuyInOut(transaction models.BuyInOut,membername string) Response {
 	//transactionsub.BetAmount = transactionsub.BetAmount
 	transaction.BeforeBalance = users.Balance
 	transaction.Balance = users.Balance.Add(transaction.TransactionAmount)
-	transaction.ProID = users.ProStatus
+	transaction.ProID = users.ProID
+	
 	result := db.Create(&transaction); 
 	
 	
@@ -368,6 +374,8 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 			},
     	}
 	}
+	
+	
 	//fmt.Printf("ProID : %v \n",users)
     transactionsub.GameProvide = "EFINITY"
     transactionsub.MemberName = membername
@@ -380,7 +388,8 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 	// }
 	transactionsub.BeforeBalance = users.Balance
 	transactionsub.Balance = users.Balance.Add(transactionsub.TransactionAmount)
-	transactionsub.ProID = users.ProStatus
+	transactionsub.ProID = users.ProID
+	transactionsub.Uid = users.Uid
 	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
@@ -408,10 +417,26 @@ func AddTransactions(transactionsub models.TransactionSub,membername string) Res
 		} else {
 			fmt.Println("User fields updated successfully")
 		}
+		 
+		redisClient :=redis.NewClient(&redis.Options{
+			Addr: redis_master_host + ":" + redis_master_port,
+		})
+		balance64,_ := transactionsub.Balance.Float64()
+		totalKey := fmt.Sprintf("%s:total_transactions", fmt.Sprintf("%s%d",users.Prefix, users.ID))
+		if err := redisClient.HSet(ctx, totalKey, "total_amount",balance64 ).Err(); err != nil {
+			fmt.Printf("error initializing total transactions: %v \n", err)
+			}
+
+		userid := fmt.Sprintf("%s%d", users.Prefix, users.ID)
+		key := fmt.Sprintf("bank_statement:%s:%s", userid, users.Uid)
+		err := redisClient.HSet(ctx, key, "transaction_amount", transactionsub.TransactionAmount.String()).Err()
+		err = redisClient.HSet(ctx, key, "balance", transactionsub.Balance.String()).Err()
+		err = redisClient.HSet(ctx, key, "before_balance", transactionsub.BeforeBalance.String()).Err()
 		
- 
- 
-	 
+		if err != nil {
+			fmt.Printf("failed to update transaction_amount in Redis: %v", err)
+		}
+
 	  response = Response{
 		Status: true,
 		Message: "สำเร็จ",
@@ -559,6 +584,7 @@ func GameResult(c *fiber.Ctx) error {
 
 	} else {
 		var c_transaction_found models.TransactionSub
+		
 		rowsAffected := db.Model(&models.TransactionSub{}).Select("id").Where("TransactionID = ? ",transaction.TransactionID).Find(&c_transaction_found).RowsAffected
 		
 		 if rowsAffected == 0 {
@@ -1483,8 +1509,10 @@ func LaunchGame(c *fiber.Ctx) error {
 		return c.JSON(respon)
 	}
 	var users models.Users
-	users = handler.ValidateJWTReturn(request.SessionToken);
-
+	users,err := handler.ValidateJWTReturn(request.SessionToken);
+	if err != nil {
+		return c.Status(200).SendString(err.Error())
+		}
 	//fmt.Printf("users: %s ",users)
 	//fmt.Printf("request: %s ",request.SessionToken)
 	var RequestTime = time.Now().Format("20060102150405")

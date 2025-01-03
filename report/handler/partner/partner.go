@@ -1361,6 +1361,10 @@ func getDataList() ([]DatabaseInfo,error) {
 	return databaseList,nil
 
 }
+type OverviewProvider struct {
+	Name  string          `json:"name"`
+	Total decimal.Decimal `json:"total"`
+}
 
 type OverviewResponse struct {
 	Allmembers decimal.Decimal `json:"allmembers"`
@@ -1372,11 +1376,11 @@ type OverviewResponse struct {
 	TotalWithdrawl decimal.Decimal `json:"totalwithdrawl"`
 	Winlose decimal.Decimal `json:"winlose"`
 	Totalprofit decimal.Decimal `json:"totalprofit"`
-	Provider []struct {
-		Name string `json:"name"`
-		Total decimal.Decimal `json:"total"`
-	}
+	Provider []OverviewProvider `json:"provider"`
 }
+
+
+
 type OBody struct {
 	Startdate string `json:"startdate"`
 	Prefix string `json:"prefix"`
@@ -1389,6 +1393,7 @@ func Overview(c *fiber.Ctx) (error) {
 	var body OBody
 
 	if err := c.BodyParser(&body); err != nil {
+		fmt.Println(err.Error())
 		response := fiber.Map{
 			"Status":  false,
 			"Message": err.Error(),
@@ -1396,16 +1401,38 @@ func Overview(c *fiber.Ctx) (error) {
 		return c.JSON(response)
 	}
 
+	//fmt.Printf("Body: %+v \n",body)
 
-	startDate, err := time.Parse("01/02/2006", body.Startdate)
+	// Split the input string into components
+	parts := strings.Split(body.Startdate, "/")
+	if len(parts) != 3 {
+		fmt.Println("Invalid date format")
+		response := fiber.Map{
+			"Status":  false,
+			"Message": "ไม่สามารถแปลงวันที่ได้: ",
+		}
+		return c.JSON(response)
+	}
+
+	// Pad single-digit day and month with leading zeros
+	day := fmt.Sprintf("%02s", parts[0])
+	month := fmt.Sprintf("%02s", parts[1])
+	year := parts[2]
+
+	// Reassemble the date in MM/DD/YYYY format
+	fixedDate := fmt.Sprintf("%s/%s/%s", day, month, year)
+
+
+	startDate, err := time.Parse("01/02/2006", fixedDate)
 	if err != nil {
+		fmt.Println(err.Error())
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถแปลงวันที่ได้: " + err.Error(),
 		}
 		return c.JSON(response)
 	}
-//	formattedDate := startDate.Format("2006-01-02")
+	//formattedDate := startDate.Format("2006-01-02")
 	//fmt.Printf("Startdate: %s \n", formattedDate)
 
 	
@@ -1416,7 +1443,7 @@ func Overview(c *fiber.Ctx) (error) {
 	prefix := c.Locals("Prefix")
 	//fmt.Println("prefix:", prefix)
 	if _err != nil {
-
+		fmt.Println(_err.Error())
 		// response := fiber.Map{
 		// "Message": "โทเคนไม่ถูกต้อง!!",
 		// "Status":  false,
@@ -1431,7 +1458,7 @@ func Overview(c *fiber.Ctx) (error) {
 	u_err := db.Where("id= ?", id).Find(&partner).Error
 
 	if u_err != nil {
-
+		fmt.Println(u_err.Error())
 		response := fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
 			"Status":  false,
@@ -1447,8 +1474,9 @@ func Overview(c *fiber.Ctx) (error) {
 
 	member := []models.Users{}
 
-	result := db.Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
+	result := db.Debug().Model(&models.Users{}).Where("referred_by = ?",partner.AffiliateKey).Find(&member)
 	if result.Error != nil {
+		fmt.Println(result.Error)
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
 			"Status":  false,
@@ -1516,6 +1544,7 @@ func Overview(c *fiber.Ctx) (error) {
 	
 	//	fmt.Printf("Results: %+v \n",results)
 	if err != nil {
+		fmt.Println(err.Error())
 		response := fiber.Map{
 			"Status":  false,
 			"Message": "ไม่สามารถแปลง activeCount เป็น decimal ได้: " + err.Error(),
@@ -1540,6 +1569,11 @@ func Overview(c *fiber.Ctx) (error) {
 	}
      depositCount := len(depositRows)
 	 withdrawCount := len(withdrawRows)
+	
+	
+
+	
+
 	//memberCount := result.RowsAffected
 	//withdrawCount := len(withdrawMembers)
 	// fmt.Printf("จำนวนสมาชิกทั้งหมด: %v\n", memberCount) 
@@ -1612,7 +1646,8 @@ func Overview(c *fiber.Ctx) (error) {
 
 
 	//allmembers := db.Debug()
-	
+	// สร้างรายการ Provider ที่ต้องการให้รองรับ
+	defaultProviders := []string{"PGSOFT", "EFINITY", "GCLUB"}
 
 	overview := OverviewResponse{
 		Allmembers:    decimal.NewFromInt(memberCount),
@@ -1624,16 +1659,100 @@ func Overview(c *fiber.Ctx) (error) {
 		TotalWithdrawl: sumWithdraw,
 		Winlose:       decimal.NewFromFloat(2500.00),
 		Totalprofit:   decimal.NewFromFloat(10000.00),
-		Provider: []struct {
-			Name  string          `json:"name"`
-			Total decimal.Decimal `json:"total"`
-		}{
-			{Name: "PGSoft", Total: decimal.NewFromFloat(1000.00)},
-			{Name: "Efinity", Total: decimal.NewFromFloat(2000.00)},
-			{Name: "GCLUB", Total: decimal.NewFromFloat(4000.00)},
+		Provider: []OverviewProvider{
+			{Name: "PGSOFT", Total: decimal.NewFromFloat(0.00)},
+			{Name: "EFINITY", Total: decimal.NewFromFloat(0.00)},
+			{Name: "GCLUB", Total: decimal.NewFromFloat(0.00)},
 		},
 	}
 
+	
+
+	// สร้างแผนที่ (map) เพื่อตรวจสอบว่ามี Provider ใดบ้างที่ไม่ได้รับค่า
+	providerMap := make(map[string]bool)
+	for _, provider := range defaultProviders {
+		providerMap[provider] = false
+	}
+
+	var totalwinlose decimal.Decimal
+	var totalprofit decimal.Decimal
+
+	err = db.Debug().Table("TransactionSub").
+	Select(`
+		TransactionSub.GameProvide as Name,
+		0-COALESCE(Sum(TransactionSub.transactionamount),0) as Total
+	`).
+	Joins("JOIN Users ON TransactionSub.MemberID = Users.id").
+	Where("Users.referred_by = ? AND DATE(TransactionSub.created_at) = ?",
+		partner.AffiliateKey,
+		startDate.Format("2006-01-02")).
+		Group("TransactionSub.GameProvide").
+	Find(&overview.Provider).Error
+
+	if err != nil {
+		fmt.Println(err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+
+	// ตั้งค่า Provider ที่มีในข้อมูลที่ดึงมาแล้ว
+	for _, provider := range overview.Provider {
+		providerMap[provider.Name] = true
+	}
+
+	// เพิ่ม Provider ที่ไม่มีค่าเข้าไปใน `overview.Provider`
+	for provider, exists := range providerMap {
+		if !exists {
+			overview.Provider = append(overview.Provider, OverviewProvider{
+				Name:  provider,
+				Total: decimal.NewFromFloat(0.00),
+			})
+		}
+	}
+ 
+
+	err = db.Table("TransactionSub").
+	Select(`
+		0-COALESCE(Sum(TransactionSub.transactionamount),0) as Winlose
+	`).
+	Joins("JOIN Users ON TransactionSub.MemberID = Users.id").
+	Where("Users.referred_by = ? AND DATE(TransactionSub.created_at) = ?",
+		partner.AffiliateKey,
+		startDate.Format("2006-01-02")).
+	Find(&totalwinlose).Error
+
+	if err != nil {
+		fmt.Println(err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	overview.Winlose = totalwinlose
+
+	err = db.Table("BankStatement").
+	Select(`
+		COALESCE(Sum(BankStatement.Proamount),0) as Totalprofit
+	`).
+	Joins("JOIN Users ON BankStatement.userid = Users.id").
+	Where("Users.referred_by = ? AND DATE(BankStatement.createdAt) = ?",
+		partner.AffiliateKey,
+		startDate.Format("2006-01-02")).
+	Find(&totalprofit).Error
+
+	if err != nil {
+		fmt.Println(err.Error())
+		response := fiber.Map{
+			"Status":  false,
+			"Message": err.Error(),
+		}
+		return c.JSON(response)
+	}
+	overview.Totalprofit = totalprofit
 
 	return c.JSON(fiber.Map{
 		"Status":  true,
@@ -1862,10 +1981,7 @@ func GetOverview(body OBody) (OverviewResponse,error) {
 		TotalWithdrawl: sumWithdraw,
 		Winlose:       decimal.NewFromFloat(2500.00),
 		Totalprofit:   decimal.NewFromFloat(10000.00),
-		Provider: []struct {
-			Name  string          `json:"name"`
-			Total decimal.Decimal `json:"total"`
-		}{
+		Provider: []OverviewProvider{
 			{Name: "PGSoft", Total: decimal.NewFromFloat(1000.00)},
 			{Name: "Efinity", Total: decimal.NewFromFloat(2000.00)},
 			{Name: "GCLUB", Total: decimal.NewFromFloat(4000.00)},

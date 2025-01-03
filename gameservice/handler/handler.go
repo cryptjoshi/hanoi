@@ -792,7 +792,10 @@ func LaunchGame(c *fiber.Ctx) error {
 		return c.Status(200).SendString(err.Error())
 	}
 	var users models.Users
-	users = ValidateJWTReturn(request.SessionToken);
+	users,err := ValidateJWTReturn(request.SessionToken);
+	if err != nil {
+		return c.Status(200).SendString(err.Error())
+	}
 
 	//fmt.Printf("users: %v ",users)
 	//fmt.Printf("request: %s ",request.SessionToken)

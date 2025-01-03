@@ -159,8 +159,8 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 
 	// ตรวจสอบการเชื่อมต่อที่มีอยู่
 	if db, exists := dbConnections[dbName]; exists {
-		MigrationPromotion(db)
-		migrationAffiliate(db)
+		//MigrationPromotion(db)
+		//migrationAffiliate(db)
 		return db, nil
 	}
 
@@ -194,7 +194,9 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 		dbConnections[dbName] = db
 		fmt.Println("Successfully connected to DB:", dbName)
 	}
-
+	if err := db.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+		fmt.Printf("Warning: Failed to set timezone: %v\n", err)
+	}
 	return db, nil
 }
 

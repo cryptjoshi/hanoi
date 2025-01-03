@@ -1,46 +1,27 @@
 package users
 
 import (
-	// 	// "context"
-	// 	// "fmt"
-	// 	// "github.com/amalfra/etag"
-	// 	// "github.com/go-redis/redis/v8"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/shopspring/decimal"
-	// 	// "github.com/streadway/amqp"
-	// 	// "github.com/tdewolff/minify/v2"
-	// 	// "github.com/tdewolff/minify/v2/js"
-	// 	// "github.com/valyala/fasthttp"
-	// 	// _ "github.com/go-sql-driver/mysql"
 	jtoken "github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 	"hanoi/database"
 	"hanoi/handler"
 	"hanoi/handler/jwtn"
 	"hanoi/models"
-	wallet "hanoi/handler/wallet"
-	// 	//"github.com/golang-jwt/jwt"
-	// 	//jtoken "github.com/golang-jwt/jwt/v4"
-	// 	//"github.com/solrac97gr/basic-jwt-auth/config"
-	// 	//"github.com/solrac97gr/basic-jwt-auth/models"
-	// 	//"github.com/solrac97gr/basic-jwt-auth/repository"
 	"github.com/go-redis/redis/v8" 
 	"hanoi/repository"
 	"hanoi/encrypt"
 	"context" 
-	//"log"
-	// 	// "net"
-	// 	// "net/http"
 	"os"
-	// 	// "strconv"
 	"time"
 	"fmt"
 	"strings"
 	"encoding/json"
-	//"errors"
+
 )
-var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
-var redis_master_port = "6379"  //os.Getenv("REDIS_PORT")
+
 type ErrorResponse struct {
 	Status  bool   `json:"Status"`
 	Message string `json:"message"`
@@ -49,7 +30,6 @@ var ctx = context.Background()
 type Body struct {
 	UserID   int    `json:"userid"`
 	Username string `json:"username"`
-	//TransactionAmount decimal.Decimal `json:"transactionamount"`
 	Password  string `json:"password"`
 	Status    string `json:"Status"`
 	Startdate string `json:"startdate"`
@@ -58,26 +38,32 @@ type Body struct {
 	Channel   string `json:"channel"`
 	Provide   string `json:"provide"`
 }
-
+ 
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
 
- 
+type LoginResponse struct {
+    Token  string     `json:"token"`
+    Data   models.Users `json:"data"`
+    Status bool       `json:"status"`
+}
+type Response struct {
+    Message  string     `json:"message"`
+    Data   models.Users `json:"data"`
+    Status bool       `json:"status"`
+}
 
-func createRedisClient() *redis.Client {
-	return 	 redis.NewClient(&redis.Options{
-		Addr:     redis_master_host + ":" + redis_master_port,
-		Password: "", //redis_master_password,
-		DB:       0,  // ใช้ database 0
-	})
- }
 
-// @Summary Login user
-// @Description Get a list of all users in the database.
-// @Tags users
+
+// Login godoc
+// @Summary Login User
+// @Description Authenticate the user and return a token
+// @Tags Users
+// @Accept json
 // @Produce json
-// @Success 200 {array} models.SwaggerUser
-// @Router /users/login [post]
-// @Param user body models.Users true "User registration info"
+// @Param body body Body true "Login Credentials"
+// @Success 200 {object} LoginResponse "success"
+// @Failure 401 {object} LoginResponse "unauthorized"
+// @Router /api/v2/users/login [post]
 func Login(c *fiber.Ctx) error {
 	// var data = formData
 	// c.Bind(&data)
@@ -92,13 +78,12 @@ func Login(c *fiber.Ctx) error {
 	}
 	var user models.Users
 
-	// fmt.Printf("%s",loginRequest)
+ 
 
 	db, err := database.ConnectToDB(loginRequest.Prefix)
-	//db.AutoMigrate(&models.BankStatement{},&models.PromotionLog{})
+ 
 	db.Migrator().CreateTable(&models.Promotion{},&models.PromotionLog{})
-	//db.AutoMigrate(&models.Promotion{})
-	//database.MigrationPromotion(db)
+ 
 	err = db.Where("preferredname = ? AND password = ?", loginRequest.Username, loginRequest.Password).First(&user).Error;
 	 
 	if err != nil {
@@ -117,7 +102,7 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 
-	//day := time.Hour * 24
+	 
 
 	claims := jtoken.MapClaims{
 		"ID":          user.ID,
@@ -127,7 +112,7 @@ func Login(c *fiber.Ctx) error {
 		"Role":        user.Role,
 		"PartnersKey": user.PartnersKey,
 		"Prefix":      user.Prefix,
-		//"exp":   time.Now().Add(day * 1).Unix(),
+	 
 	}
 
 	token := jtoken.NewWithClaims(jtoken.SigningMethodHS256, claims)
@@ -162,11 +147,7 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(response)
 	}
 	// เชื่อมต่อกับ Redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redis_master_host + ":" + redis_master_port,
-		Password: "", //redis_master_password,
-		DB:       0,  // ใช้ database 0
-	})
+	rdb :=  handler.CreateRedisClient()
 
 	pong, err := rdb.Ping(ctx).Result()
 	if err != nil {
@@ -202,23 +183,14 @@ func Login(c *fiber.Ctx) error {
 		"Status": true,
 	}
 	return c.JSON(response)
-	// return c.JSON(models.LoginResponse{
-	// 	Token: t,
-	// })
+ 
 
 }
 
-// @Summary Get all users
-// @Description Get a list of all users in the database.
-// @Tags users
-// @Produce json
-// @Success 200 {array} models.SwaggerUser
-// @Router /users/all [post]
-// @Param user body models.SwaggerBody true "User registration info"
-// @param Authorization header string true "Bearer token"
+
 func GetUsers(c *fiber.Ctx) error {
 
-	user := new(models.SwaggerBody)
+	user := new(models.Users)
 
 	if err := c.BodyParser(user); err != nil {
 		//fmt.Println(err)
@@ -261,15 +233,16 @@ func GetUsers(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// @Summary Register new user
-// @Description Register user in the database.
-// @Tags users
-// @Produce json
+// Register User godoc
+// @Summary  Register User
+// @Description Authenticate token and return a userinfo
+// @Tags Users
 // @Accept json
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/register [post]
-// @Param user body models.Users true "User registration info"
+// @Produce json
+// @Param body body models.Users true "User info"
+// @Success 200 {object} Response "success"
+// @Failure 401 {object} Response "unauthorized"
+// @Router /api/v2/users/register [post] 
 func Register(c *fiber.Ctx) error {
 
 	var currency = os.Getenv("CURRENCY")
@@ -302,11 +275,11 @@ func Register(c *fiber.Ctx) error {
 	seedPhrase  := CheckSeed(db)
 	//seedPhrase,_ := encrypt.GenerateAffiliateCode(5) //handler.GenerateReferralCode(user.Username,1)
 
-	fmt.Printf("SeedPhase  %s\n", strings.ToUpper(user.Prefix) + user.Username + currency) 
+	//fmt.Printf("SeedPhase  %s\n", strings.ToUpper(user.Prefix) + user.Username + currency) 
    
 	user.ReferralCode = seedPhrase
 
-	fmt.Printf("user: %s \n",user)
+	//fmt.Printf("user: %s \n",user)
 	
 	result := db.Debug().Create(&user)
 
@@ -351,24 +324,24 @@ func Register(c *fiber.Ctx) error {
 	}
 }
 
-// @Summary Get userinfo
-// @Description Get userinfo in the database.
-// @Tags users
-// @Produce json
+// GetUserInfo godoc
+// @Summary  UserInfo
+// @Description Authenticate token and return a userinfo
+// @Tags Users
 // @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/info [post]
-// @Param user body models.Users true "User user info"
-// @param Authorization header string true "Bearer token"
-func GetUser(c *fiber.Ctx) error {
+// @Produce json
+// @Param body body models.Users true "User info"
+// @Success 200 {object} Response "success"
+// @Failure 401 {object} Response "unauthorized"
+// @Router /api/v2/users/info [post] 
+func GetUser(redisClient *redis.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error {
 
 	var users models.Users
 
 	db, _err := handler.GetDBFromContext(c)
 	prefix := c.Locals("Prefix")
-	fmt.Println("prefix:", prefix)
+	//fmt.Println("prefix:", prefix)
 	if _err != nil {
 
 		// response := fiber.Map{
@@ -396,31 +369,7 @@ func GetUser(c *fiber.Ctx) error {
 
 		return c.JSON(response)
 	}
-	// if err := db.AutoMigrate(&models.BankStatement{});err != nil {
-	// 	fmt.Errorf("Tables schema migration not successfully\n")
-	// }
-	// type Summary struct {
-	// 	Turnover decimal.Decimal `json:"turnover"`
-	// 	createdAt time.Time `json:"createdat"`
-	// }
-	//var summary models.BankStatement
-	
-	//db.Debug().Model(&models.BankStatement{}).Select("turnover,createdat").Where("userid= ?", users.ID).Last(&summary)
-	//db.Debug().Model(&models.BankStatement{}).Select("turnover, createdAt").Where("userid= ? and transactionamount<0", users.ID).Order("createdAt DESC").Limit(1).Scan(&summary)
-	
-		 
-	 //fmt.Println(summary.CreatedAt.Format("2006-01-02"))
-
-	//createdate := summary.createdAt.Format("2006-01-02")
-	// fmt.Printf("turnover: %v \n",summary.Turnover)
-	// fmt.Printf("createdAt: %v \n",summary.CreatedAt)
-	// fmt.Printf("342 line GetUser \n")
-
-	// if summary.Turnover.LessThanOrEqual(decimal.Zero) {
-	//  	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and deleted_at is null", users.Username).Scan(&summary)
-	// } else {
-	// 	db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(sum(BetAmount),0) as turnover").Where("membername= ? and created_at > ? and deleted_at is null", users.Username,summary.CreatedAt.Format("2006-01-02 15:04:05")).Scan(&summary)
-	// }
+	 
 	
 	
 
@@ -436,7 +385,7 @@ func GetUser(c *fiber.Ctx) error {
 
 	//fmt.Printf("PromotionLogs : %+v \n",promotionLogs)
 
-	db.Debug().Model(&models.PromotionLog{}).Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProStatus).
+	db.Debug().Model(&models.PromotionLog{}).Where("userid = ? AND promotioncode = ? AND status = 1", users.ID, users.ProID).
 		Order("created_at DESC").
 		First(&promotionLog)
  
@@ -444,9 +393,27 @@ func GetUser(c *fiber.Ctx) error {
 
 	var totalTurnover decimal.Decimal
  
+	fmt.Printf("Users.ProID: %s \n",users.ProID)
+	key := fmt.Sprintf("%s:current_promotion", fmt.Sprintf("%s%d",c.Locals("prefix"), users.ID))
+	
+	pro_uid,_ := getRedisKV(redisClient,key,"uid")
+	status,err := getRedisKV(redisClient,key,"status")
+    //proID,_ := getRedisKV(redisClient,key,"proID")
+	if err != nil {
+		fmt.Printf("ไม่พบโปรโมชั่น %s \n",err.Error())
+		// if err := redisClient.HSet(ctx, , "status", "2", "timestamp", time.Now().Format(time.RFC3339)).Err(); err != nil {
+		// 	fmt.Printf(" ไม่สามารถปรับสถานะได้ ")
+		// }
+		
+	} else {
+		fmt.Printf(" สถานะ:  %s \n",status)
+		fmt.Printf(" key:  %s \n",key)
+	// 	if err := redisClient.HSet(ctx, key, "status", "0", "timestamp", time.Now().Format(time.RFC3339)).Err(); err != nil {
+	// 		fmt.Printf(" ไม่สามารถปรับสถานะได้ ")
+	 	}
+	if status != "" {
 	if err := db.Debug().Model(&models.TransactionSub{}).
-		Where("proid = ? AND membername = ? AND Date(created_at) >= Date(?)", 
-			users.ProStatus, 
+		Where("membername = ? AND created_at >= ?", 
 			users.Username, 
 			promotionLog.CreatedAt).
 		Select("COALESCE(SUM(turnover), 0)").
@@ -457,108 +424,106 @@ func GetUser(c *fiber.Ctx) error {
 				"Data": "เกิดข้อผิดพลาด!",
 			})
 			
-		
 		}
+	} else {
+		// var lastdate models.BankStatement
+		// if err := db.Debug().Model(&models.BankStatement{}).
+		// Where("userid = ? and status='verified'",id).
+		// Select("updatedAt").
+		// Order("id desc").
+		// First(&lastdate).Error; err != nil {
+		// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		// 		"Message": "ไม่สามารถคำนวณยอดเทิร์นได้ !",
+		// 		"Status": false,
+		// 		"Data": "เกิดข้อผิดพลาด!",
+		// 	})
+		// }
+
+		if err := db.Debug().Model(&models.TransactionSub{}).
+		Where("membername = ? AND  created_at >= (select MAX(updatedat) from BankStatement Where userid = ? and Status='Verified' )", 
+			users.Username, 
+			users.ID).
+		Select("COALESCE(SUM(turnover), 0)").
+		Scan(&totalTurnover).Error; err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Message": "ไม่สามารถคำนวณยอดเทิร์นได้ !",
+				"Status": false,
+				"Data": "เกิดข้อผิดพลาด!",
+			})
+			
+		}
+	}
  
-
-	// type TurnoverResult struct {
-	// 	Turnover decimal.Decimal
-	// }
-	
-	//  //var lastWithdrawTurnover decimal.Decimal
-	//  subQuery := db.Debug().
-	// 	 Table("BankStatement").
-	// 	 Select("TurnOver").
-	// 	 Where("(userid = ? OR walletid = ?) AND statement_type = ?", users.ID, users.ID, "Withdraw").
-	// 	 Order("created_at DESC").
-	// 	 Limit(1)
-	 
-	//  // Query หลัก
-	//  var result TurnoverResult
-	//  err = db.Debug().
-	// 	 Table("TransactionSub").
-	// 	 Select("SUM(turnover) - COALESCE((?),0) as turnover", subQuery).
-	// 	 Where("MemberID = ?", users.ID).
-	// 	 Scan(&result).Error
-
-	// if err != nil {
-	// 	return c.JSON(fiber.Map{
-	// 		"Status": false,
-	// 		"Message":  err,
-	// 		"Data": fiber.Map{"id": -1},
-	// 	})
-	// }
-	 
-	//  fmt.Printf(" Users TurnOver: %v \n",result.Turnover)
-	//  fmt.Printf(" minTurnover: %v \n",minTurnover)
-
-
+		
 
 	var promotion models.Promotion
 	//fmt.Println(summary.Turnover)
 	if users.ProStatus != "" {
-		db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProStatus).Scan(&promotion)
+		db.Debug().Model(&models.Promotion{}).Select("Includegames,Excludegames").Where("ID = ?",users.ProID).Scan(&promotion)
 	}
-	pro_setting, err := wallet.CheckPro(db, &users) 
-	if err != nil {
-		//fmt.Printf("388 error: %s \n",err)
+	
+
+
+	//pro_setting, err := wallet.CheckPro(db, &users) 
+	// if err != nil {
+	// 	//fmt.Printf("388 error: %s \n",err)
 		
-	updates := map[string]interface{}{
-		"pro_status": "",
-	}
+	// updates := map[string]interface{}{
+	// 	"pro_status": "",
+	// }
 
 	// อัปเดตข้อมูลยูสเซอร์
-	repository.UpdateFieldsUserString(db, users.Username, updates)
+	//repository.UpdateFieldsUserString(db, users.Username, updates)
 
 
-		return c.JSON(fiber.Map{
-			"Status": false,
-			"Message":  err.Error(),
-			"Data": fiber.Map{
-				"id":         users.ID,
-				"fullname":   users.Fullname,
-				"banknumber": users.Banknumber,
-				"bankname":   users.Bankname,
-				"username":   strings.ToUpper(users.Username),
-				"balance":    users.Balance,
-				"prefix":     users.Prefix,
-				"currency":   users.Currency,
-				"promotionlog":  promotionLogs,
-				"includegames": "13,8,2,5,7,1,3,2",
-				"excludegames": "",
-			}})
-	}
+		// return c.JSON(fiber.Map{
+		// 	"Status": false,
+		// 	"Message":  fmt.Errorf("ข้อมูลยูสเซอร์ เกิดข้อผิดพลาด"),
+		// 	"Data": fiber.Map{
+		// 		"id":         users.ID,
+		// 		"fullname":   users.Fullname,
+		// 		"banknumber": users.Banknumber,
+		// 		"bankname":   users.Bankname,
+		// 		"username":   strings.ToUpper(users.Username),
+		// 		"balance":    users.Balance,
+		// 		"prefix":     users.Prefix,
+		// 		"currency":   users.Currency,
+		// 		"promotionlog":  promotionLogs,
+		// 		"includegames": "13,8,2,5,7,1,3,2",
+		// 		"excludegames": "",
+		// 	}})
+	//}
 
-	var minTurnover string
-	if pro_setting["MinTurnover"] != nil {
-		minTurnover = fmt.Sprintf("%v", pro_setting["MinTurnover"])
-	} else {
-		minTurnover = "0" // ค่าเริ่มต้นเมื่อเป็น nil
-	}
+	// var minTurnover string
+	// if pro_setting["MinTurnover"] != nil {
+	// 	minTurnover = fmt.Sprintf("%v", pro_setting["MinTurnover"])
+	// } else {
+	// 	minTurnover = "0" // ค่าเริ่มต้นเมื่อเป็น nil
+	// }
 
-	var baseAmount decimal.Decimal
-	if pro_setting["MinSpendType"] == "deposit" {
-		baseAmount = users.LastDeposit
-	} else {
-		baseAmount = users.LastDeposit.Add(users.LastProamount)
-	}
+	// var baseAmount decimal.Decimal
+	// if pro_setting["MinSpendType"] == "deposit" {
+	// 	baseAmount = users.LastDeposit
+	// } else {
+	// 	baseAmount = users.LastDeposit.Add(users.LastProamount)
+	// }
 
-	if minTurnover == "" {
-		minTurnover = "0"
-	}
+	// if minTurnover == "" {
+	// 	minTurnover = "0"
+	// }
 	//fmt.Printf("508 minTurnover: %+v \n",minTurnover)
 	//fmt.Printf("509 baseAmount: %+v \n",baseAmount)
 
 
-	requiredTurnover, err := wallet.CalculateRequiredTurnover(minTurnover, baseAmount)
+	// requiredTurnover, err := wallet.CalculateRequiredTurnover(minTurnover, baseAmount)
  
-	if err != nil {
-		return c.JSON(fiber.Map{
-			"Status": false,
-			"Message": "ไม่สามารถคำนวณยอดเทิร์นได้",
-			"Data": fiber.Map{"id": -1},
-		})
-	}
+	// if err != nil {
+	// 	return c.JSON(fiber.Map{
+	// 		"Status": false,
+	// 		"Message": "ไม่สามารถคำนวณยอดเทิร์นได้",
+	// 		"Data": fiber.Map{"id": -1},
+	// 	})
+	// }
 
 	// var transaction models.TransactionSub
 	// db.Debug().Model(&models.TransactionSub{}).Select("COALESCE(balance,0) as balance").Where("membername= ? and deleted_at is null", users.Username).Scan(&transaction)
@@ -574,25 +539,101 @@ func GetUser(c *fiber.Ctx) error {
 	// }
 	// pro_setting["CreatedAt"] = createdAt.Format("2006-01-02 15:04:05")
 	
-	var pro_balance decimal.Decimal
-	var createdAt time.Time
-	createdAt = time.Now() 
-	if pro_setting["CreatedAt"] != nil {
-		createdAt = pro_setting["CreatedAt"].(time.Time) 
-	}
-	db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND deleted_at is null and created_at > ?",users.Username,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
+	// var pro_balance decimal.Decimal
+	// var createdAt time.Time
+	// createdAt = time.Now() 
+	// if pro_setting["CreatedAt"] != nil {
+	// 	createdAt = pro_setting["CreatedAt"].(time.Time) 
+	// }
+	// db.Debug().Model(&models.TransactionSub{}).Select("balance").Where("membername = ? AND deleted_at is null and created_at > ?",users.Username,createdAt.Format("2006-01-02 15:04:05")).Limit(1).Order("id desc").Find(&pro_balance)
 	
 
-	updates := map[string]interface{}{
-		"ProBalance": pro_balance,
-	}
-	if err := db.Debug().Model(&users).Where("id=? and pro_status=?",users.ID,users.ProStatus).Updates(updates).Error; err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// updates := map[string]interface{}{
+	// 	"ProBalance": pro_balance,
+	// }
+	// if err := db.Debug().Model(&users).Where("id=? and pro_status=?",users.ID,users.ProStatus).Updates(updates).Error; err != nil {
+	// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 			"Status": false,
+	// 			"Message": err.Error(),
+	// 		})
+	// 	}
+ 
+
+	 
+	// }
+	balance64,_ := users.Balance.Float64()
+
+	if balance64 < 1  {
+
+
+		fmt.Printf("User.Status %v \n",users.ProStatus)
+		//currentPromotionKey := fmt.Sprintf("%s%s",c.Locals("prefix"),userID)
+		// check redis status
+		r_status,_ := getRedisKV(redisClient,key,"status")
+		fmt.Printf("r.Status %v \n",r_status)
+		if r_status == "1" {
+			// if err := redisClient.HSet(ctx, key, "status","2").Err(); err != nil {
+			// 	return fmt.Errorf("ไม่สามารถฝากเงินเพิ่มได้ ")
+			// }
+		
+		// updates := map[string]interface{}{
+		// 	"ProStatus": "2",
+		// 	"Balance": 0,
+		// }
+ 
+		// repository.UpdateUserFields(db, users.ID, updates)
+		updates := map[string]interface{}{
+			"status": "2",
+		}
+       if err = db.Debug().Model(&models.PromotionLog{}).Where("uid=?",pro_uid).Updates(updates).Error; err != nil {
+			return c.JSON(fiber.Map{
 				"Status": false,
-				"Message": err.Error(),
-			})
+				"Message": err,
+				"Data": fiber.Map{ 
+					"id": -1,
+				}})
+		}
+		key := fmt.Sprintf("%s%d", users.Prefix, users.ID)
+		currentPromotionKey := fmt.Sprintf("%s:current_promotion", key)
+		fmt.Printf("line Key %s \n", currentPromotionKey)
+
+		// ลบคีย์จาก Redis โดยตรง
+		err := redisClient.Del(ctx, currentPromotionKey).Err()
+		if err != nil {
+			fmt.Println("Error clearing Redis keys:", err)
+		} else {
+			fmt.Println("Successfully cleared Redis keys for user:", users.ID)
 		}
 
+		fmt.Printf("line 598 \n")
+		}
+		return c.JSON(fiber.Map{
+			"Status": true,
+			"Message":  fmt.Errorf("ข้อมูลยูสเซอร์ เกิดข้อผิดพลาด"),
+			"Data": fiber.Map{
+				"id":         users.ID,
+				"fullname":   users.Fullname,
+				"banknumber": users.Banknumber,
+				"bankname":   users.Bankname,
+				"username":   strings.ToUpper(users.Username),
+				"balance":    users.Balance,
+				"lastdeposit": users.LastDeposit,
+				"lastproamount":users.LastProamount,
+				"pro_status": "0",
+				"pro_id": "",
+				"prefix":     users.Prefix,
+				"minturnoverdef": users.MinTurnoverDef,
+				"turnover": "0",
+				"currency":   users.Currency,
+				"promotionlog":  promotionLogs,
+				"includegames": "13,8,2,5,7,1,3,2",
+				"excludegames": "",
+			}})
+
+
+	} else if users.ProStatus != "2" {
+
+	fmt.Printf("line 624")
 	
 	//fmt.Printf("data: %+v\n", users)
 	response := fiber.Map{
@@ -607,22 +648,82 @@ func GetUser(c *fiber.Ctx) error {
 			"balance":    users.Balance,
 			"currency":   users.Currency,
 			"prefix":     users.Prefix,
-			"turnover":   totalTurnover,//summary.Turnover,
-			"minturnover": requiredTurnover,
+			"turnover":   totalTurnover.Round(2),//summary.Turnover,
+			"minturnoverdef": users.MinTurnoverDef,
 			"lastdeposit": users.LastDeposit,
 			"lastproamount": users.LastProamount,
 			"referredby": users.ReferredBy,
 			"lastwithdraw": users.LastWithdraw,
 			"promotionlog": promotionLogs,
 			"pro_status": users.ProStatus,
-			"pro_balance": pro_balance,
+			"pro_id": pro_uid,
+			//"pro_balance": pro_balance,
 			"includegames": promotion.Includegames,
 			"excludegames": promotion.Excludegames,
 		}}
 	return c.JSON(response)
+	} else {
+		fmt.Printf("line 654")
+		timestamp,_ := getRedisKV(redisClient,key,"timestamp")
+
+		if err := db.Debug().Model(&models.TransactionSub{}).
+		Where(" membername = ? AND Date(created_at) >= Date(?)", 
+			users.Username, 
+			timestamp).
+		Select("COALESCE(SUM(turnover), 0)").
+		Scan(&totalTurnover).Error; err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"Message": "ไม่สามารถคำนวณยอดเทิร์นได้ !",
+				"Status": false,
+				"Data": "เกิดข้อผิดพลาด!",
+			})
+			
+		
+		}
+
+
+		return c.JSON(fiber.Map{
+			"Status": true,
+			"Message":   "ดึงข้อมูลสำเร็จ",
+			"Data": fiber.Map{
+				"id":         users.ID,
+				"fullname":   users.Fullname,
+				"banknumber": users.Banknumber,
+				"bankname":   users.Bankname,
+				"username":   strings.ToUpper(users.Username),
+				"balance":    users.Balance,
+				"pro_status": "0",
+				"pro_id": pro_uid,
+				"prefix":     users.Prefix,
+				"currency":   users.Currency,
+				"turnover": totalTurnover.Round(2),
+				"minturnoverdef": users.MinTurnoverDef,
+				"promotionlog":  promotionLogs,
+				"includegames": "13,8,2,5,7,1,3,2",
+				"excludegames": "",
+			}})
+
+	}
+}
 }
 
 
+func getRedisKV(redisClient *redis.Client,currentPromotionKey string,key string) (string, error) {
+    //currentPromotionKey := fmt.Sprintf("%s:%s", userID,key)
+
+    // ดึงข้อมูล "Example" จาก Redis
+    value, err := redisClient.HGet(ctx, currentPromotionKey, key).Result()
+    if err != nil && err != redis.Nil {
+        return "", fmt.Errorf("error fetching value: %v", err)
+    }
+
+    // ถ้าไม่พบค่า ให้คืนค่าเป็นสตริงว่าง
+    if err == redis.Nil {
+        return "", nil
+    }
+
+    return value, nil
+}
 
 func getPromotionsWithUserID(userID int, db *gorm.DB) ([]models.Promotion, error) {
 	var goodpromotions []models.Promotion
@@ -648,7 +749,7 @@ func getPromotionsWithUserID(userID int, db *gorm.DB) ([]models.Promotion, error
 		return nil, err
 	}
 	var promotions []models.Promotion
-	if err = db.Debug().Model(models.Promotion{}).Where("status=1 and date(end_date) > date(?)",createdAt.Format("2006-01-02 15:04:05")).Scan(&promotions).Error; err != nil {
+	if err = db.Debug().Model(models.Promotion{}).Where("status=1 and date(end_date) >= date(?)",createdAt.Format("2006-01-02 15:04:05")).Scan(&promotions).Error; err != nil {
 		return nil, err
 	}
 	
@@ -978,6 +1079,7 @@ func GetUserByUsername(c *fiber.Ctx) error {
 			"minturnover": users.MinTurnover,
 			"lastdeposit": users.LastDeposit,
 			"lastproamount": users.LastProamount,
+			"minturnoverdef": users.MinTurnoverDef,
 			"lastwithdraw": users.LastWithdraw,
 			"pro_status": users.ProStatus,
 			"includegames": promotion.Includegames,
@@ -985,17 +1087,7 @@ func GetUserByUsername(c *fiber.Ctx) error {
 		}}
 	return c.JSON(response)
 }
-// @Summary Get user balance
-// @Description Get user balance in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/balance [post]
-// @Param user body models.Users true "User balance info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetBalance(c *fiber.Ctx) error {
 
 	var users models.Users
@@ -1040,21 +1132,12 @@ func GetBalance(c *fiber.Ctx) error {
 			"username":   strings.ToUpper(users.Username),
 			"balance":    users.Balance,
 			"prefix":     users.Prefix,
+			"minturnoverdef": users.MinTurnoverDef,
 		}}
 	return c.JSON(response)
 }
 
-// @Summary User Logout
-// @Description Get user balance in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerUser
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/logout [post]
-// @Param user body models.Users true "User Logout"
-// @param Authorization header string true "Bearer token"
+ 
 func Logout(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*jtoken.Token)
@@ -1086,17 +1169,7 @@ func Logout(c *fiber.Ctx) error {
 
 }
 
-// @Summary Get user Transaction
-// @Description Get user Transaction in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerTransactionSub
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/transactions [post]
-// @Param user body models.TransactionSub true "User Transaction info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetUserTransaction(c *fiber.Ctx) error {
 
 	body := new(Body)
@@ -1174,17 +1247,7 @@ func GetUserTransaction(c *fiber.Ctx) error {
 
 }
 
-// @Summary Get user Statement
-// @Description Get user Statement in the database.
-// @Tags users
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {object} models.SwaggerBankStatement
-// @Failure 400 {object} ErrorResponse "Error response"
-// @Router /users/statement [post]
-// @Param user body models.BankStatement true "User Bank Statement info"
-// @param Authorization header string true "Bearer token"
+ 
 func GetUserStatement(c *fiber.Ctx) error {
 
 	body := new(Body)
@@ -1399,7 +1462,7 @@ func UpdateUserPro(c *fiber.Ctx) error {
 		Prostatus string `json:"pro_status"`
 	}
 
-	rdb := createRedisClient()
+	rdb := handler.CreateRedisClient()
 	defer rdb.Close()
 
 	//	body :=   make(map[string]interface{})

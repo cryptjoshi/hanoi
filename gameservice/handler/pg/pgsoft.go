@@ -2,6 +2,7 @@ package pg
 
 import 
 (
+	 "context"
 	"github.com/gofiber/fiber/v2"
 	"pkd/models"
 	"pkd/database"
@@ -10,13 +11,14 @@ import
 	"github.com/shopspring/decimal"
 	"github.com/valyala/fasthttp"
 	"pkd/common"
-	
+	"github.com/go-redis/redis/v8"
 	//jtoken "github.com/golang-jwt/jwt/v4"
 	"fmt"
 	//"log"
 	"encoding/json"
 	//"os"
 	"strings"
+	"time"
 )
 type Response struct {
     Message string      `json:"message"`
@@ -62,7 +64,7 @@ type ResponseBalance struct {
 	BeforeBalance decimal.Decimal `json:"beforebalance"`
 	Balance decimal.Decimal `json:"balance"`
 }
-
+var ctx = context.Background()
 //http://ambsuperapi.com
 //user : sunshinepgthb
 //pass : Sunshine@688
@@ -91,8 +93,10 @@ func GetBalance(c *fiber.Ctx) error {
 		return c.Status(200).SendString(err.Error())
 	}
 	var users models.Users
-	users = handler.ValidateJWTReturn(request.SessionToken);
-
+	users,err := handler.ValidateJWTReturn(request.SessionToken);
+	if err != nil {
+	return c.Status(200).SendString(err.Error())
+	}
 	fmt.Printf("users: %s ",users.Token)
 	fmt.Printf("request: %s ",request.SessionToken)
 
@@ -127,7 +131,8 @@ func GetBalance(c *fiber.Ctx) error {
 	
 }
 
-func PlaceBet(c *fiber.Ctx) error {
+func PlaceBet(redisClient *redis.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error { 
 	
 	request := new(PgRequest)
 	if err := c.BodyParser(request); err != nil {
@@ -152,7 +157,7 @@ func PlaceBet(c *fiber.Ctx) error {
 	if cnn != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("cnn is nil")
 	}
-		 dberr := db.Debug().Select("id,balance,pro_status as ProStatus").Where("username = ?", request.Username).First(&user).Error
+		 dberr := db.Debug().Select("id,balance,prefix,uid,pro_status as ProStatus").Where("username = ?", request.Username).First(&user).Error
 		 if dberr != nil {
 		 
 			response := fiber.Map{
@@ -168,8 +173,8 @@ func PlaceBet(c *fiber.Ctx) error {
 			}	
 			return c.JSON(response)
 		 }
-	
-	 
+		 //totalKey := fmt.Sprintf("%s%d",prefix, user.ID)
+		 totalKey := fmt.Sprintf("%s:total_transactions", fmt.Sprintf("%s%d",prefix, user.ID))
 		 for _, transaction := range request.Txns {
 			
 			transactionAmount := func(betamount decimal.Decimal,payoutamount decimal.Decimal,status string,feature bool) decimal.Decimal {
@@ -224,7 +229,9 @@ func PlaceBet(c *fiber.Ctx) error {
 				"GameProvide": "PGSOFT",
 				"BeforeBalance":user.Balance,
 				"Balance":user.Balance.Add(transactionAmount),
-				"ProID":user.ProStatus,
+				"ProID":user.ProID,
+				"Uid":user.Uid,
+				"CreatedAt": time.Now(),
 			  } 
 
 			  fmt.Printf("Xtransaction : %+v \n",xtransaction)
@@ -242,6 +249,7 @@ func PlaceBet(c *fiber.Ctx) error {
 					"username": strings.ToUpper(request.Username),
 					"message": "Balance incorrect",
 				}	
+				
 				return c.JSON(response)
 			} else 
 			{
@@ -250,7 +258,8 @@ func PlaceBet(c *fiber.Ctx) error {
 				fmt.Println(" GameRoundID RowAffected: ",rowsAffected)
 				//fmt.Printf("xtransaction: %v",xtransaction)
 				//fmt.Printf("user: %s",user)
-				xtransaction["ProID"] = user.ProStatus
+				xtransaction["ProID"] = user.ProID
+				
 				// แก้ไขส่วนการสร้าง transactionSub
 				// transactionSub := &models.TransactionSub{
 				// 	MemberID: user.ID,
@@ -305,7 +314,28 @@ func PlaceBet(c *fiber.Ctx) error {
 								"balanceAfter": balanceAfterFloat,
 								"username": strings.ToUpper(request.Username),
 							}
-						
+							//fmt.Printf("totalKey: %v \n", totalKey)
+							//fmt.Printf("balanceAfterFloat: %v  \n", balanceAfterFloat)
+					
+							if err := redisClient.HSet(ctx, totalKey, "total_amount", balanceAfterFloat).Err(); err != nil {
+							 fmt.Printf("error initializing total transactions: %v \n", err)
+							 }
+							 
+							 userid := fmt.Sprintf("%s%d", prefix, user.ID)
+							 key := fmt.Sprintf("bank_statement:%s:%s", userid, user.Uid)
+							 //fmt.Printf("User: %+v \n", user)
+							 
+							//fmt.Printf("Key: %+v \n", key)
+							 err := redisClient.HSet(ctx, key, "transaction_amount", transactionAmount.String()).Err()
+							 err = redisClient.HSet(ctx, key, "balance", balanceAfterFloat).Err()
+							 err = redisClient.HSet(ctx, key, "before_balance", balanceBeforeFloat).Err()
+							 
+							 if err != nil {
+								fmt.Printf("failed to update transaction_amount in Redis: %v", err)
+							 }
+							 
+
+
 						return c.JSON(response)
 					} else {
 						// balanceBeforeFloat, _ := c_transaction_found.BeforeBalance.Float64()
@@ -329,12 +359,92 @@ func PlaceBet(c *fiber.Ctx) error {
 							"username": strings.ToUpper(request.Username),
 							"message": "Balance incorrect",
 						}
+						
+						//balanceAfterFloat, _ := user.Balance.Float64()
+						//transactionAmount64,_ := transactionAmount.Float64()
+						fmt.Printf("totalKey: %v \n", totalKey)
+						fmt.Printf("balanceAfterFloat: %v  \n", balanceAfterFloat)
+						
+						if err := redisClient.HSet(ctx, totalKey, "total_amount",balanceAfterFloat).Err(); err != nil {
+						 fmt.Printf("error initializing total transactions: %v \n", err)
+						 }
+
+						 userid := fmt.Sprintf("%s%d", prefix, user.ID)
+						 key := fmt.Sprintf("bank_statement:%s:%s", userid, user.Uid)
+						 err := redisClient.HSet(ctx, key, "transaction_amount", transactionAmount.String()).Err()
+						 err = redisClient.HSet(ctx, key, "balance", balanceAfterFloat).Err()
+						 err = redisClient.HSet(ctx, key, "before_balance", balanceAfterFloat).Err()
+						 if err != nil {
+							fmt.Printf("failed to update transaction_amount in Redis: %v", err)
+						 }
 						return c.JSON(response)	
 					}
 			}
+
+		
+	 
 		 }
+
+		   // ยอดรวมของ user
+		   
+
+
 		 return c.JSON(response)		 
 }
+}
+
+
+// // เพิ่มฟังก์ชั่นช่วยคำนวณยอดเทิร์นที่ต้องการ
+// func addTransaction(rdb *redis.Client, bankstatement *models.BankStatement, requestBodytype string) error {
+//     // ตรวจสอบว่า bankstatement เป็น nil หรือไม่
+//     if bankstatement == nil {
+//         return fmt.Errorf("bankstatement is nil")
+//     }
+
+//     now := time.Now()
+//     nowRFC3339 := now.Format(time.RFC3339)
+//     //fmt.Printf("BankStatement: %+v \n", bankstatement)
+
+//     // สร้างคีย์ใหม่ที่รวม uid และ userID
+//     userid := fmt.Sprintf("%s%d", bankstatement.Prefix, bankstatement.Userid)
+//     key := fmt.Sprintf("bank_statement:%s:%s", userid, bankstatement.Uid)
+//     //fmt.Printf("Key: %s \n", key)
+
+//     response := map[string]interface{}{
+//         "timestamp": nowRFC3339,
+//         "balance":   bankstatement.Balance.String(),
+//     }
+
+//     // ถ้า requestBodytype เป็น "payout"
+//     if requestBodytype == "payout" {
+     
+//             response["before_balance"] = bankstatement.Balance.Add(bankstatement.Transactionamount.Abs()).String()
+//             response["deposit_amount"] = "0"
+//             response["withdraw_amount"] = bankstatement.Transactionamount.String()
+
+//     } else {
+ 
+//             response["before_balance"] = bankstatement.Balance.Sub(bankstatement.Transactionamount.Abs()).String()
+//             response["deposit_amount"] = bankstatement.Transactionamount.String()
+//             response["withdraw_amount"] = "0"
+
+//     }
+
+//     // เก็บคีย์ธุรกรรมใน Hash
+//     err := rdb.HSet(ctx, key, response).Err()
+//     if err != nil {
+//         return fmt.Errorf("failed to set transaction in Redis: %v", err)
+//     }
+// 	transactionData, err := getTransaction(rdb, userid, bankstatement.Uid)
+// 	if err != nil {
+//         return fmt.Errorf("failed to set transaction in Redis: %v", err)
+//     }
+	
+   
+
+//     return nil
+// }
+
 
 // var SECRET_KEY = os.Getenv("PASSWORD_SECRET")
 // var pg_prod_code = os.Getenv("PG_PRODUCT_ID")
@@ -461,8 +571,10 @@ func LaunchGame(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	var users models.Users
-	users = handler.ValidateJWTReturn(request.SessionToken);
-
+	users,err := handler.ValidateJWTReturn(request.SessionToken);
+	if err != nil {
+		return c.Status(200).SendString(err.Error())
+		}
 	//fmt.Printf("users: %v ",users)
 	//fmt.Printf("request: %s ",request.SessionToken)
 	// efargs = {

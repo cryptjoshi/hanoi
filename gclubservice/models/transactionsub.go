@@ -54,6 +54,8 @@ type TransactionSub struct {
 	AffiliateID      string          `gorm:"type:varchar(50);column:affiliate_id"`         // รหัส Affiliated ที่เชื่อมโยง
 	AffiliateTurnover decimal.Decimal `gorm:"type:decimal(15,2);column:affiliate_turnover;default:0"` // Turnover ที่เกิดจาก Affiliate
 	PartnerID int `gorm:"column:partner_id"` // บันทึก partner ที่เกี่ยวข้องกับ transaction
+	Uid    string          `gorm:"column:uid" json:"uid"`
+	
 }
 
 func (m *TransactionSub) TableName() string {

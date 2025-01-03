@@ -140,7 +140,7 @@ services:
 
 
   backendservice:
-    image: king_backend_service
+    #image: king_backend_service
     container_name: backend_service
     build:
       context: ./backend

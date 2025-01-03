@@ -7,14 +7,14 @@ import (
 	//"github.com/golang-jwt/jwt/v4"
 	"pkd/handler"
 	//"pkd/middlewares"
-	 
+	"github.com/go-redis/redis/v8"
 	"pkd/handler/ef" 
 	"pkd/handler/gc" 
 	"pkd/handler/pg" 
 	"os"
 )
 var jwtSecret = os.Getenv("PASSWORD_SECRET")
-func SetupRoutes(app *fiber.App) {
+func SetupRoutes(app *fiber.App,redisClient *redis.Client) {
 	// app.Use(etag.New())
 	app.Use(compress.New())
 	
@@ -41,7 +41,7 @@ func SetupRoutes(app *fiber.App) {
 	// PGSOFT
 	app.Get("/callback/pgsoft",pg.Index)
 	app.Post("/callback/pgsoft/checkBalance",pg.GetBalance)
-	app.Post("/callback/pgsoft/settleBets",pg.PlaceBet)
+	app.Post("/callback/pgsoft/settleBets",pg.PlaceBet(redisClient))
 	app.Post("/callback/pgsoft/gamelist",handler.GetGameList)
 	
 	

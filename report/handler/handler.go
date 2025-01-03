@@ -534,7 +534,7 @@ func createDatabase(dbName string) *gorm.DB {
 			Key: "ckd_user_commission",
 			Value: "5%",
 		})
-		db.Debug().Create(&settings)
+		db.Create(&settings)
 	}
  
 	
@@ -705,7 +705,7 @@ func GetMasterSetting(c *fiber.Ctx) error {
 	}
 	var settings models.Settings
 	var existingSetting models.Settings
-	db.Debug().Model(&settings).Where("`key` = ?",loginRequest.Prefix ).First(&existingSetting)
+	db.Model(&settings).Where("`key` = ?",loginRequest.Prefix ).First(&existingSetting)
 	// rows, err := db.Raw("SHOW DATABASES").Rows()
 	// if err != nil {
 	// 	response := fiber.Map{
@@ -1029,7 +1029,7 @@ func GetPromotionByUser(c *fiber.Ctx) error {
 	
 	var promotions = []models.Promotion{}
 
-	err := db.Debug().Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
+	err := db.Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions).Error//Where("status=1 and end_date>?", time.Now().Format("2006-01-02")).Find(&promotions)
 	fmt.Printf("err: %s",err)
      
 	if err != nil {
@@ -1083,7 +1083,7 @@ func GetAllPromotion(c *fiber.Ctx) error {
 	// }
 	promotions := []models.Promotion{}
 
-	err = db.Debug().Find(&promotions).Error
+	err = db.Find(&promotions).Error
 
 	// fmt.Println(promotions)
 	if err != nil {
@@ -1124,7 +1124,7 @@ func GetPromotionById(c *fiber.Ctx) error {
 		return c.JSON(response)
 	}
 	promotion := models.Promotion{}
-	err = db.Debug().First(&promotion, body.PromotionId).Error
+	err = db.First(&promotion, body.PromotionId).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
@@ -1200,20 +1200,20 @@ func UpdatePromotion(c *fiber.Ctx) error {
 	}
 	// fmt.Printf("promotion: %+v\n", promotion)
 
-	// err = db.Debug().Model(&models.Promotion{}).Select("name", "description", "percent_discount", 
+	// err = db.Model(&models.Promotion{}).Select("name", "description", "percent_discount", 
     // "start_date", "end_date", "max_discount", "unit", "usage_limit", "specific_time",
     // "payment_method", "min_dept", "min_spend", "max_spend", "terms_and_conditions",
     // "status", "includegames", "excludegames", "example", "min_spend_type", "min_credit",
     // "turn_type", "zerobalance").Where("id = ?", data.PromotionId).Updates(promotion).Error
-	// err = db.Debug().Session(&gorm.Session{FullSaveAssociations: true}).
+	// err = db.Session(&gorm.Session{FullSaveAssociations: true}).
     // Model(&models.Promotion{}).
     // Where("id = ?", data.PromotionId).
     // Updates(promotion).Error
-	//err = db.Debug().Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Updates(promotion).Error
+	//err = db.Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Updates(promotion).Error
 	
-	//err = db.Debug().Model(&models.Promotion{}).Select("*").Where("id = ?", data.PromotionId).Updates(promotion).Error
-	//err = db.Debug().Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Save(&promotion).Error
-	err = db.Debug().Exec(`
+	//err = db.Model(&models.Promotion{}).Select("*").Where("id = ?", data.PromotionId).Updates(promotion).Error
+	//err = db.Model(&models.Promotion{}).Where("id = ?", data.PromotionId).Save(&promotion).Error
+	err = db.Exec(`
     UPDATE promotions 
     SET name = ?, description = ?, percent_discount = ?, 
         start_date = ?, end_date = ?, max_discount = ?,
@@ -1278,7 +1278,7 @@ func DeletePromotion(c *fiber.Ctx) error {
 	}
 	//db.AutoMigrate(&models.Promotion{})
 	//fmt.Println(body)
-	err = db.Debug().Delete(&models.Promotion{}, "id = ?", body.PromotionId).Error
+	err = db.Delete(&models.Promotion{}, "id = ?", body.PromotionId).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "มีข้อผิดพลาดเกิดขึ้น!!",
@@ -1390,7 +1390,7 @@ func GetGameList(c *fiber.Ctx) error {
 	}
 
 	games := []models.Games{}
-	err = db.Debug().Find(&games).Error
+	err = db.Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1481,7 +1481,7 @@ func GetGameList(c *fiber.Ctx) error {
 		}
 	}
 	games = []models.Games{}
-	err = db.Debug().Find(&games).Error
+	err = db.Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1520,7 +1520,7 @@ func GetGameById(c *fiber.Ctx) error {
 		fmt.Println("err:", err)
 	}
 	game := models.Games{}
-	err = db.Debug().First(&game, body.ID).Error
+	err = db.First(&game, body.ID).Error
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1581,7 +1581,7 @@ func GetGameByType(c *fiber.Ctx) error {
 	
 	
 
-	err = db.Debug().Model(&models.Games{}).Where("status like ?","%"+strings.Replace(body.ID,"%20","%",-1)+"%").Scan(&games).Error
+	err = db.Model(&models.Games{}).Where("status like ?","%"+strings.Replace(body.ID,"%20","%",-1)+"%").Scan(&games).Error
 
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -1625,7 +1625,7 @@ func UpdateGame(c *fiber.Ctx) error {
 	game.Name = body.Body.Name
 	game.Status = body.Body.Status
 
-	err = db.Debug().Model(&models.Games{}).Where("id = ?", body.ID).Updates(body.Body).Error
+	err = db.Model(&models.Games{}).Where("id = ?", body.ID).Updates(body.Body).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "อัปเดตข้อมูลผิดพลาด",
@@ -1745,7 +1745,7 @@ func GetGameStatus(c *fiber.Ctx) error {
 	}
 	// If no cached data, query the database
 	gameStatus := []GameStatus{}
-	err = db.Debug().Table("Games").Select("DISTINCT status").Find(&gameStatus).Error
+	err = db.Table("Games").Select("DISTINCT status").Find(&gameStatus).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1822,7 +1822,7 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 
 	var partner models.Partner
 
-	if err = db.Debug().Where("id = ?",body.Id).Find(&partner).Error; err != nil {
+	if err = db.Where("id = ?",body.Id).Find(&partner).Error; err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
 			"Status":  false,
@@ -1830,12 +1830,12 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	fmt.Printf("Partner: %+v \n",partner)
+	//fmt.Printf("Partner: %+v \n",partner)
 		
 	//games := []models.Users{}
 	games := []models.Users{}
 
-	err = db.Debug().Where("referred_by = ?",partner.AffiliateKey).Find(&games).Error
+	err = db.Where("referred_by = ?",partner.AffiliateKey).Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1849,7 +1849,7 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 
 	// dbm := ConnectMaster()
 
-	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+	// dbm.Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
 
 	// defer dbm.Close()
 	
@@ -1897,19 +1897,76 @@ func GetMemberByPartnerId(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+
+func FixDate(datestring string) string {
+
+	parts := strings.Split(datestring, "/")
+	if len(parts) != 3 {
+		return fmt.Sprintf("")
+		 
+	}
+
+	// Pad single-digit day and month with leading zeros
+	day := fmt.Sprintf("%02s", parts[0])
+	month := fmt.Sprintf("%02s", parts[1])
+	year := parts[2]
+
+	// Reassemble the date in MM/DD/YYYY format
+	return fmt.Sprintf("%s/%s/%s", day, month, year)
+}
+
+func parseISODate(dateStr string) (time.Time, error) {
+	// กำหนดรูปแบบวันที่
+	layout := time.RFC3339Nano
+	// ใช้ time.Parse เพื่อแปลง
+	parsedTime, err := time.Parse(layout, dateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parsedTime, nil
+}
+func parseISODateInBangkok(dateStr string) (time.Time, error) {
+	// กำหนดรูปแบบวันที่
+	layout := time.RFC3339Nano
+
+	// แปลงสตริงเป็นเวลาใน UTC
+	parsedTime, err := time.Parse(layout, dateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// โหลดเขตเวลา Asia/Bangkok
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// แปลงเวลา UTC เป็นเวลาที่เขตเวลา Bangkok
+	bangkokTime := parsedTime.In(loc)
+	return bangkokTime, nil
+}
 func GetMemberByPartner(c *fiber.Ctx) error {
-	
-	// body := new(Dbstruct)
-	// if err := c.BodyParser(body); err != nil {
-	// 	response := fiber.Map{
-	// 		"Message": "รับข้อมูลผิดพลาด",
-	// 		"Status":  false,
-	// 		"Data":    err.Error(),
-	// 	}
-	// 	return c.JSON(response)
-	// }
+
+
+
+	type OBody struct {
+		From string `json:"from"`
+		To string `json:"to"`
+		Prefix string `json:"prefix"`
+		Id string `json:"id"`
+	}
+	body := new(OBody)
+
+	if err := c.BodyParser(body); err != nil {
+		response := fiber.Map{
+			"Message": "รับข้อมูลผิดพลาด",
+			"Status":  false,
+			"Data":    err.Error(),
+		}
+		return c.JSON(response)
+	}
 	db, err := GetDBFromContext(c)
- 
+	fmt.Printf("BODY: %+v \n",body)
 	//db, err := database.ConnectToDB(body.Prefix)
 	if err != nil {
 		response := fiber.Map{
@@ -1921,10 +1978,30 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 	}
 	
 	//database.CheckAndCreateTable(db, models.Users{})
+	// fixedDate := FixDate(body.From)
+	// startDate, err := time.Parse("01/02/2006", fixedDate)
+	// fixedDate = FixDate(body.To)
+	// stopDate, err := time.Parse("01/02/2006", fixedDate)
+
+	//fmt.Printf("Startdate: %s \n",body.From)
+	//fmt.Printf("Stopdate: %s \n",body.To)
+
+	startDate, err := parseISODate(body.From)
+	if err != nil {
+		fmt.Println("Error parsing date:", err)
+		 
+	}
+	stopDate, err := parseISODate(body.To)
+	if err != nil {
+		fmt.Println("Error parsing date:", err)
+		 
+	}
+	 
+
 
 	var partner models.Partner
 
-	if err = db.Debug().Where("affiliateKey = ?",c.Locals("AffiliateKey")).Find(&partner).Error; err != nil {
+	if err = db.Where("affiliateKey = ?",c.Locals("AffiliateKey")).Find(&partner).Error; err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
 			"Status":  false,
@@ -1935,7 +2012,7 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 	//fmt.Printf("Partner: %+v \n",partner)
 		
 	games := []models.Users{}
-	err = db.Debug().Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
+	err = db.Where("referred_by = ?",c.Locals("AffiliateKey")).Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -1949,15 +2026,27 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 
 	// dbm := ConnectMaster()
 
-	// dbm.Debug().Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
+	// dbm.Model(&settings).Where("`key` like ?", c.Locals("Prefix")+"%").Find(&settings)
 
 	// defer dbm.Close()
-	
+	type TotalData struct {
+		TotalEarnings decimal.Decimal `json:"totalearnings"`//CalculatePartnerCommission(db,partner.ID, totalTurnover)
+		TotalTurnover decimal.Decimal `json:"totalturnover"`
+		TDeposit decimal.Decimal `json:"tdeposit"`
+		TWithdraw decimal.Decimal `json:"twithdraw"`
+		Deposit decimal.Decimal `json:"deposit"`
+		Withdraw decimal.Decimal `json:"withdraw"`
+		Crdb decimal.Decimal `json:"crdb"`
+		TotalProamount  decimal.Decimal `json:"totalproamount"`
+		Win  decimal.Decimal `json:"win"`
+		Lose  decimal.Decimal `json:"lose"`
+		}
 
 	for i := range games {
-		
+		var totaldata TotalData
+		var winloss TotalData
 		pro_setting,_ := GetProdetail(db,games[i].ProStatus)
-		fmt.Printf(" pro_setting: %+v",pro_setting)
+		//fmt.Printf(" pro_setting: %+v",pro_setting)
 		if pro_setting != nil {
 		turnType, ok := pro_setting["TurnType"].(string)
         if !ok {
@@ -1978,12 +2067,65 @@ func GetMemberByPartner(c *fiber.Ctx) error {
 			}	
 			}
 		} else {
-			games[i].TotalEarnings = decimal.NewFromFloat(0.0) //CalculatePartnerCommission(db,partner.ID, totalTurnover)
-			games[i].TotalTurnover = decimal.NewFromFloat(0.0)
-			games[i].TDeposit = decimal.NewFromFloat(0.0)
-			games[i].TWithdraw = decimal.NewFromFloat(0.0)
-			games[i].Crdb = decimal.NewFromFloat(0.0)
-			games[i].SumProamount = decimal.NewFromFloat(0.0)
+
+		err = db.Table("BankStatement").
+			Select(`
+				COALESCE(SUM(BankStatement.Proamount), 0) AS TotalProamount,
+				COALESCE(SUM(CASE WHEN transactionamount < 0 THEN transactionamount ELSE 0 END), 0) AS Withdraw,
+    			COALESCE(SUM(CASE WHEN transactionamount > 0 THEN transactionamount ELSE 0 END), 0) AS Deposit,
+				COALESCE(SUM(CASE WHEN transactionamount > 0 THEN transactionamount ELSE 0 END), 0) + 
+    			COALESCE(SUM(CASE WHEN transactionamount < 0 THEN transactionamount ELSE 0 END), 0) AS Crdb,
+    			COALESCE(COUNT(CASE WHEN transactionamount < 0 THEN transactionamount ELSE 0 END), 0) AS TWithdraw,
+    			COALESCE(COUNT(CASE WHEN transactionamount > 0 THEN transactionamount ELSE 0 END), 0) AS TDeposit
+			`).
+			Joins("JOIN Users ON BankStatement.userid = Users.id").
+			Where("Users.referred_by = ? AND DATE(BankStatement.createdAt) between ? AND ? AND Users.id=?",
+				partner.AffiliateKey,
+				startDate.Format("2006-01-02"),stopDate.Format("2006-01-02"),games[i].ID).
+			Find(&totaldata).Error
+
+			if err != nil {
+				fmt.Println(err.Error())
+				response := fiber.Map{
+					"Status":  false,
+					"Message": err.Error(),
+				}
+				return c.JSON(response)
+			}
+			///fmt.Printf("tdata: %+v \n",totaldata)
+			games[i].SumProamount = totaldata.TotalProamount
+			games[i].TDeposit = totaldata.TDeposit
+			games[i].TWithdraw = totaldata.TWithdraw
+			games[i].Deposit = totaldata.Deposit
+			games[i].Withdraw = totaldata.Withdraw
+			games[i].Crdb =totaldata.Crdb
+
+
+			err = db.Table("TransactionSub").
+			Select(`
+				COALESCE(SUM(CASE WHEN transactionamount < 0 THEN transactionamount ELSE 0 END), 0) AS Win,
+    			COALESCE(SUM(CASE WHEN transactionamount > 0 THEN transactionamount ELSE 0 END), 0) AS Lose
+			`).
+			Joins("JOIN Users ON TransactionSub.MemberID = Users.id").
+			Where("Users.referred_by = ? AND DATE(TransactionSub.created_at) between ? AND ? AND Users.id=?",
+				partner.AffiliateKey,
+				startDate.Format("2006-01-02"),stopDate.Format("2006-01-02"),games[i].ID).
+			Find(&winloss).Error
+
+			if err != nil {
+				fmt.Println(err.Error())
+				response := fiber.Map{
+					"Status":  false,
+					"Message": err.Error(),
+				}
+				return c.JSON(response)
+			}
+
+
+			games[i].Win = winloss.Win //CalculatePartnerCommission(db,partner.ID, totalTurnover)
+			games[i].Lose = winloss.Lose
+			
+			 //decimal.NewFromFloat(totalproamount)
 			
 		}
 	}
@@ -2020,7 +2162,7 @@ func GetMemberList(c *fiber.Ctx) error {
 	}
 	//database.CheckAndCreateTable(db, models.Users{})
 	games := []models.Users{}
-	err = db.Debug().Find(&games).Error
+	err = db.Find(&games).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -2080,7 +2222,7 @@ func CreateMember(c *fiber.Ctx) error {
 	member.MinTurnoverDef = body.Body.MinTurnoverDef
 	member.Role = "user"
 
-	err = db.Debug().Create(&member).Error
+	err = db.Create(&member).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "สร้างข้อมูลผิดพลาด",
@@ -2121,7 +2263,7 @@ func GetMemberById(c *fiber.Ctx) error {
 	}
 	//database.CheckAndCreateTable(db, models.Users{})
 	user := models.Users{}
-	err = db.Debug().First(&user, body.ID).Error
+	err = db.First(&user, body.ID).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "ดึงข้อมูลผิดพลาด",
@@ -2153,7 +2295,7 @@ var ProItem struct {
 }
 func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 	var promotion models.Promotion
-	if err := db.Debug().Where("id = ?", procode).Find(&promotion).Error; err != nil {
+	if err := db.Where("id = ?", procode).Find(&promotion).Error; err != nil {
 		fmt.Printf("Error unmarshalling JSON: %v", err)
 		return nil, err
 	}
@@ -2257,7 +2399,7 @@ func UpdateMember(c *fiber.Ctx) error {
 	// 	}
 	//}
 
-	err = db.Debug().Model(&member).Where("id = ?", body.ID).Updates(member).Error
+	err = db.Model(&member).Where("id = ?", body.ID).Updates(member).Error
 	if err != nil {
 		response := fiber.Map{
 			"Message": "อัพเดตข้อมูลผิดพลาด",
@@ -2452,7 +2594,7 @@ func UpdateDatabase(c *fiber.Ctx) error {
 		}
 		return c.JSON(response)
 	}
-	db.Debug().Model(&settings).Updates(body.Body)
+	db.Model(&settings).Updates(body.Body)
 	// 
 
 	response := fiber.Map{
@@ -2498,28 +2640,28 @@ func UpdateMaster(c *fiber.Ctx) error {
 	}
 
 	
-	allrowsAffected := db.Debug().Model(&settings).Select("id").Find(&settings).RowsAffected
+	allrowsAffected := db.Model(&settings).Select("id").Find(&settings).RowsAffected
 
 	//var parry Pairy
 
 	if allrowsAffected == 0 {
-		db.Debug().Create(&body.Body)
+		db.Create(&body.Body)
 	} else {
 		for _, setting := range body.Body {
 			var existingSetting models.Settings
 			// Check if the setting with the given key exists
-			result := db.Debug().Model(&settings).Where("`key` = ?", setting.Key).First(&existingSetting)
+			result := db.Model(&settings).Where("`key` = ?", setting.Key).First(&existingSetting)
 	
 			if result.RowsAffected == 0 {
 				// If it doesn't exist, create a new entry
-				db.Debug().Create(&setting)
+				db.Create(&setting)
 			} else {
 				// If it exists, update the existing entry
-				db.Debug().Model(&existingSetting).Updates(setting)
+				db.Model(&existingSetting).Updates(setting)
 			}
 		}
  
-		//db.Debug().Model(&settings).Updates(body.Body)
+		//db.Model(&settings).Updates(body.Body)
 	}
 	response := fiber.Map{
 		"Message": "อัพเดตข้อมูลสำเร็จ",
@@ -2560,7 +2702,7 @@ func GetCommission(c *fiber.Ctx) error {
 	// }
 
 
-	db.Debug().Model(&settings).Where("`key` like ?", body.Prefix+"%").Find(&settings)
+	db.Model(&settings).Where("`key` like ?", body.Prefix+"%").Find(&settings)
 	
 	response := fiber.Map{
 		"Message": "ดึงข้อมูลสำเร็จ",
@@ -2664,7 +2806,7 @@ func AddTransactions(c *fiber.Ctx) error {
 
 	//fmt.Println(transactionsub)
 
-	result := db.Debug().Create(&transactionsub); 
+	result := db.Create(&transactionsub); 
 	//fmt.Println(result)
 	if result.Error != nil {
 		response = Response{
@@ -2761,7 +2903,7 @@ func GetAllTransaction(c *fiber.Ctx) error {
     	})
 	}
 
-	err_ := db.Debug().Where("membername = ?", users.Username).Find(&transactionsub).Error
+	err_ := db.Where("membername = ?", users.Username).Find(&transactionsub).Error
 	if err_ != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"Status": false,
@@ -2796,7 +2938,7 @@ func GetUserCommission(c *fiber.Ctx) error {
 	}
 	id := c.Locals("Walletid")
 
-	u_err := db.Debug().Where("id= ?", id).Find(&users).Error
+	u_err := db.Where("id= ?", id).Find(&users).Error
 	if u_err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"Message": "ไม่พบรหัสผู้ใช้งาน!!",
@@ -2811,14 +2953,14 @@ func GetUserCommission(c *fiber.Ctx) error {
 
 	db = ConnectMaster()
 
-	db.Debug().Model(&settings).Where("`key` like ?", users.Prefix+"%").Find(&settings)
+	db.Model(&settings).Where("`key` like ?", users.Prefix+"%").Find(&settings)
 
 	// ดึงค่า referral_code จาก users
 	referralCode := users.ReferralCode
 	db,_ = GetDBFromContext(c)
 	// ดึงยอดรวมของ BetAmount จาก TransactionSub โดยใช้ JOIN กับ Users
 	var totalBetAmount decimal.Decimal
-	err := db.Debug().Raw(`
+	err := db.Raw(`
 		SELECT COALESCE(SUM(ts.betamount), 0) as TurnOver 
 		FROM TransactionSub ts 
 		JOIN Users u ON u.username = ts.membername 
@@ -2885,7 +3027,7 @@ func CalculateUserCommission(db *gorm.DB,userID int,prefix string, refereeTurnov
 	// db.First(&user, userID)
 
 	//dbx := ConnectMaster()
-	//dbx.Debug().Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
+	//dbx.Model(&settings).Where("`key` like ?", prefix+"%").Find(&settings)
 	// คำนวณค่าคอมมิชชั่น
 	//fmt.Printf(" Settings: %+v \n",settings)
 

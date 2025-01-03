@@ -352,7 +352,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
 		//dbInterface := c.Locals("db")
 		
 		var users models.Users
-		if err_ := db.Debug().Select("id as ID,role,prefix,pro_status,deposit,actived").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
+		if err_ := db.Debug().Select("id as ID,role,prefix,pro_status,deposit,actived,uid").Where("username = ? ", claims.Username).Find(&users).Error; err_ == nil {
 			//fmt.Println("ID:",users.ID)
 			c.Locals("ID",users.ID)
 			c.Locals("Walletid", users.ID)
@@ -361,6 +361,7 @@ func JwtMiddleware(c *fiber.Ctx) error {
 			c.Locals("deposit",users.Deposit)
 			c.Locals("actived",users.Actived)
 			c.Locals("prostatus",users.ProStatus)
+			c.Locals("uid",users.Uid)
 		}
 		db, ok := c.Locals("db").(*gorm.DB)
 		if db == nil {

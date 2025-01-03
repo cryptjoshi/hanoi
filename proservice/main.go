@@ -16,6 +16,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"log"
 	"time"
+	"github.com/swaggo/fiber-swagger"
+	_ "hanoi/docs"
 	//"github.com/shopspring/decimal"
 )
 
@@ -395,6 +397,11 @@ func checkRedisConnection(redisClient *redis.Client) error {
 // 	return promotionStatuses, nil
 // }
 
+// @title User Management API
+// @version 1.0
+// @description This is a sample API server.
+// @host http://152.42.185.164:8020
+// @BasePath /
 func main() {
 
 	redisClient := createRedisClient()
@@ -418,7 +425,15 @@ func main() {
 
 	app.Use(logger.New())
 	
-	
+ 
+
+    // Swagger route
+    app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
+    // Example route
+    app.Get("/", func(c *fiber.Ctx) error {
+        return c.SendString("Welcome to the User Management API!")
+    })
 
 	// // Endpoint สำหรับฝากเงิน
 	// app.Post("/deposit", func(c *fiber.Ctx) error {

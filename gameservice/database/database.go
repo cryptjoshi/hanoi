@@ -84,10 +84,35 @@ func Connect() error {
 		fmt.Println("Successfully connected to DB!")
 	}
 
+	 
+		// ตั้งค่า timezone
+		if  err := Database.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+			fmt.Printf("Warning: Failed to set timezone: %v\n", err)
+		}
+		// ... existing code ...
+	 
 	return err
 }
 
+func SetTimezone(db *gorm.DB) {
 
+	
+	// เชื่อมต่อฐานข้อมูลด้วย GORM
+	 
+
+	// ใช้ Raw SQL เพื่อกำหนด Timezone
+	sqlDB, err := db.DB()
+	if err != nil {
+		fmt.Printf("Failed to get DB instance: %v", err)
+	}
+
+	_, err = sqlDB.Exec("SET GLOBAL time_zone = '+07:00';")
+	if err != nil {
+		fmt.Printf("Failed to set global time zone: %v", err)
+	}
+
+	fmt.Println("Global time zone set to +07:00.")
+ }
 // Connect function to establish a database connection based on the prefix
 func ConnectToDB(prefix string) (*gorm.DB, error) {
 	mutex.Lock()
@@ -125,7 +150,9 @@ func ConnectToDB(prefix string) (*gorm.DB, error) {
 	} else {
 		return nil, err // Return the error if connection fails
 	}
-
+	if err := db.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+		fmt.Printf("Warning: Failed to set timezone: %v\n", err)
+	}
 	return db, nil
 }
 
@@ -217,7 +244,7 @@ func ConnectToDBX(prefix string) (*gorm.DB, error) {
 	if db, exists := dbConnections[dbName]; exists {
 		return db, nil
 	}
-
+ 
 	// Read database prefixes and environment from environment variable
 	//prefixes := strings.Split(os.Getenv("DB_PREFIXES"), ",")
 	// env := os.Getenv("ENVIRONMENT") // Read the environment variable
@@ -256,6 +283,9 @@ func ConnectToDBX(prefix string) (*gorm.DB, error) {
 		fmt.Println("Successfully connected to DB:", dbName)
 	} else {
 		return nil, err // Return the error if connection fails
+	}
+	if err := db.Exec("SET time_zone = 'Asia/Bangkok'"); err != nil {
+		fmt.Printf("Warning: Failed to set timezone: %v\n", err)
 	}
 	//migrateNormal(db)
 	return db, nil

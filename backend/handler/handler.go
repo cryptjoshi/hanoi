@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"context"
+	//"context"
 	"fmt"
 	"hanoi/models"
 	"math/rand"
@@ -58,7 +58,7 @@ var Words = []string{
 	"peas", "corn", "radish", "beet", "turnip",
 	"rutabaga", "pars"}
 
-var ctx = context.Background()
+//var ctx = context.Background()
 var amqp_connection *amqp.Connection
 var amqp_channel *amqp.Channel
 var queue amqp.Queue = amqp.Queue{}
@@ -66,8 +66,7 @@ var is_connection = false
 var has_channel = false
 var has_queue = false
 
-var redis_master_host = "redis" //os.Getenv("REDIS_HOST")
-var redis_master_port = "6379"  //os.Getenv("REDIS_PORT")
+ 
 var redis_master_password = os.Getenv("REDIS_PASSWORD")
 var redis_slave_host = os.Getenv("REDIS_SLAVE_HOST")
 var redis_slave_port = os.Getenv("REDIS_SLAVE_PORT")
@@ -2405,10 +2404,33 @@ func GetProdetail(db *gorm.DB, procode string) (map[string]interface{}, error) {
 			response["Id"] = promotion.ID
 			response["Type"] = ProItem.ProType.Type
 			response["count"] = ProItem.UsageLimit
-			response["MinTurnover"] = promotion.MinSpend
-			response["Formular"] = promotion.Example
-		    response["Name"] = promotion.Name
-			response["TurnType"]=promotion.TurnType
+			//response["MinTurnover"] = promotion.MinSpend
+			//response["Formular"] = promotion.Example
+		    //response["Name"] = promotion.Name
+			//response["TurnType"] = promotion.TurnType
+			// response["Example"] = promotion.Example
+			// response["MinCreditType"] = promotion.MinCreditType
+			// response["MinCredit"]=promotion.MinCredit
+			response["minDept"] = promotion.MinDept
+		response["maxDept"] = promotion.MaxDiscount
+		response["Widthdrawmax"] = promotion.MaxSpend
+		response["Widthdrawmin"] = promotion.Widthdrawmin
+		response["MinTurnover"] = promotion.MinSpend
+		response["Example"] = promotion.Example
+		//response["count"] = promotion.UsageLimit
+		response["Formular"] = promotion.Example
+		response["Name"] = promotion.Name
+		response["MinSpendType"] = promotion.MinSpendType
+		response["MinCreditType"] = promotion.MinCreditType
+		response["MaxWithdrawType"] = promotion.MaxWithdrawType
+		response["MinCredit"] = promotion.MinCredit
+		response["TurnType"] = promotion.TurnType
+		response["Zerobalance"] = promotion.Zerobalance
+		response["CreatedAt"] = promotion.CreatedAt
+		response["MaxUse"] = promotion.UsageLimit
+		if ProItem.ProType.Type == "weekly" {
+			response["Week"] = ProItem.ProType.DaysOfWeek
+		}
 		if ProItem.ProType.Type == "weekly" {
 			response["Week"] = ProItem.ProType.DaysOfWeek
 		}

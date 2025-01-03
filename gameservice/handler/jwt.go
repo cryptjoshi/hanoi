@@ -79,7 +79,7 @@ func MapToJSONString(data fiber.Map) (string, error) {
 	return string(encoded), nil
 }
 
-func ValidateJWTReturn(tokenString string) models.Users {
+func ValidateJWTReturn(tokenString string) (models.Users,error) {
 	claims := &Claims{}
 	//dbClaims := &Claims{}
 	//tokenString := c.Get("Authorization")[7:]
@@ -99,17 +99,29 @@ func ValidateJWTReturn(tokenString string) models.Users {
  
 	// Connect to the database based on the prefix
 	db, err := database.ConnectToDB(prefix)
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		fmt.Printf("Failed to get DB instance: %v", err)
+	}
+
+	_, err = sqlDB.Exec("SET GLOBAL time_zone = '+07:00';")
+	if err != nil {
+		fmt.Printf("Failed to set global time zone: %v", err)
+	}
 	//checkerFromRequest := claims.Checker
 	var user models.Users
 	//fmt.Println(err)
 	if err==nil {
 		db.Select("id,username,password,balance,Token").Where("username = ?", username).First(&user)
+	} else {
+		return user,err
 	}
 
 	 
 
 	
-	return user
+	return user,nil
 	 
 }
 

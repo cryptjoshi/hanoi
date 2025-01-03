@@ -15,55 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/users/all": {
+        "/api/v2/users/info": {
             "post": {
-                "description": "Get a list of all users in the database.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get all users",
-                "parameters": [
-                    {
-                        "description": "User registration info",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.SwaggerBody"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.SwaggerUser"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/users/balance": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get user balance in the database.",
+                "description": "Authenticate token and return a userinfo",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,57 +25,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
-                "summary": "Get user balance",
+                "summary": "UserInfo",
                 "parameters": [
                     {
-                        "description": "User balance info",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Users"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.SwaggerUser"
-                        }
-                    },
-                    "400": {
-                        "description": "Error response",
-                        "schema": {
-                            "$ref": "#/definitions/users.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/login": {
-            "post": {
-                "description": "Get a list of all users in the database.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Login user",
-                "parameters": [
-                    {
-                        "description": "User registration info",
-                        "name": "user",
+                        "description": "User info",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -131,25 +41,23 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "success",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.SwaggerUser"
-                            }
+                            "$ref": "#/definitions/users.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/users.Response"
                         }
                     }
                 }
             }
         },
-        "/users/logout": {
+        "/api/v2/users/login": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get user balance in the database.",
+                "description": "Authenticate the user and return a token",
                 "consumes": [
                     "application/json"
                 ],
@@ -157,46 +65,39 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
-                "summary": "User Logout",
+                "summary": "Login User",
                 "parameters": [
                     {
-                        "description": "User Logout",
-                        "name": "user",
+                        "description": "Login Credentials",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Users"
+                            "$ref": "#/definitions/users.Body"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "success",
                         "schema": {
-                            "$ref": "#/definitions/models.SwaggerUser"
+                            "$ref": "#/definitions/users.LoginResponse"
                         }
                     },
-                    "400": {
-                        "description": "Error response",
+                    "401": {
+                        "description": "unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/users.ErrorResponse"
+                            "$ref": "#/definitions/users.LoginResponse"
                         }
                     }
                 }
             }
         },
-        "/users/register": {
+        "/api/v2/users/register": {
             "post": {
-                "description": "Register user in the database.",
+                "description": "Authenticate token and return a userinfo",
                 "consumes": [
                     "application/json"
                 ],
@@ -204,13 +105,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
-                "summary": "Register new user",
+                "summary": "Register User",
                 "parameters": [
                     {
-                        "description": "User registration info",
-                        "name": "user",
+                        "description": "User info",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -220,119 +121,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "success",
                         "schema": {
-                            "$ref": "#/definitions/models.SwaggerUser"
+                            "$ref": "#/definitions/users.Response"
                         }
                     },
-                    "400": {
-                        "description": "Error response",
+                    "401": {
+                        "description": "unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/users.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/statement": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get user Statement in the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get user Statement",
-                "parameters": [
-                    {
-                        "description": "User Bank Statement info",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.BankStatement"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.SwaggerBankStatement"
-                        }
-                    },
-                    "400": {
-                        "description": "Error response",
-                        "schema": {
-                            "$ref": "#/definitions/users.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/transactions": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get user Transaction in the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get user Transaction",
-                "parameters": [
-                    {
-                        "description": "User Transaction info",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.TransactionSub"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.SwaggerTransactionSub"
-                        }
-                    },
-                    "400": {
-                        "description": "Error response",
-                        "schema": {
-                            "$ref": "#/definitions/users.ErrorResponse"
+                            "$ref": "#/definitions/users.Response"
                         }
                     }
                 }
@@ -340,542 +137,16 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.BankStatement": {
-            "type": "object",
-            "properties": {
-                "accountno": {
-                    "type": "string"
-                },
-                "balance": {
-                    "type": "number"
-                },
-                "bankaccountID": {
-                    "type": "integer"
-                },
-                "bankcode": {
-                    "type": "integer"
-                },
-                "bankname": {
-                    "type": "string"
-                },
-                "beforebalance": {
-                    "type": "number"
-                },
-                "betAmount": {
-                    "type": "number"
-                },
-                "bet_amount": {
-                    "type": "number"
-                },
-                "channel": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "deletionAt": {
-                    "type": "string"
-                },
-                "detail": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "ismanual": {
-                    "type": "integer"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "qrExpireDate": {
-                    "type": "string"
-                },
-                "statementType": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "transactionDate": {
-                    "type": "string"
-                },
-                "transactionamount": {
-                    "type": "number"
-                },
-                "uid": {
-                    "type": "string"
-                },
-                "unix": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "integer"
-                },
-                "walletid": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.SwaggerBankStatement": {
-            "type": "object",
-            "properties": {
-                "accountno": {
-                    "type": "string"
-                },
-                "balance": {
-                    "type": "number"
-                },
-                "bankaccountID": {
-                    "type": "integer"
-                },
-                "bankcode": {
-                    "type": "integer"
-                },
-                "bankname": {
-                    "type": "string"
-                },
-                "beforebalance": {
-                    "type": "number"
-                },
-                "betAmount": {
-                    "type": "number"
-                },
-                "bet_amount": {
-                    "type": "number"
-                },
-                "channel": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "deletionAt": {
-                    "type": "string"
-                },
-                "detail": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ismanual": {
-                    "type": "integer"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "qrExpireDate": {
-                    "type": "string"
-                },
-                "statementType": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "transactionDate": {
-                    "type": "string"
-                },
-                "transactionamount": {
-                    "type": "number"
-                },
-                "uid": {
-                    "type": "string"
-                },
-                "unix": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "userid": {
-                    "type": "integer"
-                },
-                "walletid": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.SwaggerBody": {
-            "type": "object",
-            "properties": {
-                "prefix": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.SwaggerTransactionSub": {
-            "type": "object",
-            "properties": {
-                "afterBalance": {
-                    "type": "number"
-                },
-                "balance": {
-                    "type": "number"
-                },
-                "beforeBalance": {
-                    "type": "number"
-                },
-                "betAmount": {
-                    "type": "number"
-                },
-                "commissionAmount": {
-                    "type": "number"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "currencyID": {
-                    "type": "integer"
-                },
-                "deletedAt": {
-                    "type": "string"
-                },
-                "gameID": {
-                    "type": "string"
-                },
-                "gameNumber": {
-                    "type": "string"
-                },
-                "gameProvide": {
-                    "type": "string"
-                },
-                "gameRoundID": {
-                    "type": "string"
-                },
-                "gameType": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "isAction": {
-                    "type": "string"
-                },
-                "isEndRound": {
-                    "type": "integer"
-                },
-                "isFeature": {
-                    "type": "integer"
-                },
-                "isFeatureBuy": {
-                    "type": "integer"
-                },
-                "jackpotAmount": {
-                    "type": "number"
-                },
-                "jpbet": {
-                    "type": "number"
-                },
-                "memberID": {
-                    "type": "integer"
-                },
-                "memberName": {
-                    "type": "string"
-                },
-                "messageID": {
-                    "type": "string"
-                },
-                "operatorCode": {
-                    "type": "string"
-                },
-                "operatorID": {
-                    "type": "integer"
-                },
-                "payoutAmount": {
-                    "type": "number"
-                },
-                "payoutDetail": {
-                    "type": "string"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "productID": {
-                    "type": "integer"
-                },
-                "providerID": {
-                    "type": "integer"
-                },
-                "providerLineID": {
-                    "type": "integer"
-                },
-                "requestTime": {
-                    "type": "string"
-                },
-                "settlementDate": {
-                    "type": "string"
-                },
-                "sign": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "transactionAmount": {
-                    "type": "number"
-                },
-                "transactionID": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "validBetAmount": {
-                    "type": "number"
-                },
-                "wagerID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.SwaggerUser": {
-            "type": "object",
-            "properties": {
-                "actived": {
-                    "type": "string"
-                },
-                "balance": {
-                    "type": "number"
-                },
-                "bankname": {
-                    "type": "string"
-                },
-                "banknumber": {
-                    "type": "string"
-                },
-                "beforebalance": {
-                    "type": "number"
-                },
-                "betamount": {
-                    "type": "number"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "credit": {
-                    "type": "number"
-                },
-                "deletionAt": {
-                    "type": "string"
-                },
-                "deposit": {
-                    "type": "number"
-                },
-                "firstname": {
-                    "type": "string"
-                },
-                "fullname": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "lose": {
-                    "type": "number"
-                },
-                "otpAuthUrl": {
-                    "type": "string"
-                },
-                "partnersKey": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "preferredname": {
-                    "type": "string"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "proID": {
-                    "type": "string"
-                },
-                "proStatus": {
-                    "type": "string"
-                },
-                "providerPassword": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "salt": {
-                    "type": "string"
-                },
-                "secret": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "tempSecret": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                },
-                "turnover": {
-                    "type": "number"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                },
-                "walletid": {
-                    "type": "integer"
-                },
-                "win": {
-                    "type": "number"
-                },
-                "withdraw": {
-                    "type": "number"
-                }
-            }
-        },
-        "models.TransactionSub": {
-            "type": "object",
-            "properties": {
-                "afterBalance": {
-                    "type": "number"
-                },
-                "balance": {
-                    "type": "number"
-                },
-                "beforeBalance": {
-                    "type": "number"
-                },
-                "betAmount": {
-                    "type": "number"
-                },
-                "commissionAmount": {
-                    "type": "number"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "currencyID": {
-                    "type": "integer"
-                },
-                "deletedAt": {
-                    "type": "string"
-                },
-                "gameID": {
-                    "type": "string"
-                },
-                "gameNumber": {
-                    "type": "string"
-                },
-                "gameProvide": {
-                    "type": "string"
-                },
-                "gameRoundID": {
-                    "type": "string"
-                },
-                "gameType": {
-                    "type": "integer"
-                },
-                "id": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "isAction": {
-                    "type": "string"
-                },
-                "isEndRound": {
-                    "type": "integer"
-                },
-                "isFeature": {
-                    "type": "integer"
-                },
-                "isFeatureBuy": {
-                    "type": "integer"
-                },
-                "jackpotAmount": {
-                    "type": "number"
-                },
-                "jpbet": {
-                    "type": "number"
-                },
-                "memberID": {
-                    "type": "integer"
-                },
-                "memberName": {
-                    "type": "string"
-                },
-                "messageID": {
-                    "type": "string"
-                },
-                "operatorCode": {
-                    "type": "string"
-                },
-                "operatorID": {
-                    "type": "integer"
-                },
-                "payoutAmount": {
-                    "type": "number"
-                },
-                "payoutDetail": {
-                    "type": "string"
-                },
-                "prefix": {
-                    "type": "string"
-                },
-                "productID": {
-                    "type": "integer"
-                },
-                "providerID": {
-                    "type": "integer"
-                },
-                "providerLineID": {
-                    "type": "integer"
-                },
-                "requestTime": {
-                    "type": "string"
-                },
-                "settlementDate": {
-                    "type": "string"
-                },
-                "sign": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
-                },
-                "transactionAmount": {
-                    "type": "number"
-                },
-                "transactionID": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "validBetAmount": {
-                    "type": "number"
-                },
-                "wagerID": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.Users": {
             "type": "object",
             "properties": {
                 "actived": {
                     "type": "string"
                 },
+                "affiliateLink": {
+                    "description": "ใช้บันทึกลิงค์ที่ใช้",
+                    "type": "string"
+                },
                 "balance": {
                     "type": "number"
                 },
@@ -888,7 +159,17 @@ const docTemplate = `{
                 "beforebalance": {
                     "type": "number"
                 },
+                "betLimit": {
+                    "type": "string"
+                },
                 "betamount": {
+                    "type": "number"
+                },
+                "commissionEarned": {
+                    "description": "ค่าคอมมิชชันสะสมจาก Affiliated",
+                    "type": "number"
+                },
+                "crdb": {
                     "type": "number"
                 },
                 "createdAt": {
@@ -896,6 +177,9 @@ const docTemplate = `{
                 },
                 "credit": {
                     "type": "number"
+                },
+                "currency": {
+                    "type": "string"
                 },
                 "deletionAt": {
                     "type": "string"
@@ -913,14 +197,33 @@ const docTemplate = `{
                     "description": "gorm.Model",
                     "type": "integer"
                 },
+                "lastDeposit": {
+                    "type": "number"
+                },
+                "lastProamount": {
+                    "type": "number"
+                },
+                "lastWithdraw": {
+                    "type": "number"
+                },
                 "lastname": {
                     "type": "string"
                 },
                 "lose": {
                     "type": "number"
                 },
+                "minTurnover": {
+                    "type": "string"
+                },
+                "minTurnoverDef": {
+                    "type": "string"
+                },
                 "otpAuthUrl": {
                     "type": "string"
+                },
+                "partnerID": {
+                    "description": "ใช้บันทึก ID ของ partner ที่เชื่อมโยง",
+                    "type": "integer"
                 },
                 "partnersKey": {
                     "type": "string"
@@ -934,6 +237,9 @@ const docTemplate = `{
                 "prefix": {
                     "type": "string"
                 },
+                "proBalance": {
+                    "type": "number"
+                },
                 "proID": {
                     "type": "string"
                 },
@@ -941,6 +247,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "providerPassword": {
+                    "type": "string"
+                },
+                "referralCode": {
+                    "description": "รหัสแนะนำ",
+                    "type": "string"
+                },
+                "referred_by": {
+                    "description": "ผู้แนะนำ (User ID)",
                     "type": "string"
                 },
                 "role": {
@@ -955,13 +269,30 @@ const docTemplate = `{
                 "status": {
                     "type": "integer"
                 },
+                "sumProamount": {
+                    "type": "number"
+                },
+                "tdeposit": {
+                    "type": "number"
+                },
                 "tempSecret": {
                     "type": "string"
                 },
                 "token": {
                     "type": "string"
                 },
+                "totalEarnings": {
+                    "description": "ค่าคอมมิชชั่นสะสม",
+                    "type": "number"
+                },
+                "totalTurnover": {
+                    "description": "Turnover รวมที่เกิดจากสมาชิกและ Affiliated",
+                    "type": "number"
+                },
                 "turnover": {
+                    "type": "number"
+                },
+                "twithdraw": {
                     "type": "number"
                 },
                 "updatedAt": {
@@ -981,9 +312,58 @@ const docTemplate = `{
                 }
             }
         },
-        "users.ErrorResponse": {
+        "users.Body": {
             "type": "object",
             "properties": {
+                "Status": {
+                    "type": "string"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "provide": {
+                    "type": "string"
+                },
+                "startdate": {
+                    "type": "string"
+                },
+                "stopdate": {
+                    "type": "string"
+                },
+                "userid": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Users"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.Response": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Users"
+                },
                 "message": {
                     "type": "string"
                 },
@@ -998,11 +378,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "167.71.100.123:3003",
-	BasePath:         "/api/v1",
+	Host:             "152.42.185.164:4006",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Api Goteway in Go",
-	Description:      "Api Goteway in Go.",
+	Title:            "Backend API Document",
+	Description:      "This is a sample API server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

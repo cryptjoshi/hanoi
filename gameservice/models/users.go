@@ -54,6 +54,7 @@ type Users struct {
 	CommissionEarned  decimal.Decimal `gorm:"type:decimal(15,2);column:commission_earned;default:0"` // ค่าคอมมิชชันสะสมจาก Affiliated
 	PartnerID int `gorm:"column:partner_id"` // ใช้บันทึก ID ของ partner ที่เชื่อมโยง
 	AffiliateLink string `gorm:"type:varchar(255);column:affiliate_link"` // ใช้บันทึกลิงค์ที่ใช้
+	Uid    string          `gorm:"column:uid" json:"uid"`
 }
 
 func (m *Users) TableName() string {

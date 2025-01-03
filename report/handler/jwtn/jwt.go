@@ -275,7 +275,7 @@ func JwtPMiddleware(c *fiber.Ctx) error {
  	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
     })
-	fmt.Printf("Claims: %+v \n",claims)
+	//fmt.Printf("Claims: %+v \n",claims)
  	if err==nil {
 		db, _ := database.ConnectToDB(claims.Prefix)
         
@@ -389,7 +389,7 @@ func jwtMiddleware(c *fiber.Ctx) error {
 
 
     if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims)
+		//fmt.Println(claims)
         // ดึงข้อมูล claims เช่น id, role หรือ prefix
         c.Locals("Walletid", claims["walletid"])
         c.Locals("ID", claims["id"])

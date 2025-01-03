@@ -62,6 +62,7 @@ type Users struct {
 	ReferralCode  string          `gorm:"column:referral_code;unique;not null"` // รหัสแนะนำ
 	ReferredBy    string          `gorm:"column:referred_by" json:"referred_by"` // ผู้แนะนำ (User ID)
 	TotalEarnings decimal.Decimal `gorm:"column:total_earnings;type:decimal(10,2);default:0"` // ค่าคอมมิชชั่นสะสม
+	Uid    string          `gorm:"column:uid" json:"uid"`
 }
 
 func (m *Users) TableName() string {

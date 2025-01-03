@@ -3,12 +3,21 @@ import React, { useState } from 'react';
 import { redirect, useRouter } from 'next/navigation';
 import { Avatar} from "@/components/ui/avatar";
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 import { Bell, Search, Wallet, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import  type { JSX } from 'react';
 import { useTranslation } from '@/app/i18n/client';
-import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion, GetUserPromotion } from '@/actions';
+import { GetUserInfo,GetPromotion, UpdateUser, UpdateUserPromotion, GetUserPromotion, CancelPromotion } from '@/actions';
 import { formatNumber } from '@/lib/utils';
 import useGameStore from '@/store/gameStore';
 import useAuthStore from '@/store/auth';
@@ -35,6 +44,7 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   const [userPro,setUserPro] = React.useState<any>()
   const [currency, setCurrency] = React.useState<string>('USD');
   const [isBlinking, setIsBlinking] = useState(false);
+  const [open,setOpen] = useState(false)
   //const session = getSession()
   //const {prefix,Logout,setPrefix} = useAuthStore();
   // const handleSignOut = () => {
@@ -51,6 +61,10 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
  // const { accessToken } = useAuthStore()
  // const userLoginStatus = JSON.parse(localStorage.getItem('userLoginStatus') || '{}');
   //const [token, setToken] = useState<string>(userLoginStatus.state?.accessToken);
+
+
+
+
   const accpetedPromotion = (promotion:Promotion) =>{
 
     const accepted = async (promotion:Promotion) => {
@@ -86,151 +100,91 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
   }
 
   React.useEffect(() => {
-  
-
     const fetchBalance = async () => {
-      const session = await getSession()
+      const session = await getSession();
       try {
-     
-      
-    
-      
- 
-    
-       //         if(session.isLoggedIn && session.token) {
-        const user:any = await GetUserInfo();
-      
-        if(user.Status){
-          
+        const user: any = await GetUserInfo();
+        console.log(user)
+        if (user.Status) {
           setBalance(user.Data.balance);
-       
           setUser(user.Data);
-         
-          session.customerCurrency = user.Data.currency
+          session.customerCurrency = user.Data.currency;
           setCurrency(session.customerCurrency);
-          //setPrefix(user.Data.prefix);
-           
-         } else {
-          
-          toast({title: t('unsuccess'),
+        } else {
+          toast({
+            title: t('unsuccess'),
             description: user.Message,
             variant: "destructive",
           });
-         // console.log(user.Data)
-          setBalance(user.Data.balance);
-       
-          setUser(user.Data);
-          //setCurrency(session.customerCurrency);
-          //setPrefix(user.Data.prefix);
-         }  
-     
-      // } else {
-      //   router.push(`/${lng}/login`);
-      //   return;
-      //   }
-     
+        }
       } catch (error) {
-       // router.push(`/${lng}/login`);
-       console.log(error)
+        console.log(error);
       }
-     
     };
 
     const fetchPromotion = async () => {
-      
+      try {
+        const user_pro = await GetUserPromotion();
+        console.log(user_pro)
+        if (user_pro.Status) {
+          setUserPro(user_pro.Data);
+          setIsBlinking(parseInt(user_pro.Data.status) > 0);
+        }
 
-      // const session = await getSession()
-      // if(session.token){
-      const user_pro = await GetUserPromotion();
-      
-      if(user_pro.Status){
-        if(parseInt(user_pro.Data.status)>0){
-          setIsBlinking(true);
+        const promotion = await GetPromotion();
+    
+        if (promotion.Status) {
+          if (promotion.Data.length > 0) {
+            setPromotions(promotion.Data[0]);
+            setFilteredPromotions(promotion.Data[0]);
+          }
         } else {
-          setIsBlinking(false);
+          toast({
+            title: t('unsuccess'),
+            description: promotion.Message,
+            variant: "destructive",
+          });
         }
-        setUserPro(user_pro.Data)
-        //setBalance(user_pro.Data.after_balance);
+      } catch (error) {
+        console.log(error);
       }
-      const promotion = await GetPromotion();
-     
-      if (promotion.Status) {
-        // กรองโปรโมชั่นที่มี ID ไม่ตรงกับ user.pro_status
-        //console.log(promotion.Data)
-        //console.log(user)
-        // const filtered =  promotion.Data.Promotions?.filter((promo:any) => 
-        //   //{
-        //     //console.log(promo.ID.toString(), user?.pro_status?.toString())
-        //     (1*promo.ID)-(1*user?.pro_status) != 0 
-        //   //}
-        // );
-        if(promotion.Data.length>0){
-        setPromotions(promotion.Data[0]);
-        setFilteredPromotions(promotion.Data[0]);
-        }
-       
-      //   const filteredPromotions = promotion.Data.Promotions.filter((promo: any) => 
-          
-      //     user?.promotionlog.some((log: any) => log.Promotioncode === promo.ID) // ใช้ user?.promotionlog เป็นตัวกรอง
-        
-      // );
-      // if(user)
-      // console.log(filteredPromotions);
-
-        // ถ้า filtered เป็น array ว่าง ให้สร้าง promotion เริ่มต้น
-                 // แก้ไขการใช้ includes แทน include
-        //console.log(promotion.Data.Promotions.filter((item:any)=>item.ID))
-                // สร้าง array เก็บ ID ของ Promotions
-               // กรอง promotions ที่มี ID ตรงกับ promotioncode ใน user.promotionlog
-              
-        // if (filtered.length === 0 ) {
-        //   setFilteredPromotions([{
-        //     ID: 'default',
-        //     name: t('defaultPromotion'),
-        //     description: t('noAvailablePromotions'),
-        //     image: '/path/to/default/image.jpg',
-        //     disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
-        //     // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
-        //   }]);
-        // } else {
-        //     console.log(user?.pro_status)
-        //     if(user?.pro_status=="" || user?.pro_status==null || user?.pro_status=="0")
-        //     setFilteredPromotions(filtered);
-        //     else
-        //     setFilteredPromotions([{
-        //       ID: 'default',
-        //       name: t('defaultPromotion'),
-        //       description: t('noAvailablePromotions'),
-        //       image: '/path/to/default/image.jpg',
-        //       disableAccept: true, // เพิ่มคุณสมบัตินี้เพื่อ disable ปุ่ม Accept
-        //       // เพิ่ม properties อื่นๆ ตามที่จำเป็นสำหรับ PromotionList component
-        //     }]);
-        
-        // }
-      } else {
-        
-        //router.push(`/${lng}/login`)toast({
-      toast({title: t('unsuccess'),
-        description: promotion.Message,
-        variant: "destructive",
-      });
-        return;
-      }
-    // } else {
-    //   router.push(`/${lng}/login`);
-    //   return;
-    // }
-    
-    }
-    //setIsLoading(true);
-    
-    fetchBalance();
-    fetchPromotion();
+    };
+    fetchBalance().then(()=>{
+      fetchPromotion();
+    })
+   
+   
+   
     setLoading(false);
-    
-  }, [ user?.pro_status, t])
+  }, [lng, t]);
 
- 
+  const handleCancelPromotion = () => {
+    const cancelPro = async ()=>{
+      const response = await CancelPromotion()
+      if(response.Status){
+        toast({
+          title: t('common.success'),
+          description: t('common.promotionAccept'),
+          variant: "default",
+        })
+        setOpen(false);
+        setUserPro(null);
+        window.location.reload();
+      } else {
+        toast({
+          title: t('common.unsuccess'),
+          description: response.Message,
+          variant: "destructive",
+        })
+      }
+    }
+    // เพิ่มโค้ดสำหรับการยกเลิกโปรโมชั่นที่นี่
+    //console.log("โปรโมชั่นถูกยกเลิก"); // ตัวอย่างการแสดงข้อความใน console
+    // ปิด Dialog หลังจากยกเลิก
+    cancelPro()
+    
+    
+};
   
   return loading ? <div>Loading...</div> : (
     <div className="max-w-md mx-auto bg-background text-foreground min-h-screen flex flex-col">
@@ -248,27 +202,29 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
           <p className="text-xs sm:text-sm text-muted-foreground">{user?.bankname}</p>
           <div className="mt-2">
             <p className="text-xs sm:text-sm font-semibold">{t('promotionStatus')}:</p>
-            <div className="flex items-center gap-2">
-            {/* <div
-                className={cn(
-                  "h-3 w-3 rounded-full transition-all duration-300",
-                  promotions.status != "0" ? "bg-green-500" : "bg-red-500",
-                  isBlinking && "animate-pulse"
-                )}
-              /> */}
-             
-                <span className={cn(
+            <div className="flex items-center p-2 gap-2 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
+
+             <span className={cn(
                 "transition-opacity",
-                parseInt(userPro?.status) > 0 ? "text-green-500" : "text-red-500",
+                parseInt(userPro?.status) === 1 ? "text-green-500" : "text-red-500",
                 isBlinking && "animate-pulse"
               )}>
+              
               {selectedPromotion 
                 ? selectedPromotion.name // Display selected promotion name if available
-                :    userPro?.Name || t('noPromotion')  // Changed ID to id and added fallback text
+                : userPro?.status != "2" ? userPro?.Name : t('noPromotion')  // Changed ID to id and added fallback text
               }   
-              
            </span>
-       </div>
+          { selectedPromotion  ||  userPro?.status == "0" ? (
+           <Button 
+              className="bg-red-500 text-white hover:bg-red-600 transition duration-200 text-xs" 
+              onClick={() => setOpen(true)} // เปิด Dialog
+           >
+              <span className="text-lg">x</span> {/* สัญลักษณ์กากบาท */}
+           </Button>
+          ):<></>
+          }
+          </div>
           </div>
         </div>
       </div>
@@ -277,20 +233,14 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
       <Button className="flex-1 text-sm sm:text-base py-2 sm:py-3" variant="outline" onClick={() => router.push(`/${lng}/transaction/withdraw`)}>{t('withdraw')}</Button>         </div>
      </div>
     
+      <GameList includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
  
-     
-      <GameList  includegames={user?.includegames} excludegames={user?.excludegames} lng={lng} />
- 
-      
       <PromotionList 
-        
         lng={lng} 
         promotions={user?.promotionlog}
         onSelectPromotion={accpetedPromotion} 
       />
      
-
-    
      <div className="p-4 sm:p-6">
        <div className="flex justify-between items-center mb-2">
          <h3 className="font-bold text-sm sm:text-base">{t('lastgameplay')}</h3>
@@ -309,22 +259,27 @@ export default function HomePage({lng}:{lng:string}): JSX.Element {
          ))}
        </div>
      </div>
-    {/* <Footer lng={lng} /> */}
-   
-     {/* <div className="mt-auto fixed bottom-0 left-0 right-0 border-t flex justify-between p-2 sm:p-3 bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
-      
-        {['Home', 'Deposit', 'Withdraw', 'History', 'sign_out'].map((item, index) => (
-          <Button 
-            key={index} 
-            variant="ghost" 
-            className="flex-col py-1 px-2 sm:py-2 sm:px-3"
-            onClick={item === 'sign_out' ? handleSignOut : undefined}
-          >
-            <span className="text-[10px] sm:text-xs mt-1">{t(`menu.${item.toLowerCase()}`)}</span>
-          </Button>
-        ))}
-      </div> */}
+     <div>
+           <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+            
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>ยกเลิกโปรโมชั่น</DialogTitle>
+                <DialogDescription>
+                  คุณแน่ใจหรือไม่ว่าต้องการยกเลิกโปรโมชั่นนี้?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end">
+                <Button onClick={handleCancelPromotion} className="mr-2">ยืนยัน</Button>
+                <Button onClick={() => setOpen(false)}>ยกเลิก</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
    </div>
+   
   );
 };
 

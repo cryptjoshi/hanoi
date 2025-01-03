@@ -1,4 +1,5 @@
 'use client';
+import { getSession } from '@/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,9 +12,12 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { signOut, useSession } from 'next-auth/react';
-export function UserNav() {
-  const { data: session } = useSession();
+import { Logout } from '@/actions';
+
+//import { signOut, useSession } from 'next-auth/react';
+export async function UserNav() {
+  const session = await getSession()
+  //  const { data: session } = useSession();
   if (session) {
     return (
       <DropdownMenu>
@@ -56,7 +60,7 @@ export function UserNav() {
             <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()}>
+          <DropdownMenuItem onClick={() => Logout()}>
             Log out
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>

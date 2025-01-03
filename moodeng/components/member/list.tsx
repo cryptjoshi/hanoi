@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
- 
+import { toast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -12,7 +13,12 @@ import {
 
 import { PlusIcon } from "@radix-ui/react-icons"
 
- 
+import { TZDate } from "@date-fns/tz";
+import { addDays } from "date-fns";
+import { formatNumber,decompressGzip,Decrypt } from '@/lib/utils'
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 
 import {
   ColumnDef,
@@ -48,10 +54,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
- 
+
 import { GetMemberList } from '@/actions'
 import { useTranslation } from '@/app/i18n/client';
- 
+import { DateRange } from "react-day-picker"
  
 export interface iMember {
   // Define the properties of GroupedDatabase here
@@ -101,8 +107,9 @@ export interface DataTableProps<TData> {
 import { ArrowLeftIcon } from "@radix-ui/react-icons"
 import EditMember from './EditMember'
 import { number } from 'zod'
-import { formatNumber } from '@/lib/utils'
+ 
 import useAuthStore from '@/store/auth'
+import { Form, FormField, FormItem } from '../ui/form'
 
 
 function formatSpecificTime(jsonString: string,lng:string): string {
@@ -147,12 +154,40 @@ export default function MemberListDataTable({
   const [editingGame, setEditingGame] = useState<number | null>(null);
   const [isAddingGame, setIsAddingGame] = useState(false);
   const [isEditingGame, setIsEditingGame] = useState(false);
+   
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showTable, setShowTable] = useState(true);
   const [prefix,setPrefix] = useState(null)
   const router = useRouter()
-  const { customerCurrency,accessToken } = useAuthStore();
+  //const { customerCurrency,accessToken } = useAuthStore();
   const {t} = useTranslation(lng,'translation',undefined)
+  const tzDate = new TZDate(new Date(), "Asia/Bangkok");
+  const FormSchema = z.object({
+    startdate: z.object({
+      from: z.date({
+      required_error: "A date of Start is required.",
+    }),
+    to: z.date({
+      required_error: "A date of Start is required.",
+    }),
+  })})
+
+  
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+        startdate: {
+          from: tzDate,
+          to: addDays(tzDate, 20),
+        } // ตั้งค่าเริ่มต้นให้กับ startdate
+    },
+  })
+
+  const [date, setDate] = React.useState<DateRange | undefined>
+  ({
+    from: tzDate,
+    to: addDays(tzDate, 20),
+  })
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -160,13 +195,13 @@ export default function MemberListDataTable({
       setIsLoading(true);
       try {
       
-        if(accessToken){
-        const fetchedGames = await GetMemberList(accessToken);
-        console.log(fetchedGames)
+      //  if(accessToken){
+        const fetchedGames = await GetMemberList(date);
+        //console.log(fetchedGames)
         setGames(fetchedGames.Data);
-        } else {
-          router.replace(`/${lng}/login`)
-        }
+       // } else {
+       //   router.replace(`/${lng}/login`)
+       // }
       } catch (error) {
         console.error('Error fetching games:', error);
       } finally {
@@ -213,56 +248,104 @@ export default function MemberListDataTable({
       header: t('member.columns.deposit'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span className={cn(parsedValue <= 0 ? "text-grey-500" : "text-green-500","text-right inline-block") }>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
          columnHelper.accessor('TDeposit', {
       header: t('member.columns.trxdeposit'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue <= 0 ? 'grey' : 'blue' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
      columnHelper.accessor('Withdraw', {
       header: t('member.columns.withdraw'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue < 0 ? 'red' : 'grey' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
      columnHelper.accessor('TWithdraw', {
       header: t('member.columns.trxwithdraw'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue <= 0 ? 'grey' : 'blue' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
       columnHelper.accessor('Crdb', {
       header: t('member.columns.drdb'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue < 0 ? 'red' : 'green' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
     columnHelper.accessor('SumProamount', {
       header: t('member.columns.promotion'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue < 0 ? 'blue' : parsedValue==0?'grey':'blue' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
       columnHelper.accessor('Win', {
       header: t('member.columns.win'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+         return (
+          <span style={{ color: parsedValue < 0 ? 'red' : parsedValue==0?'grey':'green' }}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
     columnHelper.accessor('Lose', {
       header: t('member.columns.lose'),
       cell: info => {
         const value = info.getValue();
-        return formatNumber(parseFloat(value?.toString()), 2);
+        const parsedValue = parseFloat(value?.toString());
+        return (
+          <span style={{ color: parsedValue < 0 ? 'red' : parsedValue==0?'grey':'green'}}>
+          {formatNumber( parsedValue, 2)}
+          </span>
+          
+         )
       }
     }),
     // columnHelper.accessor('TotalEarnings', {
@@ -412,8 +495,37 @@ export default function MemberListDataTable({
     setIsAddingGame(false);
     setShowTable(true);
     setPrefix("")
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev:any) => prev + 1);
   };
+
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(date, null, 2)}</code>
+        </pre>
+      ),
+    })
+   
+    setIsLoading(true);
+   
+     GetMemberList(date).then(response=>{
+        if(response.Status){
+          setGames(response.Data);
+        } else {
+            // toast({
+            //     title: t("common.fetch.error"),
+            //     description: t("common.fetch.error_description"),
+            //     variant: "destructive",
+            //   })
+        }
+    setIsLoading(false);
+    })
+   
+  }
+
 
   if (isLoading) {
     return <div>Loading {t('member.title')}...</div>;
@@ -421,12 +533,19 @@ export default function MemberListDataTable({
 
   return (
     <div className="w-full">
+     
       {showTable ? (
         <>
-          {/* <div className="flex items-center justify-between mt-4 mb-4">
-            <Button onClick={handleAddGame}>{t('member.add.title')}</Button>
-          </div> */}
+         
           <div className="flex items-center justify-between gap-4 py-4">
+          <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} >
+          <div className="gap-4 flex flex-row">
+          <FormField
+                control={form.control}
+                name="search"
+                render={({ field }) => (
+                  <FormItem className="">   
             <Input
               placeholder={t('member.columns.search')}
               value={(table.getColumn("Username")?.getFilterValue() as string) ?? ""}
@@ -435,13 +554,26 @@ export default function MemberListDataTable({
               }
               className="max-w"
             />
+            </FormItem>
+                )} />
+            <FormField
+                control={form.control}
+                name="startdate"
+                render={({ field }:any) => (
+                  <FormItem className="">   
+                      
+                      <CalendarDateRangePicker lng={lng}  
+                      onChange={(value:any) => { console.log(value); field.onChange(value)} }
+                      date={date}
+                      setDate={setDate}/>
+                   
                
-                
-                
-                <CalendarDateRangePicker />
-                
-               
-        
+                </FormItem>
+                )} />
+                 <Button type="submit">{t('button.refresh')}</Button>
+        </div>
+        </form>
+        </Form>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
@@ -566,6 +698,7 @@ export default function MemberListDataTable({
           />
         </div>
       )}
+ 
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, PersistOptions } from 'zustand/middleware';
 //import { useRouter } from 'next/router';
+import { Signin } from '@/actions';
 
 export interface AuthStore {
     isLoggedIn: boolean;
@@ -52,17 +53,19 @@ const useAuthStore = create<AuthStore>()(
       Signin: async (body: User) => {
       //  const router = useRouter()
         try {
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username: body.username, password: body.password, prefix: "" }),
-          });
+          // const response = await fetch(endpoint, {
+          //   method: 'POST',
+          //   headers: {
+          //     'Accept': 'application/json',
+          //     'Content-Type': 'application/json',
+          //   },
+          //   body: JSON.stringify({ username: body.username, password: body.password, prefix: "" }),
+          // });
 
-          const data = await response.json();
+          // const data = await response.json();
           //console.log(data)
+          const data = await Signin({
+            username: body.username, password: body.password});
           if (data.Status) {
             set({
               isLoggedIn: true,

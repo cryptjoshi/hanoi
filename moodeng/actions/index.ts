@@ -3,6 +3,11 @@
 //import useAuthStore from "@/store/auth"
 'use server'
 import { redirect } from 'next/navigation'
+import { SessionData } from "@/lib";
+import { defaultSession, sessionOptions } from "@/lib";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
+ 
 
 type User = {
     username: string;
@@ -16,11 +21,21 @@ type Dbstruct = {
   dbnames:string[];
 }
 
+export async function getSession() {
+  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+ // const { data: session } = useSession();
+  if (!session.isLoggedIn) {
+    session.isLoggedIn = defaultSession.isLoggedIn;
+  }
+
+  return session;
+}
+
 const url = "http://reportservice"// process.env.NEXT_PUBLIC_BACKEND_ENDPOINT
 const port = ":4003"
 export const Signin = async (body:User) =>{
      
- 
+      const session = await getSession();
        // const state = useAuthStore()
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v1/db/partner/login`, { method: 'POST',
@@ -29,10 +44,34 @@ export const Signin = async (body:User) =>{
             'Content-Type': 'application/json',
             //'Authorization': 'Bearer ' +  token
             },
-            body: JSON.stringify({"username":body.username,password:body.password})
+            body: JSON.stringify({"username":body.username,password:body.password,prefix:""})
           })
-       return response.json()
-}
+       const data = await response.json()
+       
+       if(data.Status){
+       
+        session.isLoggedIn = data.Status;
+        session.token = data.Token;
+        //session.user.image = "";
+        //session.user.name = data.Data.Username;
+        session.username = data.Partner.name;
+        session.userId = data.Partner.ID
+        session.prefix = data.Partner.prefix
+        session.customerCurrency= data.Partner.Currency
+        session.lng = "en"
+        await session.save();
+      }
+       return data
+    }
+
+export async function Logout() {
+      const session = await getSession();
+      console.log(session)
+      const lng = session.lng
+      //console.log(lng)
+      session.destroy();
+      redirect(`/${lng}`)
+    }
 
 export const GetDatabaseList = async () =>{
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v1/db/list`, { method: 'POST',
@@ -69,14 +108,14 @@ export const UpdateDatabaseListByPrefix = async (body:Dbstruct) =>{
     return response.json()
 }
   
-export const GetDatabaseListByPrefix = async (prefix:string) =>{
- 
+export const GetDatabaseListByPrefix = async () =>{
+  const session = await getSession()
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v1/db/prefix`, { method: 'POST',
   headers: {   
     'Accept': 'application/json',
     'Content-Type': 'application/json',
     },
-   body: JSON.stringify({"prefix":prefix})
+    body: JSON.stringify({"prefix":session.prefix})
   })
   return response.json()
 }
@@ -151,27 +190,28 @@ export const UpdatePartner = async (prefix:string,id:any,body:any) =>{
     return response.json()
 }
 
-export const GetOverview = async (token:string,startdate:string)=>{
+export const GetOverview = async (startdate:string)=>{
+  const session = await getSession()
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v1/db/partner/overview`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +  token
+      'Authorization': 'Bearer ' +  session.token
       },
       body: JSON.stringify({"startdate":startdate})
     })
     return response.json()
 }
 
-export const GetMemberList = async (token:string) =>{
- 
+export const GetMemberList = async (startdate:any) =>{
+ const session = await getSession()
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v1/db/member/bypartner`, { method: 'POST',
     headers: {   
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' +  token
+      'Authorization': 'Bearer ' +  session.token
       },
-      //body: JSON.stringify({"prefix":prefix})
+      body: JSON.stringify(startdate)
 })
 return response.json()
 }
@@ -396,3 +436,4 @@ export const GetCommission = async (prefix:string) =>{
 export async function navigate(path:string) {
   redirect(path)
 }
+

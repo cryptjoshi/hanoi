@@ -361,6 +361,19 @@ export const UpdatePromotion = async (dbname: string, promotionId: any, values: 
   })
   return response.json()
 }
+
+export const CancelPromotion = async () =>{
+  const session = await getSession()
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v2/users/promotions/clear`, { method: 'POST',
+    headers: {   
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' +  session.token
+     // body: JSON.stringify({"prefix":session.prefix,"body":body})
+    }})
+    return response.json()
+}
+
 export const GetPromotionById = async (dbname:string,id:any) =>{
  
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v2/db/promotion/byid`, { method: 'POST',
@@ -611,14 +624,4 @@ export const Webhoook = async ( uid:string,username: string,isexpired:string,isv
     
     return response.json()
 
-
-  // const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}${port}/api/v2/statement/webhook`, { method: 'POST',
-  //     headers: {   
-  //       'Accept': 'application/json',
-  //       'Content-Type': 'application/json',
-  //       },
-        // return 
-      
-  // })
-  // return response.json()
-}
+  }

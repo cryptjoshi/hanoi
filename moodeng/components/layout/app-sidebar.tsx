@@ -39,20 +39,21 @@ import {
   GalleryVerticalEnd,
   LogOut
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+//import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
-
+import { getSession } from '@/actions';
 export const company = {
   name: 'Acme Inc',
   logo: GalleryVerticalEnd,
   plan: 'Enterprise'
 };
 
-export default function AppSidebar() {
-  const { data: session } = useSession();
+export default async function AppSidebar() {
+  //const { data: session } = useSession();
+  const session = await getSession()
   const pathname = usePathname();
 
   return (

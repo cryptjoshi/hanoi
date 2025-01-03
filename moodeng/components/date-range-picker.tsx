@@ -14,12 +14,14 @@ import { DateRange } from 'react-day-picker';
 import th from "date-fns/locale/th"
 
 export function CalendarDateRangePicker({
+  date,
+  setDate,
   className
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(), // ใช้วันที่ปัจจุบัน
-    to: addDays(new Date(), 20) // วันที่ 20 วันหลังจากวันที่ปัจจุบัน
-  });
+  // const [date, setDate] = React.useState<DateRange | undefined>({
+  //   from: new Date(), // ใช้วันที่ปัจจุบัน
+  //   to: addDays(new Date(), 20) // วันที่ 20 วันหลังจากวันที่ปัจจุบัน
+  // });
 
   return (
     <div className={cn('grid gap-2', className)}>

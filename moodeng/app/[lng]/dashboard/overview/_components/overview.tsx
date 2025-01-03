@@ -37,7 +37,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-
+//import { getSession } from '@/actions';
 
 export interface IProvider {
     Name: string;
@@ -72,7 +72,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
  const [isLoading, setIsLoading] = useState(true)
  const [overview,setOverView] = useState<IFinancialStats>({})
  const [refreshTrigger, setRefreshTrigger] = useState(0);
- const { customerCurrency,accessToken } = useAuthStore();
+ //const { customerCurrency,accessToken } = useAuthStore();
  const [connected,setConncted] = useState(false)
  const router = useRouter()
  const [messages, setMessages] = useState([]);
@@ -80,7 +80,7 @@ const tzDate = new TZDate(new Date(), "Asia/Bangkok");
  const socketRef = useRef(null);
  const [socketid,setSocketId] = useState("");
  const [decompressedMessage, setDecompressedMessage] = useState<string | null>(null);
-
+ 
  const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -155,15 +155,15 @@ const fetchGames = async () => {
   setIsLoading(true);
   try {
   
-    if(accessToken){
+   // if(accessToken){
         //console.log(form.getValues("startdate").toLocaleDateString())
-    const fetchedGames = await GetOverview(accessToken,form.getValues("startdate").toLocaleDateString());
+    const fetchedGames = await GetOverview(form.getValues("startdate").toLocaleDateString());
     
     setOverView(fetchedGames.Data);
     console.log(fetchedGames)
-    } else {
-      router.replace(`/${lng}/login`)
-    }
+   // } else {
+   //   router.replace(`/${lng}/login`)
+   // }
   } catch (error) {
     console.error('Error fetching games:', error);
   } finally {
@@ -183,13 +183,14 @@ const fetchGames = async () => {
 
    useEffect(() => {
     
-   // fetchGames();
+    fetchGames();
   }, [ refreshTrigger])
 
 
  function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsLoading(true);
-    GetOverview(accessToken,data.startdate.toLocaleDateString()).then(response=>{
+
+    GetOverview(data.startdate.toLocaleDateString()).then(response=>{
         if(response.Status){
             setOverView(response.Data)
         } else {
@@ -268,7 +269,7 @@ const fetchGames = async () => {
             </CardFooter> */}
             </Card>
 
-               
+    
 {/* เปรียบเทียบกับเดือนที่ผ่านมา */}
 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-blue-600 text-white">
@@ -336,7 +337,7 @@ const fetchGames = async () => {
           </Card>
           <Card className="bg-blue-600 text-white">
             <CardHeader>
-              <CardTitle>รวมรายได้</CardTitle>
+              <CardTitle>ยอดรวมโปรโมชั่น</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(parseFloat(overview?.totalprofit?.toString()), 2)}</div>
@@ -379,8 +380,9 @@ const fetchGames = async () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1">
-               {overview?.Provider?.map((item, index) => (
-                <div key={index} className="flex justify-between">
+              
+               {overview?.provider?.map((item, index) => (
+                <div key={index} className={cn("flex justify-between ", item.total>0?"text-green-500" : "text-red-500")}>
                     <span>{item.name}</span>
                     <span>{formatNumber(parseFloat(item.total.toString()), 2)}</span>
                 </div>

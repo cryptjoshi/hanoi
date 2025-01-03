@@ -91,7 +91,7 @@ export function History({lng}:{lng:string}) {
      // console.log(uid,prefix,method)
    try {
     //console.log(item)
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4006/api/v1/statement/webhook`, { method: 'POST',
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_ENDPOINT}:4002/api/v2/statement/webhook`, { method: 'POST',
       headers: {   
         'Accept': 'application/json',
         'Content-Type': 'application/json',

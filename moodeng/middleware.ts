@@ -2,16 +2,25 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import acceptLanguage from 'accept-language';
 import { fallbackLng, languages, cookieName } from './app/i18n/settings';
+import { getSession } from './actions';
 
 acceptLanguage.languages(languages);
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   let lng = url.pathname.split('/')[1];
-
+  const session = await getSession()
   // ตรวจสอบว่าเป็น root path หรือไม่
+ 
   if (url.pathname === '/') {
     lng = request.cookies.get('NEXT_LOCALE')?.value || fallbackLng;
+    const isLoggedIn = session.isLoggedIn !== null;
+
+    // if(isLoggedIn){
+    //   return NextResponse.redirect(new URL(`/${lng}/dashboard/overview`, request.url));
+    // }else{
+    //   return NextResponse.redirect(new URL(`/${lng}/login`, request.url));
+    // }
     return NextResponse.redirect(new URL(`/${lng}/dashboard`, request.url));
   }
 
@@ -19,11 +28,14 @@ export function middleware(request: NextRequest) {
     lng = acceptLanguage.get(request.headers.get('Accept-Language')) || fallbackLng;
   }
 
-  const isLoggedIn = request.cookies.get('isLoggedIn')?.value;
+  //const isLoggedIn = request.cookies.get('isLoggedIn')?.value;
 
   // ตรวจสอบเส้นทางเมื่อเข้าหน้าแรกของภาษานั้นๆ
   if (url.pathname === `/${lng}` || url.pathname === `/${lng}/`) {
-    const redirectPath = isLoggedIn ? `/${lng}/dashboard` : `/${lng}/login`;
+    
+    //const isLoggedIn = session.isLoggedIn !== null;
+   // console.log("session 18:",session.isLoggedIn)
+    const redirectPath = session.isLoggedIn ? `/${lng}/dashboard/overview` : `/${lng}/login`;
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 

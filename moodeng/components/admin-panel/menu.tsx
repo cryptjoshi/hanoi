@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import useAuthStore  from "@/store/auth";
 import { useTranslation } from "@/app/i18n/client";
-
+import { Logout } from "@/actions";
 
 interface MenuProps {
   isOpen: boolean | undefined;  
@@ -26,7 +26,7 @@ interface MenuProps {
 export function Menu({ isOpen }: MenuProps) {
   const pathname = usePathname();
   const lng = useParams().lng as string;  
-  const {Logout} = useAuthStore()
+  //const {Logout} = useAuthStore()
   const menuList = getMenuList(pathname, lng);
   
   const {t} = useTranslation(lng,'translation',undefined);
